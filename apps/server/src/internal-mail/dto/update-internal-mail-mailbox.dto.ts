@@ -1,0 +1,6 @@
+import { IsIn } from 'class-validator';
+
+export class UpdateInternalMailMailboxDto {
+  @IsIn(['STAR', 'UNSTAR', 'ARCHIVE', 'DELETE', 'RESTORE'])
+  action: 'STAR' | 'UNSTAR' | 'ARCHIVE' | 'DELETE' | 'RESTORE';
+}

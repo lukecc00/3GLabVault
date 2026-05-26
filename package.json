@@ -1,0 +1,23 @@
+{
+  "name": "3glabvault",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.24.0",
+  "scripts": {
+    "dev:up": "bash scripts/local-dev.sh up",
+    "dev:down": "bash scripts/local-dev.sh down",
+    "dev:restart": "bash scripts/restart-local-project.sh",
+    "dev:status": "bash scripts/local-dev.sh status",
+    "dev:web": "pnpm --filter web dev",
+    "dev:server": "pnpm --filter server start:dev",
+    "build:web": "pnpm --filter web build",
+    "build:server": "pnpm --filter server build",
+    "lint:web": "pnpm --filter web lint",
+    "lint:server": "pnpm --filter server lint",
+    "format:server": "pnpm --filter server format",
+    "infra:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "infra:up:prod": "docker compose --env-file .env.production -f infra/docker/docker-compose.prod.yml up -d --build",
+    "infra:down:prod": "docker compose --env-file .env.production -f infra/docker/docker-compose.prod.yml down"
+  }
+}

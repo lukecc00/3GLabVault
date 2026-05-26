@@ -1,0 +1,185 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    command:
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --api.dashboard=false
+      - --ping=true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - edge
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      POSTGRES_APP_DB: ${POSTGRES_APP_DB}
+      POSTGRES_APP_USER: ${POSTGRES_APP_USER}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD}
+      POSTGRES_KEYCLOAK_DB: ${POSTGRES_KEYCLOAK_DB}
+      POSTGRES_KEYCLOAK_USER: ${POSTGRES_KEYCLOAK_USER}
+      POSTGRES_KEYCLOAK_PASSWORD: ${POSTGRES_KEYCLOAK_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_SUPERUSER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  minio:
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - internal
+
+  server:
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      CORS_ORIGIN: https://${LABVAULT_DOMAIN}
+      AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_USE_SSL: "false"
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      MAILCOW_API_BASE_URL: ${MAILCOW_API_BASE_URL}
+      MAILCOW_API_KEY: ${MAILCOW_API_KEY}
+      MAILCOW_DEFAULT_MAILBOX_QUOTA: ${MAILCOW_DEFAULT_MAILBOX_QUOTA}
+      ADMIN_INITIAL_EMAIL: ${ADMIN_INITIAL_EMAIL}
+      ADMIN_INITIAL_USERNAME: ${ADMIN_INITIAL_USERNAME}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD}
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.labvault-api.rule=Host(`${LABVAULT_DOMAIN}`) && PathPrefix(`/api`)
+      - traefik.http.routers.labvault-api.entrypoints=websecure
+      - traefik.http.routers.labvault-api.tls.certresolver=letsencrypt
+      - traefik.http.routers.labvault-api.priority=100
+      - traefik.http.routers.labvault-api.middlewares=labvault-security
+      - traefik.http.services.labvault-api.loadbalancer.server.port=3001
+      - traefik.http.middlewares.labvault-security.headers.stsSeconds=31536000
+      - traefik.http.middlewares.labvault-security.headers.stsIncludeSubdomains=true
+      - traefik.http.middlewares.labvault-security.headers.browserXssFilter=true
+      - traefik.http.middlewares.labvault-security.headers.contentTypeNosniff=true
+      - traefik.http.middlewares.labvault-security.headers.referrerPolicy=no-referrer-when-downgrade
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('node:http').get('http://127.0.0.1:3001/api', (response) => process.exit(response.statusCode && response.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - edge
+      - internal
+
+  server-init:
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+      target: builder
+    profiles: ["tools"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      MAIL_DOMAIN: ${MAIL_DOMAIN}
+      ADMIN_INITIAL_EMAIL: ${ADMIN_INITIAL_EMAIL}
+      ADMIN_INITIAL_USERNAME: ${ADMIN_INITIAL_USERNAME}
+      ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD}
+    command: >
+      sh -c "pnpm --filter server db:push &&
+      pnpm --filter server db:seed"
+    networks:
+      - internal
+
+  web:
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://${LABVAULT_DOMAIN}/api
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.labvault-web.rule=Host(`${LABVAULT_DOMAIN}`)
+      - traefik.http.routers.labvault-web.entrypoints=websecure
+      - traefik.http.routers.labvault-web.tls.certresolver=letsencrypt
+      - traefik.http.routers.labvault-web.middlewares=labvault-security
+      - traefik.http.services.labvault-web.loadbalancer.server.port=3000
+    networks:
+      - edge
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  traefik_letsencrypt:
+
+networks:
+  edge:
+    driver: bridge
+  internal:
+    driver: bridge

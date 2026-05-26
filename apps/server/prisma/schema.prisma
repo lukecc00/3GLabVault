@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  DISABLED
+  REJECTED
+}
+
+enum GroupType {
+  DIRECTION
+  GRADE
+  FUNCTIONAL
+  SYSTEM
+}
+
+enum MembershipRole {
+  MEMBER
+  MANAGER
+}
+
+enum SpaceVisibility {
+  PUBLIC
+  PRIVATE
+  GROUP_RESTRICTED
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MailboxProvisioningStatus {
+  PENDING
+  PROVISIONED
+  FAILED
+}
+
+enum InternalMailRecipientType {
+  SENDER
+  TO
+  CC
+}
+
+enum InternalMailDeliverySourceType {
+  USER
+  GROUP
+}
+
+model User {
+  id                        String                    @id @default(cuid())
+  username                  String?                   @unique
+  email                     String                    @unique
+  passwordHash              String?
+  mustChangePassword        Boolean                   @default(false)
+  passwordUpdatedAt         DateTime?
+  realName                  String
+  studentId                 String?                   @unique
+  avatarUrl                 String?
+  bio                       String?
+  keycloakUserId            String?                   @unique
+  mailboxProvisioningStatus MailboxProvisioningStatus @default(PENDING)
+  mailboxProvisionedAt      DateTime?
+  mailboxLastError          String?
+  status                    UserStatus                @default(PENDING)
+  archivedAt                DateTime?
+  archiveExpiresAt          DateTime?
+  contentRestoredAt         DateTime?
+  memberships               UserGroupMembership[]
+  roles                     UserRole[]
+  authoredPages             KnowledgePage[]           @relation("KnowledgePageAuthor")
+  editedPages               KnowledgePage[]           @relation("KnowledgePageEditor")
+  createdMailThreads        InternalMailThread[]      @relation("InternalMailThreadCreator")
+  sentInternalMailMessages  InternalMailMessage[]     @relation("InternalMailMessageSender")
+  internalMailRecipients    InternalMailRecipient[]   @relation("InternalMailRecipientUser")
+  createdAt                 DateTime                  @default(now())
+  updatedAt                 DateTime                  @updatedAt
+
+  @@index([archivedAt])
+  @@index([archiveExpiresAt])
+  @@index([contentRestoredAt])
+}
+
+model Role {
+  id          String     @id @default(cuid())
+  code        String     @unique
+  name        String
+  description String?
+  isSystem    Boolean    @default(false)
+  users       UserRole[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model UserRole {
+  id         String   @id @default(cuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Group {
+  id              String                @id @default(cuid())
+  code            String                @unique
+  name            String
+  type            GroupType
+  description     String?
+  parentId        String?
+  parent          Group?                @relation("GroupHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children        Group[]               @relation("GroupHierarchy")
+  memberships     UserGroupMembership[]
+  knowledgeSpaces KnowledgeSpace[]
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([type])
+  @@index([parentId])
+}
+
+model UserGroupMembership {
+  id             String         @id @default(cuid())
+  userId         String
+  groupId        String
+  membershipRole MembershipRole @default(MEMBER)
+  joinedAt       DateTime       @default(now())
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group          Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, groupId])
+  @@index([userId])
+  @@index([groupId])
+}
+
+model KnowledgeSpace {
+  id           String          @id @default(cuid())
+  code         String          @unique
+  slug         String          @unique
+  name         String
+  description  String?
+  visibility   SpaceVisibility @default(PUBLIC)
+  ownerGroupId String?
+  ownerGroup   Group?          @relation(fields: [ownerGroupId], references: [id], onDelete: SetNull)
+  pages        KnowledgePage[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([ownerGroupId])
+}
+
+model KnowledgePage {
+  id             String         @id @default(cuid())
+  spaceId        String
+  authorId       String?
+  editorId       String?
+  title          String
+  slug           String
+  summary        String?
+  contentMd      String
+  contentRawJson Json?
+  tags           String[]
+  status         PageStatus     @default(DRAFT)
+  publishedAt    DateTime?
+  space          KnowledgeSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  author         User?          @relation("KnowledgePageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  editor         User?          @relation("KnowledgePageEditor", fields: [editorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@unique([spaceId, slug])
+  @@index([spaceId])
+  @@index([authorId])
+  @@index([editorId])
+  @@index([status])
+}
+
+model InternalMailThread {
+  id            String                @id @default(cuid())
+  subject       String
+  createdById   String
+  lastMessageAt DateTime
+  createdBy     User                  @relation("InternalMailThreadCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  messages      InternalMailMessage[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([createdById])
+  @@index([lastMessageAt])
+}
+
+model InternalMailMessage {
+  id                  String                  @id @default(cuid())
+  threadId            String
+  senderId            String
+  subject             String
+  bodyMarkdown        String
+  draftToUserIds      String[]
+  draftCcUserIds      String[]
+  draftToGroupIds     String[]
+  draftCcGroupIds     String[]
+  sentAt              DateTime?
+  isDraft             Boolean                 @default(false)
+  replyToMessageId    String?
+  forwardOfMessageId  String?
+  thread              InternalMailThread      @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  sender              User                    @relation("InternalMailMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  replyToMessage      InternalMailMessage?    @relation("InternalMailReplyChain", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replyMessages       InternalMailMessage[]   @relation("InternalMailReplyChain")
+  forwardOfMessage    InternalMailMessage?    @relation("InternalMailForwardChain", fields: [forwardOfMessageId], references: [id], onDelete: SetNull)
+  forwardedMessages   InternalMailMessage[]   @relation("InternalMailForwardChain")
+  recipients          InternalMailRecipient[]
+  createdAt           DateTime                @default(now())
+  updatedAt           DateTime                @updatedAt
+
+  @@index([threadId])
+  @@index([senderId])
+  @@index([sentAt])
+  @@index([isDraft])
+  @@index([replyToMessageId])
+  @@index([forwardOfMessageId])
+}
+
+model InternalMailRecipient {
+  id                 String                         @id @default(cuid())
+  messageId          String
+  userId             String
+  recipientType      InternalMailRecipientType
+  deliverySourceType InternalMailDeliverySourceType
+  deliverySourceId   String?
+  readAt             DateTime?
+  starredAt          DateTime?
+  archivedAt         DateTime?
+  deletedAt          DateTime?
+  message            InternalMailMessage            @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user               User                           @relation("InternalMailRecipientUser", fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+
+  @@unique([messageId, userId, recipientType])
+  @@index([userId])
+  @@index([recipientType])
+  @@index([deliverySourceType, deliverySourceId])
+  @@index([readAt])
+  @@index([starredAt])
+  @@index([archivedAt])
+  @@index([deletedAt])
+}

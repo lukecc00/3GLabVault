@@ -1,0 +1,41 @@
+# Node.js
+node_modules/
+.pnpm-store/
+.npm/
+
+# Build output
+.next/
+dist/
+build/
+coverage/
+apps/server/src/generated/prisma/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Env
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Python helper cache
+__pycache__/
+*.pyc
+
+# Docker / local data
+data/
+storage/
+uploads/
+minio/
+postgres/
+redis/
+mailcow-data/
