@@ -1,9 +1,10 @@
 import {
+  Allow,
+  IsArray,
   IsEnum,
   IsOptional,
   IsString,
   MaxLength,
-  Matches,
 } from 'class-validator';
 import { SpaceVisibility } from '../../generated/prisma';
 
@@ -12,12 +13,9 @@ export class CreateKnowledgeSpaceDto {
   @MaxLength(50)
   code: string;
 
-  @IsString()
-  @MaxLength(50)
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'slug 只能包含小写字母、数字和连字符',
-  })
-  slug: string;
+  @IsOptional()
+  @Allow()
+  slug?: string;
 
   @IsString()
   @MaxLength(100)
@@ -35,4 +33,13 @@ export class CreateKnowledgeSpaceDto {
   @IsOptional()
   @IsString()
   ownerGroupId?: string;
+
+  @IsOptional()
+  @IsString()
+  parentSpaceId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  accessGroupIds?: string[];
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { AdminShell } from "../_components/admin-shell";
 import { ResourceState } from "../_components/resource-state";
+import { Button } from "@/components/ui/button";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type { CreateRolePayload, RoleSummary } from "@/lib/contracts";
 
@@ -117,7 +118,7 @@ export default function RolesPage() {
         <div className="space-y-6">
           <form
             onSubmit={handleSubmit}
-            className="rounded-3xl border border-white/10 bg-white/5 p-6"
+            className="app-panel-muted p-6"
           >
             <h2 className="text-xl font-semibold">新增角色</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -129,7 +130,7 @@ export default function RolesPage() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, name: event.target.value }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 outline-none"
+                  className="app-input"
                   placeholder="例如：知识库审核员"
                 />
               </label>
@@ -141,7 +142,7 @@ export default function RolesPage() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, code: event.target.value }))
                   }
-                  className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 outline-none"
+                  className="app-input"
                   placeholder="例如：REVIEWER"
                 />
               </label>
@@ -155,7 +156,7 @@ export default function RolesPage() {
                       description: event.target.value,
                     }))
                   }
-                  className="min-h-24 w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3 outline-none"
+                  className="app-textarea min-h-24"
                   placeholder="可选"
                 />
               </label>
@@ -173,13 +174,14 @@ export default function RolesPage() {
                 标记为系统角色
               </label>
             </div>
-            <button
+            <Button
               type="submit"
+              variant="success"
+              className="mt-6"
               disabled={submitting}
-              className="mt-6 rounded-full bg-emerald-400 px-5 py-3 text-sm font-medium text-zinc-950 transition hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
               创建角色
-            </button>
+            </Button>
           </form>
 
           {actionMessage ? (
@@ -194,14 +196,14 @@ export default function RolesPage() {
             {roles.map((role) => (
               <article
                 key={role.id}
-                className="rounded-3xl border border-white/10 bg-white/5 p-6"
+                className="app-panel-muted p-6"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">{role.name}</h2>
                     <p className="mt-2 text-sm text-zinc-400">{role.code}</p>
                   </div>
-                  <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-zinc-300">
+                  <span className="app-pill">
                     {role._count.users} 人
                   </span>
                 </div>

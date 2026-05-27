@@ -1,7 +1,10 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleDestroy,
+  OnModuleInit,
 } from '@nestjs/common';
 import {
   InternalMailDeliverySourceType,
@@ -13,9 +16,12 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateInternalMailDto } from './dto/create-internal-mail.dto';
 import { QueryInternalMailListDto } from './dto/query-internal-mail-list.dto';
+import { ExternalMailReminderService } from './external-mail-reminder.service';
 import { UpdateInternalMailMailboxDto } from './dto/update-internal-mail-mailbox.dto';
 
 type MailboxFolder = 'inbox' | 'sent' | 'drafts' | 'archive' | 'trash';
+const INTERNAL_MAIL_TRASH_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+const INTERNAL_MAIL_TRASH_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 
 const internalMailUserSelect = {
   id: true,
@@ -100,10 +106,33 @@ const internalMailDetailSelect = {
 } satisfies Prisma.InternalMailMessageSelect;
 
 @Injectable()
-export class InternalMailService {
-  constructor(private readonly prisma: PrismaService) {}
+export class InternalMailService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(InternalMailService.name);
+  private trashPurgeTimer: NodeJS.Timeout | null = null;
+  private trashPurgeRunning = false;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly externalMailReminderService: ExternalMailReminderService,
+  ) {}
+
+  onModuleInit() {
+    void this.runExpiredTrashCleanup();
+    this.trashPurgeTimer = setInterval(() => {
+      void this.runExpiredTrashCleanup();
+    }, INTERNAL_MAIL_TRASH_CLEANUP_INTERVAL_MS);
+    this.trashPurgeTimer.unref?.();
+  }
+
+  onModuleDestroy() {
+    if (this.trashPurgeTimer) {
+      clearInterval(this.trashPurgeTimer);
+      this.trashPurgeTimer = null;
+    }
+  }
 
   async getSummary(currentUser: AuthenticatedUser) {
+    void this.runExpiredTrashCleanup();
     const [inbox, unread, sent, drafts, archive, trash, starred] =
       await Promise.all([
         this.countMailboxEntries('inbox', currentUser.id),
@@ -136,12 +165,15 @@ export class InternalMailService {
     };
   }
 
-  async getComposerOptions() {
+  async getComposerOptions(currentUser: AuthenticatedUser) {
     const [users, groups] = await Promise.all([
       this.prisma.user.findMany({
         where: {
           status: UserStatus.ACTIVE,
           archivedAt: null,
+          id: {
+            not: currentUser.id,
+          },
         },
         select: internalMailComposerUserSelect,
         orderBy: [{ realName: 'asc' }, { createdAt: 'asc' }],
@@ -163,34 +195,68 @@ export class InternalMailService {
     };
   }
 
-  getInbox(currentUser: AuthenticatedUser, query: QueryInternalMailListDto) {
+  async getInbox(
+    currentUser: AuthenticatedUser,
+    query: QueryInternalMailListDto,
+  ) {
+    await this.runExpiredTrashCleanup();
     return this.getMailboxEntries('inbox', currentUser, query);
   }
 
-  getSent(currentUser: AuthenticatedUser, query: QueryInternalMailListDto) {
+  async getSent(
+    currentUser: AuthenticatedUser,
+    query: QueryInternalMailListDto,
+  ) {
+    await this.runExpiredTrashCleanup();
     return this.getMailboxEntries('sent', currentUser, query);
   }
 
-  getDrafts(currentUser: AuthenticatedUser, query: QueryInternalMailListDto) {
+  async getDrafts(
+    currentUser: AuthenticatedUser,
+    query: QueryInternalMailListDto,
+  ) {
+    await this.runExpiredTrashCleanup();
     return this.getMailboxEntries('drafts', currentUser, query);
   }
 
-  getArchive(currentUser: AuthenticatedUser, query: QueryInternalMailListDto) {
+  async getArchive(
+    currentUser: AuthenticatedUser,
+    query: QueryInternalMailListDto,
+  ) {
+    await this.runExpiredTrashCleanup();
     return this.getMailboxEntries('archive', currentUser, query);
   }
 
-  getTrash(currentUser: AuthenticatedUser, query: QueryInternalMailListDto) {
+  async getTrash(
+    currentUser: AuthenticatedUser,
+    query: QueryInternalMailListDto,
+  ) {
+    await this.runExpiredTrashCleanup();
     return this.getMailboxEntries('trash', currentUser, query);
   }
 
   async findOne(id: string, currentUser: AuthenticatedUser) {
+    await this.runExpiredTrashCleanup();
     return this.findAccessibleMessage(id, currentUser, true);
+  }
+
+  async emptyTrash(currentUser: AuthenticatedUser) {
+    await this.runExpiredTrashCleanup();
+    const deletedCount = await this.permanentlyDeleteMailboxEntries(
+      undefined,
+      currentUser.id,
+    );
+
+    return {
+      deletedCount,
+    };
   }
 
   async markMailboxEntryAsRead(
     mailboxEntryId: string,
     currentUser: AuthenticatedUser,
   ) {
+    await this.runExpiredTrashCleanup();
     const mailboxEntry = await this.prisma.internalMailRecipient.findUnique({
       where: { id: mailboxEntryId },
       select: {
@@ -231,17 +297,34 @@ export class InternalMailService {
     dto: UpdateInternalMailMailboxDto,
     currentUser: AuthenticatedUser,
   ) {
+    await this.runExpiredTrashCleanup();
     const mailboxEntry = await this.prisma.internalMailRecipient.findUnique({
       where: { id: mailboxEntryId },
       select: {
         id: true,
         messageId: true,
         userId: true,
+        deletedAt: true,
       },
     });
 
     if (!mailboxEntry || mailboxEntry.userId !== currentUser.id) {
       throw new NotFoundException('邮件不存在或当前用户无权访问');
+    }
+
+    if (dto.action === 'PURGE') {
+      if (!mailboxEntry.deletedAt) {
+        throw new BadRequestException('仅支持彻底删除回收站中的邮件');
+      }
+
+      const deletedCount = await this.permanentlyDeleteMailboxEntries(
+        [mailboxEntryId],
+        currentUser.id,
+      );
+
+      return {
+        deletedCount,
+      };
     }
 
     const now = new Date();
@@ -265,8 +348,6 @@ export class InternalMailService {
         data.deletedAt = null;
         data.archivedAt = null;
         break;
-      default:
-        break;
     }
 
     await this.prisma.internalMailRecipient.update({
@@ -285,8 +366,8 @@ export class InternalMailService {
     const subject = dto.subject.trim() || '无主题';
     const bodyMarkdown = dto.bodyMarkdown.trim();
     const saveAsDraft = dto.saveAsDraft ?? false;
-    const toUserIds = this.normalizeIds(dto.toUserIds);
-    const ccUserIds = this.normalizeIds(dto.ccUserIds);
+    const toUserIds = this.excludeCurrentUser(this.normalizeIds(dto.toUserIds), currentUser.id);
+    const ccUserIds = this.excludeCurrentUser(this.normalizeIds(dto.ccUserIds), currentUser.id);
     const toGroupIds = this.normalizeIds(dto.toGroupIds);
     const ccGroupIds = this.normalizeIds(dto.ccGroupIds);
 
@@ -322,6 +403,9 @@ export class InternalMailService {
               user: {
                 status: UserStatus.ACTIVE,
                 archivedAt: null,
+                id: {
+                  not: currentUser.id,
+                },
               },
             },
             select: {
@@ -346,6 +430,12 @@ export class InternalMailService {
       throw new BadRequestException('目标群组下没有可接收内部邮件的有效成员');
     }
 
+    const recipientUserIds = Array.from(recipientMap.entries())
+      .filter(
+        ([, recipient]) =>
+          recipient.recipientType === InternalMailRecipientType.TO,
+      )
+      .map(([userId]) => userId);
     const now = new Date();
     const threadId =
       dto.threadId?.trim() ||
@@ -448,6 +538,8 @@ export class InternalMailService {
         });
       });
 
+      this.triggerExternalReminder(recipientUserIds, currentUser.id, subject, saveAsDraft);
+
       return this.findAccessibleMessage(existingDraft.id, currentUser, false);
     }
 
@@ -501,7 +593,99 @@ export class InternalMailService {
       return message;
     });
 
+    this.triggerExternalReminder(recipientUserIds, currentUser.id, subject, saveAsDraft);
+
     return this.findAccessibleMessage(createdMessage.id, currentUser, false);
+  }
+
+  async sendNotification(input: {
+    senderId: string;
+    toUserIds: string[];
+    subject: string;
+    bodyMarkdown: string;
+  }) {
+    const subject = input.subject.trim() || '无主题';
+    const bodyMarkdown = input.bodyMarkdown.trim();
+    const toUserIds = this.normalizeIds(input.toUserIds).filter(
+      (userId) => userId !== input.senderId,
+    );
+
+    if (toUserIds.length === 0) {
+      return;
+    }
+
+    await Promise.all([
+      this.getActiveUsersByIds([input.senderId]),
+      this.getActiveUsersByIds(toUserIds),
+    ]);
+
+    const recipientUserIds = [...toUserIds];
+    const now = new Date();
+    const threadId = (await this.createThread(subject, input.senderId)).id;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.internalMailMessage.create({
+        data: {
+          threadId,
+          senderId: input.senderId,
+          subject,
+          bodyMarkdown,
+          draftToUserIds: [],
+          draftCcUserIds: [],
+          draftToGroupIds: [],
+          draftCcGroupIds: [],
+          isDraft: false,
+          sentAt: now,
+          recipients: {
+            create: [
+              {
+                userId: input.senderId,
+                recipientType: InternalMailRecipientType.SENDER,
+                deliverySourceType: InternalMailDeliverySourceType.USER,
+                deliverySourceId: input.senderId,
+                readAt: now,
+              },
+              ...recipientUserIds.map((userId) => ({
+                userId,
+                recipientType: InternalMailRecipientType.TO,
+                deliverySourceType: InternalMailDeliverySourceType.USER,
+                deliverySourceId: userId,
+              })),
+            ],
+          },
+        },
+      });
+
+      await tx.internalMailThread.update({
+        where: { id: threadId },
+        data: {
+          subject,
+          lastMessageAt: now,
+        },
+      });
+    });
+
+    this.triggerExternalReminder(recipientUserIds, input.senderId, subject, false);
+  }
+
+  private triggerExternalReminder(
+    recipientUserIds: string[],
+    senderUserId: string,
+    subject: string,
+    saveAsDraft: boolean,
+  ) {
+    if (saveAsDraft || recipientUserIds.length === 0) {
+      return;
+    }
+
+    void this.externalMailReminderService
+      .notifyNewInternalMailRecipients(recipientUserIds, senderUserId, subject)
+      .catch((error) => {
+        this.logger.error(
+          '内部邮件外部提醒发送失败',
+          error instanceof Error ? error.stack : String(error),
+        );
+      });
   }
 
   private async getMailboxEntries(
@@ -770,6 +954,122 @@ export class InternalMailService {
     };
   }
 
+  private async permanentlyDeleteMailboxEntries(
+    mailboxEntryIds?: string[],
+    userId?: string,
+  ) {
+    if (mailboxEntryIds && mailboxEntryIds.length === 0) {
+      return 0;
+    }
+
+    const deleteWhere: Prisma.InternalMailRecipientWhereInput = {
+      deletedAt: {
+        not: null,
+      },
+      ...(mailboxEntryIds?.length
+        ? {
+            id: {
+              in: mailboxEntryIds,
+            },
+          }
+        : {}),
+      ...(userId
+        ? {
+            userId,
+          }
+        : {}),
+    };
+
+    return this.prisma.$transaction(async (tx) => {
+      const deletedEntries = await tx.internalMailRecipient.deleteMany({
+        where: deleteWhere,
+      });
+
+      await this.cleanupOrphanedMessages(tx);
+
+      return deletedEntries.count;
+    });
+  }
+
+  private async cleanupOrphanedMessages(tx: Prisma.TransactionClient) {
+    const orphanMessages = await tx.internalMailMessage.findMany({
+      where: {
+        recipients: {
+          none: {},
+        },
+      },
+      select: {
+        id: true,
+        threadId: true,
+      },
+    });
+
+    if (orphanMessages.length === 0) {
+      return;
+    }
+
+    const messageIds = orphanMessages.map((message) => message.id);
+    const threadIds = [
+      ...new Set(orphanMessages.map((message) => message.threadId)),
+    ];
+
+    await tx.internalMailMessage.deleteMany({
+      where: {
+        id: {
+          in: messageIds,
+        },
+      },
+    });
+
+    if (threadIds.length > 0) {
+      await tx.internalMailThread.deleteMany({
+        where: {
+          id: {
+            in: threadIds,
+          },
+          messages: {
+            none: {},
+          },
+        },
+      });
+    }
+  }
+
+  private async runExpiredTrashCleanup() {
+    if (this.trashPurgeRunning) {
+      return;
+    }
+
+    this.trashPurgeRunning = true;
+
+    try {
+      const expiredAt = new Date(Date.now() - INTERNAL_MAIL_TRASH_RETENTION_MS);
+      const expiredMailboxEntryIds = (
+        await this.prisma.internalMailRecipient.findMany({
+          where: {
+            deletedAt: {
+              lte: expiredAt,
+            },
+          },
+          select: {
+            id: true,
+          },
+          orderBy: {
+            deletedAt: 'asc',
+          },
+        })
+      ).map((entry) => entry.id);
+
+      if (expiredMailboxEntryIds.length === 0) {
+        return;
+      }
+
+      await this.permanentlyDeleteMailboxEntries(expiredMailboxEntryIds);
+    } finally {
+      this.trashPurgeRunning = false;
+    }
+  }
+
   private async getActiveUsersByIds(userIds: string[]) {
     if (userIds.length === 0) {
       return [];
@@ -879,6 +1179,10 @@ export class InternalMailService {
     return Array.from(
       new Set(values.map((value) => value.trim()).filter(Boolean)),
     );
+  }
+
+  private excludeCurrentUser(userIds: string[], currentUserId: string) {
+    return userIds.filter((userId) => userId !== currentUserId);
   }
 
   private buildRecipientMap(

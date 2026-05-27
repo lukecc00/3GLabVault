@@ -146,7 +146,7 @@ export class MailcowService {
   }
 
   private getMailDomain() {
-    return process.env.MAIL_DOMAIN ?? '3glab.local';
+    return process.env.MAIL_DOMAIN ?? '3glab';
   }
 
   private getMailboxQuota() {

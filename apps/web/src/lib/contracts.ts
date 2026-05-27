@@ -2,6 +2,7 @@ export type UserStatus = "PENDING" | "ACTIVE" | "DISABLED" | "REJECTED";
 export type GroupType = "DIRECTION" | "GRADE" | "FUNCTIONAL" | "SYSTEM";
 export type MembershipRole = "MEMBER" | "MANAGER";
 export type MailboxProvisioningStatus = "PENDING" | "PROVISIONED" | "FAILED";
+export type ArchivedContentRestoreTarget = "LAB_ADMIN" | "DIRECTION_ADMIN";
 export type InternalMailRecipientType = "SENDER" | "TO" | "CC";
 export type InternalMailDeliverySourceType = "USER" | "GROUP";
 
@@ -48,10 +49,13 @@ export interface UserSummary {
   id: string;
   username: string | null;
   email: string;
+  notificationEmail: string | null;
   realName: string;
   studentId: string | null;
   avatarUrl: string | null;
   bio: string | null;
+  emailReminderEnabled: boolean;
+  lastExternalMailReminderAt: string | null;
   keycloakUserId: string | null;
   mustChangePassword: boolean;
   mailboxProvisioningStatus: MailboxProvisioningStatus;
@@ -106,6 +110,14 @@ export interface AuthUser {
   mustChangePassword: boolean;
   roleCodes: string[];
   groupIds: string[];
+  memberships: Array<{
+    groupId: string;
+    group: {
+      id: string;
+      name: string;
+      type: GroupType;
+    };
+  }>;
 }
 
 export interface AuthSession {
@@ -131,6 +143,7 @@ export interface CreateUserPayload {
   realName: string;
   namePinyin: string;
   password: string;
+  notificationEmail: string;
   avatarUrl?: string;
   bio?: string;
   groupIds?: string[];
@@ -157,11 +170,22 @@ export interface RegisterOptions {
   mailDomain: string;
 }
 
+export interface UserDirectoryResult {
+  items: UserSummary[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
 export interface BatchGenerateUsersPayload {
   groupIds: string[];
+  password: string;
   users: Array<{
     realName: string;
-    studentId?: string;
+    notificationEmail: string;
   }>;
 }
 
@@ -174,7 +198,7 @@ export interface BatchGenerateUsersResult {
   createdUsers: BatchGeneratedUserResult[];
   failedUsers: Array<{
     realName: string;
-    studentId?: string;
+    notificationEmail?: string;
     reason: string;
   }>;
 }
@@ -183,6 +207,7 @@ export interface ReviewUserPayload {
   status: UserStatus;
   roleIds?: string[];
   groupIds?: string[];
+  notificationEmail?: string;
 }
 
 export interface ChangePasswordPayload {
@@ -197,6 +222,10 @@ export interface ResetUserPasswordPayload {
 export interface ResetUserPasswordResult {
   temporaryPassword: string;
   user: UserSummary;
+}
+
+export interface RestoreArchivedContentPayload {
+  target: ArchivedContentRestoreTarget;
 }
 
 export interface CreateRolePayload {
@@ -230,6 +259,43 @@ export interface AddGroupMemberPayload {
 
 export type SpaceVisibility = "PUBLIC" | "PRIVATE" | "GROUP_RESTRICTED";
 export type PageStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+export type KnowledgePageAccessRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "CANCELLED";
+export type KnowledgePageAccessApproverKind =
+  | "PAGE_OWNER"
+  | "SPACE_OWNER"
+  | "LAB_ADMIN";
+export type KnowledgeApprovalSection =
+  | "pendingReviews"
+  | "submitted"
+  | "reviewedByMe";
+
+export interface KnowledgeSpaceAccessGroupSummary {
+  id: string;
+  spaceId: string;
+  groupId: string;
+  createdAt: string;
+  updatedAt: string;
+  group: GroupSummary;
+}
+
+export interface KnowledgeSpaceParentSummary {
+  id: string;
+  code: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  visibility: SpaceVisibility;
+  ownerGroupId: string | null;
+  parentSpaceId: string | null;
+  deletedAt: string | null;
+  deleteExpiresAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface KnowledgeSpaceSummary {
   id: string;
@@ -239,17 +305,24 @@ export interface KnowledgeSpaceSummary {
   description: string | null;
   visibility: SpaceVisibility;
   ownerGroupId: string | null;
+  parentSpaceId: string | null;
+  deletedAt: string | null;
+  deleteExpiresAt: string | null;
   createdAt: string;
   updatedAt: string;
   ownerGroup: GroupSummary["parent"];
+  parentSpace: KnowledgeSpaceParentSummary | null;
+  accessGroups: KnowledgeSpaceAccessGroupSummary[];
   _count: {
     pages: number;
+    childSpaces: number;
   };
 }
 
 export interface KnowledgePageSummary {
   id: string;
   spaceId: string;
+  parentId: string | null;
   authorId: string | null;
   editorId: string | null;
   title: string;
@@ -259,7 +332,10 @@ export interface KnowledgePageSummary {
   contentRawJson: unknown;
   tags: string[];
   status: PageStatus;
+  sortOrder: number;
   publishedAt: string | null;
+  deletedAt: string | null;
+  deleteExpiresAt: string | null;
   createdAt: string;
   updatedAt: string;
   space: {
@@ -273,6 +349,12 @@ export interface KnowledgePageSummary {
     createdAt: string;
     updatedAt: string;
   };
+  parent?: {
+    id: string;
+    title: string;
+    slug: string;
+    parentId: string | null;
+  } | null;
   author: {
     id: string;
     realName: string;
@@ -283,12 +365,38 @@ export interface KnowledgePageSummary {
     realName: string;
     email: string;
   } | null;
+  editPermission?: {
+    canEdit: boolean;
+    canDelete: boolean;
+    canManagePermissions: boolean;
+    pendingRequest: {
+      id: string;
+      reviewerId: string;
+      reviewerKind: KnowledgePageAccessApproverKind;
+      status: KnowledgePageAccessRequestStatus;
+      reason: string | null;
+      createdAt: string;
+      reviewer: {
+        id: string;
+        realName: string;
+        email: string;
+      };
+    } | null;
+    availableApprovalTargets: KnowledgePageApprovalTarget[];
+  };
 }
 
 export interface KnowledgeSpaceDetail extends KnowledgeSpaceSummary {
+  childSpaces: KnowledgeSpaceSummary[];
+  management: {
+    canManageSubspaces: boolean;
+    canManageAccess: boolean;
+    availableGradeGroups: GroupSummary[];
+  };
   pages: Array<{
     id: string;
     spaceId: string;
+    parentId: string | null;
     authorId: string | null;
     editorId: string | null;
     title: string;
@@ -298,7 +406,10 @@ export interface KnowledgeSpaceDetail extends KnowledgeSpaceSummary {
     contentRawJson: unknown;
     tags: string[];
     status: PageStatus;
+    sortOrder: number;
     publishedAt: string | null;
+    deletedAt: string | null;
+    deleteExpiresAt: string | null;
     createdAt: string;
     updatedAt: string;
   }>;
@@ -306,17 +417,18 @@ export interface KnowledgeSpaceDetail extends KnowledgeSpaceSummary {
 
 export interface CreateKnowledgeSpacePayload {
   code: string;
-  slug: string;
   name: string;
   description?: string;
   visibility?: SpaceVisibility;
   ownerGroupId?: string;
+  parentSpaceId?: string;
+  accessGroupIds?: string[];
 }
 
 export interface CreateKnowledgePagePayload {
   spaceId: string;
+  parentId?: string;
   title: string;
-  slug: string;
   summary?: string;
   contentMd: string;
   tags?: string[];
@@ -324,13 +436,138 @@ export interface CreateKnowledgePagePayload {
 }
 
 export interface UpdateKnowledgePagePayload {
+  parentId?: string | null;
   title?: string;
-  slug?: string;
   summary?: string;
   contentMd?: string;
   contentRawJson?: unknown;
   tags?: string[];
   status?: PageStatus;
+}
+
+export interface KnowledgeImageUploadResult {
+  url: string;
+  key: string;
+  contentType: string;
+  width: number | null;
+  height: number | null;
+  size: number;
+}
+
+export interface KnowledgePageApprovalTarget {
+  reviewerId: string;
+  reviewerName: string;
+  reviewerEmail: string;
+  reviewerKind: KnowledgePageAccessApproverKind;
+}
+
+export interface CreateKnowledgePageAccessRequestPayload {
+  pageId: string;
+  reviewerId: string;
+  reviewerKind: KnowledgePageAccessApproverKind;
+  reason?: string;
+}
+
+export interface ReviewKnowledgePageAccessRequestPayload {
+  action: "APPROVE" | "REJECT";
+  comment?: string;
+}
+
+export interface GrantKnowledgePagePermissionPayload {
+  userId: string;
+  comment?: string;
+}
+
+export interface GrantKnowledgeSpaceAccessGroupPayload {
+  groupId: string;
+}
+
+export interface KnowledgePageAccessRequestSummary {
+  id: string;
+  pageId: string;
+  requesterId: string;
+  reviewerId: string;
+  reviewerKind: KnowledgePageAccessApproverKind;
+  status: KnowledgePageAccessRequestStatus;
+  reason: string | null;
+  reviewComment: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  grantActive?: boolean;
+  page: {
+    id: string;
+    title: string;
+    spaceId: string;
+    space: {
+      id: string;
+      name: string;
+    };
+  };
+  requester: {
+    id: string;
+    realName: string;
+    email: string;
+  };
+  reviewer: {
+    id: string;
+    realName: string;
+    email: string;
+  };
+}
+
+export interface KnowledgePageAccessRequestDashboard {
+  summary: {
+    pendingReviews: number;
+    submitted: number;
+    reviewedByMe: number;
+  };
+  section: KnowledgeApprovalSection;
+  filters: {
+    q: string | null;
+    status: KnowledgePageAccessRequestStatus | null;
+    reviewerKind: KnowledgePageAccessApproverKind | null;
+    page: number;
+    pageSize: number;
+  };
+  records: {
+    items: KnowledgePageAccessRequestSummary[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+  };
+}
+
+export interface KnowledgePagePermissionGrantSummary {
+  id: string;
+  pageId: string;
+  userId: string;
+  grantedById: string;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    realName: string;
+    email: string;
+  };
+  grantedBy: {
+    id: string;
+    realName: string;
+    email: string;
+  };
+}
+
+export interface KnowledgePagePermissionManagement {
+  canManage: boolean;
+  grants: KnowledgePagePermissionGrantSummary[];
+  availableUsers: Array<{
+    id: string;
+    realName: string;
+    email: string;
+  }>;
 }
 
 export interface InternalMailUserOption {
@@ -465,5 +702,5 @@ export interface CreateInternalMailPayload {
 }
 
 export interface UpdateInternalMailMailboxPayload {
-  action: "STAR" | "UNSTAR" | "ARCHIVE" | "DELETE" | "RESTORE";
+  action: "STAR" | "UNSTAR" | "ARCHIVE" | "DELETE" | "RESTORE" | "PURGE";
 }

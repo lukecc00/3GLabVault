@@ -41,8 +41,8 @@ export function RouteGuard({
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-50">
-        <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-5 text-sm text-zinc-300">
+      <div className="app-shell flex min-h-dvh items-center justify-center px-6">
+        <div className="app-panel-muted px-6 py-5 text-sm text-foreground-muted">
           正在验证登录状态...
         </div>
       </div>
@@ -59,16 +59,16 @@ export function RouteGuard({
 
   if (requireAdmin && !isAdmin) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-6 text-zinc-50">
+      <div className="app-shell flex min-h-dvh items-center justify-center px-6">
         <div className="max-w-md rounded-3xl border border-red-400/20 bg-red-400/10 p-6">
-          <h1 className="text-xl font-semibold">无管理员权限</h1>
+          <h1 className="text-xl font-semibold text-foreground-strong">无管理员权限</h1>
           <p className="mt-3 text-sm leading-7 text-red-100">
             当前账号已登录，但没有访问该高权限工作区的权限。请切换具备权限的账号，或返回知识工作台继续使用。
           </p>
           <button
             type="button"
             onClick={() => router.replace("/portal")}
-            className="mt-5 rounded-full bg-white px-4 py-2 text-sm font-medium text-zinc-950 transition hover:bg-zinc-200"
+            className="app-button-secondary mt-5"
           >
             返回知识工作台
           </button>

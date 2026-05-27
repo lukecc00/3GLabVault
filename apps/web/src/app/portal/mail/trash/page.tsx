@@ -5,7 +5,7 @@ export default function PortalMailTrashPage() {
     <MailFolderPage
       folder="trash"
       title="回收站"
-      description="查看已删除的内部邮件，并按需要恢复到原工作流；第一版暂不提供彻底删除。"
+      description="查看已删除邮件，可恢复或彻底删除。"
     />
   );
 }

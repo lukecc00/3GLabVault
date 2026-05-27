@@ -7,6 +7,39 @@ LOCAL_DEV_SCRIPT="$ROOT_DIR/scripts/local-dev.sh"
 RUNTIME_DIR="$ROOT_DIR/storage/dev"
 SERVER_PID_FILE="$RUNTIME_DIR/server.pid"
 WEB_PID_FILE="$RUNTIME_DIR/web.pid"
+ROOT_ENV_FILE="$ROOT_DIR/.env"
+
+load_root_env() {
+  if [[ -f "$ROOT_ENV_FILE" ]]; then
+    set -a
+    # shellcheck disable=SC1090
+    source "$ROOT_ENV_FILE"
+    set +a
+  fi
+}
+
+configured_value() {
+  local value="${1:-}"
+  local fallback="$2"
+
+  if [[ -n "$value" ]]; then
+    printf '%s' "$value"
+  else
+    printf '%s' "$fallback"
+  fi
+}
+
+build_base_url() {
+  local protocol="$1"
+  local host="$2"
+  local port="$3"
+
+  if [[ -n "$port" ]]; then
+    printf '%s://%s:%s' "$protocol" "$host" "$port"
+  else
+    printf '%s://%s' "$protocol" "$host"
+  fi
+}
 
 print_header() {
   printf '\n[%s] %s\n' "3GLabVault" "$1"
@@ -83,6 +116,16 @@ wait_for_port_release() {
   return 1
 }
 
+load_root_env
+WEB_PROTOCOL="$(configured_value "${WEB_PROTOCOL:-}" "http")"
+SERVER_PROTOCOL="$(configured_value "${SERVER_PROTOCOL:-}" "http")"
+WEB_HOST="$(configured_value "${WEB_HOST:-}" "localhost")"
+WEB_PORT="$(configured_value "${WEB_PORT:-}" "3000")"
+SERVER_HOST="$(configured_value "${SERVER_HOST:-}" "localhost")"
+SERVER_PORT="$(configured_value "${SERVER_PORT:-}" "3001")"
+WEB_BASE_URL="$(build_base_url "$WEB_PROTOCOL" "$WEB_HOST" "$WEB_PORT")"
+SERVER_BASE_URL="$(build_base_url "$SERVER_PROTOCOL" "$SERVER_HOST" "$SERVER_PORT")"
+
 print_header "Stopping managed local stack"
 bash "$LOCAL_DEV_SCRIPT" down || true
 
@@ -90,16 +133,16 @@ print_header "Cleaning stale runtime processes"
 kill_pid_from_file "server" "$SERVER_PID_FILE"
 kill_pid_from_file "web" "$WEB_PID_FILE"
 
-kill_port_listener 3001
-kill_port_listener 3000
+kill_port_listener "$SERVER_PORT"
+kill_port_listener "$WEB_PORT"
 
-wait_for_port_release 3001
-wait_for_port_release 3000
+wait_for_port_release "$SERVER_PORT"
+wait_for_port_release "$WEB_PORT"
 
 print_header "Starting fresh local stack"
 bash "$LOCAL_DEV_SCRIPT" up
 
 print_header "Restart complete"
-echo "Web   : http://localhost:3000"
-echo "API   : http://localhost:3001/api"
+echo "Web   : $WEB_BASE_URL"
+echo "API   : $SERVER_BASE_URL/api"
 echo "Logs  : $ROOT_DIR/storage/dev/logs"

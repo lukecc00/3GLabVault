@@ -19,8 +19,22 @@ const adminRoleCodes = new Set([
   "GRADE_ADMIN",
 ]);
 
+const globalAdminRoleCodes = new Set([
+  "SUPER_ADMIN",
+  "LAB_ADMIN",
+  "DIRECTION_ADMIN",
+]);
+
 export function hasAdminRole(roleCodes: string[]) {
   return roleCodes.some((roleCode) => adminRoleCodes.has(roleCode));
+}
+
+export function hasGlobalAdminRole(roleCodes: string[]) {
+  return roleCodes.some((roleCode) => globalAdminRoleCodes.has(roleCode));
+}
+
+export function hasGradeAdminRole(roleCodes: string[]) {
+  return roleCodes.includes("GRADE_ADMIN");
 }
 
 export function getWorkspaceOptions(userOrRoleCodes: AuthUser | string[]): WorkspaceOption[] {
@@ -116,6 +130,10 @@ export function resolveWorkspaceHref(
 }
 
 export function getPostLoginDestination(user: AuthUser, nextPath: string | null) {
+  if (user.mustChangePassword) {
+    return "/change-password";
+  }
+
   const workspaces = getWorkspaceOptions(user);
 
   if (workspaces.length > 1) {

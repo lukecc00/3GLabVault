@@ -71,7 +71,7 @@ export default function WorkspaceSelectPage() {
                 "w-full rounded-3xl border p-5 text-left transition-colors duration-200",
                 isCurrent
                   ? "border-emerald-400/30 bg-emerald-400/10"
-                  : "border-white/10 bg-white/5 hover:bg-white/8",
+                  : "border-border-soft bg-surface hover:bg-surface-soft",
                 "disabled:cursor-not-allowed disabled:opacity-70",
               )}
             >

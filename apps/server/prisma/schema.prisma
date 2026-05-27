@@ -39,6 +39,19 @@ enum PageStatus {
   ARCHIVED
 }
 
+enum KnowledgePageAccessRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum KnowledgePageAccessApproverKind {
+  PAGE_OWNER
+  SPACE_OWNER
+  LAB_ADMIN
+}
+
 enum MailboxProvisioningStatus {
   PENDING
   PROVISIONED
@@ -60,6 +73,7 @@ model User {
   id                        String                    @id @default(cuid())
   username                  String?                   @unique
   email                     String                    @unique
+  notificationEmail         String?
   passwordHash              String?
   mustChangePassword        Boolean                   @default(false)
   passwordUpdatedAt         DateTime?
@@ -67,6 +81,8 @@ model User {
   studentId                 String?                   @unique
   avatarUrl                 String?
   bio                       String?
+  emailReminderEnabled      Boolean                   @default(true)
+  lastExternalMailReminderAt DateTime?
   keycloakUserId            String?                   @unique
   mailboxProvisioningStatus MailboxProvisioningStatus @default(PENDING)
   mailboxProvisionedAt      DateTime?
@@ -79,6 +95,10 @@ model User {
   roles                     UserRole[]
   authoredPages             KnowledgePage[]           @relation("KnowledgePageAuthor")
   editedPages               KnowledgePage[]           @relation("KnowledgePageEditor")
+  pageEditGrants            KnowledgePageEditGrant[]  @relation("KnowledgePageEditGrantUser")
+  grantedPageEditGrants     KnowledgePageEditGrant[]  @relation("KnowledgePageEditGrantGrantor")
+  requestedPageAccesses     KnowledgePageAccessRequest[] @relation("KnowledgePageAccessRequester")
+  reviewablePageAccesses    KnowledgePageAccessRequest[] @relation("KnowledgePageAccessReviewer")
   createdMailThreads        InternalMailThread[]      @relation("InternalMailThreadCreator")
   sentInternalMailMessages  InternalMailMessage[]     @relation("InternalMailMessageSender")
   internalMailRecipients    InternalMailRecipient[]   @relation("InternalMailRecipientUser")
@@ -88,6 +108,7 @@ model User {
   @@index([archivedAt])
   @@index([archiveExpiresAt])
   @@index([contentRestoredAt])
+  @@index([lastExternalMailReminderAt])
 }
 
 model Role {
@@ -125,6 +146,7 @@ model Group {
   children        Group[]               @relation("GroupHierarchy")
   memberships     UserGroupMembership[]
   knowledgeSpaces KnowledgeSpace[]
+  knowledgeSpaceAccesses KnowledgeSpaceAccessGroup[]
   createdAt       DateTime              @default(now())
   updatedAt       DateTime              @updatedAt
 
@@ -154,17 +176,41 @@ model KnowledgeSpace {
   description  String?
   visibility   SpaceVisibility @default(PUBLIC)
   ownerGroupId String?
+  parentSpaceId String?
+  deletedAt    DateTime?
+  deleteExpiresAt DateTime?
   ownerGroup   Group?          @relation(fields: [ownerGroupId], references: [id], onDelete: SetNull)
+  parentSpace  KnowledgeSpace? @relation("KnowledgeSpaceHierarchy", fields: [parentSpaceId], references: [id], onDelete: SetNull)
+  childSpaces  KnowledgeSpace[] @relation("KnowledgeSpaceHierarchy")
+  accessGroups KnowledgeSpaceAccessGroup[]
   pages        KnowledgePage[]
   createdAt    DateTime        @default(now())
   updatedAt    DateTime        @updatedAt
 
   @@index([ownerGroupId])
+  @@index([parentSpaceId])
+  @@index([deletedAt])
+  @@index([deleteExpiresAt])
+}
+
+model KnowledgeSpaceAccessGroup {
+  id        String         @id @default(cuid())
+  spaceId    String
+  groupId    String
+  space      KnowledgeSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  group      Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@unique([spaceId, groupId])
+  @@index([spaceId])
+  @@index([groupId])
 }
 
 model KnowledgePage {
   id             String         @id @default(cuid())
   spaceId        String
+  parentId       String?
   authorId       String?
   editorId       String?
   title          String
@@ -174,18 +220,67 @@ model KnowledgePage {
   contentRawJson Json?
   tags           String[]
   status         PageStatus     @default(DRAFT)
+  sortOrder      Int            @default(0)
   publishedAt    DateTime?
+  deletedAt      DateTime?
+  deleteExpiresAt DateTime?
   space          KnowledgeSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  parent         KnowledgePage? @relation("KnowledgePageTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children       KnowledgePage[] @relation("KnowledgePageTree")
   author         User?          @relation("KnowledgePageAuthor", fields: [authorId], references: [id], onDelete: SetNull)
   editor         User?          @relation("KnowledgePageEditor", fields: [editorId], references: [id], onDelete: SetNull)
+  editGrants     KnowledgePageEditGrant[]
+  accessRequests KnowledgePageAccessRequest[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
   @@unique([spaceId, slug])
   @@index([spaceId])
+  @@index([parentId])
+  @@index([spaceId, parentId])
   @@index([authorId])
   @@index([editorId])
   @@index([status])
+  @@index([deletedAt])
+  @@index([deleteExpiresAt])
+}
+
+model KnowledgePageEditGrant {
+  id          String        @id @default(cuid())
+  pageId       String
+  userId       String
+  grantedById  String
+  page         KnowledgePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  user         User          @relation("KnowledgePageEditGrantUser", fields: [userId], references: [id], onDelete: Cascade)
+  grantedBy    User          @relation("KnowledgePageEditGrantGrantor", fields: [grantedById], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([pageId, userId])
+  @@index([pageId])
+  @@index([userId])
+  @@index([grantedById])
+}
+
+model KnowledgePageAccessRequest {
+  id             String                          @id @default(cuid())
+  pageId          String
+  requesterId     String
+  reviewerId      String
+  reviewerKind    KnowledgePageAccessApproverKind
+  status          KnowledgePageAccessRequestStatus @default(PENDING)
+  reason          String?
+  reviewComment   String?
+  reviewedAt      DateTime?
+  page            KnowledgePage                   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  requester       User                            @relation("KnowledgePageAccessRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  reviewer        User                            @relation("KnowledgePageAccessReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                        @default(now())
+  updatedAt       DateTime                        @updatedAt
+
+  @@index([pageId])
+  @@index([requesterId, status])
+  @@index([reviewerId, status])
 }
 
 model InternalMailThread {

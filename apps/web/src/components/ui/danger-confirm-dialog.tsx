@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 interface DangerConfirmDialogProps {
   open: boolean;
@@ -130,22 +131,22 @@ export function DangerConfirmDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className="w-full max-w-lg rounded-[32px] border border-red-400/20 bg-slate-950 p-6 text-slate-100 shadow-2xl"
+        className="w-full max-w-lg rounded-[32px] border border-red-400/20 bg-surface p-6 text-foreground-strong shadow-2xl"
       >
         <div className="app-eyebrow app-eyebrow-amber">Danger Zone</div>
         <h2 id={titleId} className="mt-4 text-xl font-semibold">
           {title}
         </h2>
-        <p id={descriptionId} className="mt-3 text-sm leading-7 text-slate-300">
+        <p id={descriptionId} className="mt-3 text-sm leading-7 text-foreground-muted">
           {description}
         </p>
 
-        <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">
-          请输入确认文案：<span className="font-medium text-slate-100">{confirmText}</span>
+        <div className="mt-4 rounded-2xl border border-border bg-surface-soft px-4 py-3 text-sm text-foreground-muted">
+          请输入确认文案：<span className="font-medium text-foreground-strong">{confirmText}</span>
         </div>
 
         <label htmlFor={inputId} className="mt-5 block text-sm">
-          <div className="mb-2 text-slate-300">{confirmLabel}</div>
+          <div className="mb-2 text-foreground-muted">{confirmLabel}</div>
           <input
             id={inputId}
             ref={inputRef}
@@ -172,22 +173,22 @@ export function DangerConfirmDialog({
         ) : null}
 
         <div className="mt-6 flex flex-wrap justify-end gap-3">
-          <button
+          <Button
             type="button"
             onClick={onClose}
+            variant="secondary"
             disabled={busy}
-            className="app-button-secondary"
           >
             取消
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => void onConfirm()}
+            variant="danger"
             disabled={!matched || busy}
-            className="inline-flex cursor-pointer items-center justify-center rounded-full bg-red-400 px-5 py-3 text-sm font-medium text-slate-950 transition-colors duration-200 hover:bg-red-300 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? "处理中..." : actionLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

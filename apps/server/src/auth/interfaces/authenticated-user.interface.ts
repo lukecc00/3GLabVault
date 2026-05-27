@@ -9,6 +9,14 @@ export interface AuthenticatedUser {
   mustChangePassword: boolean;
   roleCodes: string[];
   groupIds: string[];
+  memberships: Array<{
+    groupId: string;
+    group: {
+      id: string;
+      name: string;
+      type: 'DIRECTION' | 'GRADE' | 'FUNCTIONAL' | 'SYSTEM';
+    };
+  }>;
 }
 
 export interface AuthTokenPayload {

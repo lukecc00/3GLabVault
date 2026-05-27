@@ -3,7 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "../_components/admin-shell";
 import { ResourceState } from "../_components/resource-state";
+import { Button } from "@/components/ui/button";
 import { DangerConfirmDialog } from "@/components/ui/danger-confirm-dialog";
+import { DisabledActionHint } from "@/components/ui/disabled-action-hint";
 import {
   EntitySelector,
   type EntitySelectorOption,
@@ -58,6 +60,28 @@ function buildUserSelectorOptions(users: UserSummary[]): EntitySelectorOption[] 
       label: group.name,
     })),
   }));
+}
+
+function getDeleteGroupBlockedReason(group: GroupSummary) {
+  const occupiedReasons: string[] = [];
+
+  if (group._count.memberships > 0) {
+    occupiedReasons.push(`${group._count.memberships} 个成员`);
+  }
+
+  if (group._count.children > 0) {
+    occupiedReasons.push(`${group._count.children} 个子群组`);
+  }
+
+  if (group._count.knowledgeSpaces > 0) {
+    occupiedReasons.push(`${group._count.knowledgeSpaces} 个知识空间`);
+  }
+
+  if (occupiedReasons.length === 0) {
+    return null;
+  }
+
+  return `当前仍关联 ${occupiedReasons.join("、")}，请先解除关联后再删除。`;
 }
 
 type PendingDangerAction =
@@ -250,23 +274,11 @@ export default function GroupsPage() {
   }
 
   function handleDeleteGroup(group: GroupSummary) {
-    const occupiedReasons = [];
+    const blockedReason = getDeleteGroupBlockedReason(group);
 
-    if (group._count.memberships > 0) {
-      occupiedReasons.push(`${group._count.memberships} 个成员`);
-    }
-
-    if (group._count.children > 0) {
-      occupiedReasons.push(`${group._count.children} 个子群组`);
-    }
-
-    if (group._count.knowledgeSpaces > 0) {
-      occupiedReasons.push(`${group._count.knowledgeSpaces} 个知识空间`);
-    }
-
-    if (occupiedReasons.length > 0) {
+    if (blockedReason) {
       setActionMessage(
-        `群组 ${group.name} 当前无法删除：仍关联 ${occupiedReasons.join("、")}。请先解除关联后再删除。`,
+        `群组 ${group.name} 当前无法删除：${blockedReason}`,
       );
       return;
     }
@@ -545,71 +557,77 @@ export default function GroupsPage() {
             />
           ) : null}
 
-          <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
-            <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-              <thead className="bg-white/5 text-zinc-300">
-                <tr>
-                  <th className="px-5 py-4 font-medium">群组名称</th>
-                  <th className="px-5 py-4 font-medium">类型</th>
-                  <th className="px-5 py-4 font-medium">编码</th>
-                  <th className="px-5 py-4 font-medium">父群组</th>
-                  <th className="px-5 py-4 font-medium">成员数</th>
-                  <th className="px-5 py-4 font-medium">子群组数</th>
-                  <th className="px-5 py-4 font-medium">空间数</th>
-                  <th className="px-5 py-4 font-medium">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/10">
-                {groups.map((group) => (
-                  <tr key={group.id}>
-                    <td className="px-5 py-4">
-                      <div className="font-medium">{group.name}</div>
-                      <div className="mt-1 text-xs text-zinc-400">
-                        {group.description || "暂无描述"}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-zinc-300">
-                      {groupTypeMap[group.type]}
-                    </td>
-                    <td className="px-5 py-4 text-zinc-300">{group.code}</td>
-                    <td className="px-5 py-4 text-zinc-300">
-                      {group.parent?.name || "无"}
-                    </td>
-                    <td className="px-5 py-4 text-zinc-300">
-                      {group._count.memberships}
-                    </td>
-                    <td className="px-5 py-4 text-zinc-300">
-                      {group._count.children}
-                    </td>
-                    <td className="px-5 py-4 text-zinc-300">
-                      {group._count.knowledgeSpaces}
-                    </td>
-                    <td className="px-5 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteGroup(group)}
-                        disabled={
-                          submitting ||
-                          group._count.memberships > 0 ||
-                          group._count.children > 0 ||
-                          group._count.knowledgeSpaces > 0
-                        }
-                        className="inline-flex cursor-pointer items-center justify-center rounded-full border border-red-400/20 px-4 py-2 text-sm text-red-100 transition-colors duration-200 hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-50"
-                        title={
-                          group._count.memberships > 0 ||
-                          group._count.children > 0 ||
-                          group._count.knowledgeSpaces > 0
-                            ? "请先移除成员、子群组和绑定空间后再删除"
-                            : `删除群组 ${group.name}`
-                        }
-                      >
-                        删除
-                      </button>
-                    </td>
+          <div className="app-table-shell">
+            <div className="overflow-x-auto">
+              <table className="min-w-[920px] divide-y divide-white/10 text-left text-sm">
+                <thead className="app-table-head">
+                  <tr>
+                    <th className="min-w-52 px-5 py-4 font-medium">群组名称</th>
+                    <th className="min-w-24 px-5 py-4 font-medium">类型</th>
+                    <th className="min-w-28 px-5 py-4 font-medium">编码</th>
+                    <th className="min-w-20 px-5 py-4 font-medium">父群组</th>
+                    <th className="min-w-16 px-5 py-4 font-medium">成员数</th>
+                    <th className="min-w-20 px-5 py-4 font-medium">子群组数</th>
+                    <th className="min-w-16 px-5 py-4 font-medium">空间数</th>
+                    <th className="min-w-28 px-5 py-4 font-medium">操作</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  {groups.map((group) => {
+                    const deleteBlockedReason = getDeleteGroupBlockedReason(group);
+
+                    return (
+                      <tr key={group.id}>
+                        <td className="px-5 py-4">
+                          <div className="font-medium">{group.name}</div>
+                          <div className="mt-1 text-xs text-zinc-400">
+                            {group.description || "暂无描述"}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">
+                          {groupTypeMap[group.type]}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">{group.code}</td>
+                        <td className="px-5 py-4 text-zinc-300">
+                          {group.parent?.name || "无"}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">
+                          {group._count.memberships}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">
+                          {group._count.children}
+                        </td>
+                        <td className="px-5 py-4 text-zinc-300">
+                          {group._count.knowledgeSpaces}
+                        </td>
+                        <td className="min-w-28 px-5 py-4">
+                          <DisabledActionHint
+                            align="end"
+                            disabled={Boolean(deleteBlockedReason)}
+                            reason={deleteBlockedReason}
+                          >
+                            <Button
+                              type="button"
+                              onClick={() => handleDeleteGroup(group)}
+                              variant="dangerOutline"
+                              size="sm"
+                              disabled={submitting || Boolean(deleteBlockedReason)}
+                              title={
+                                deleteBlockedReason
+                                  ? undefined
+                                  : `删除群组 ${group.name}`
+                              }
+                            >
+                              删除
+                            </Button>
+                          </DisabledActionHint>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

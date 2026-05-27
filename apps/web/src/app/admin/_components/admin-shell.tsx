@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { WorkspaceShell } from "@/components/ui/workspace-shell";
+import { hasGlobalAdminRole } from "@/lib/workspace";
 
 const navigationItems = [
   { href: "/admin", label: "概览" },
@@ -12,6 +13,10 @@ const navigationItems = [
   { href: "/admin/users/archived", label: "归档用户" },
   { href: "/admin/roles", label: "角色" },
   { href: "/admin/groups", label: "群组" },
+];
+
+const superAdminNavigationItems = [
+  { href: "/admin/knowledge/archived", label: "已删除知识库" },
 ];
 
 export function AdminShell({
@@ -25,6 +30,14 @@ export function AdminShell({
 }) {
   const pathname = usePathname();
   const { user, logout, activeWorkspace, workspaceOptions } = useAuth();
+  const navigation =
+    user && !hasGlobalAdminRole(user.roleCodes)
+      ? navigationItems.filter((item) =>
+          ["/admin/users", "/admin/users/archived"].includes(item.href),
+        )
+      : user?.roleCodes.includes("SUPER_ADMIN")
+        ? [...navigationItems, ...superAdminNavigationItems]
+        : navigationItems;
 
   return (
     <WorkspaceShell
@@ -33,7 +46,7 @@ export function AdminShell({
       brandTitle="实验室后台工作区"
       title={title}
       description={description}
-      navItems={navigationItems.map((item) => ({
+      navItems={navigation.map((item) => ({
         ...item,
         active: pathname === item.href,
       }))}

@@ -1,0 +1,2917 @@
+[?1049h[>4;2m[?1h=[?2004h[?1004h[1;30r[?12h[?12l[22;2t[22;1t[?25l[30;1H"=" [New][1;1H[?25h[?4m[30;1H
+[?25lEntering Ex mode.  Type "visual" to go to Normal mode.[?25h
+:2/{va te2/{us2/3  (  we[34m<9d><97>[m = le} 
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: {va te2[m[30;33H[K[?25h[30;1H
+:== [34m<9d><97>[m   [34m<9d><97>[m = lmp== [34m<9d><97>[m = '"sh"
+[?25l[97m[41mE488: Trailing characters: = <9d><97>   <9d><97> = lmp== <9d><97> = '[?25h[m
+:={>t}`}   re== [34m<9d><97>[m   ut={>t}`}   re== [34m<9d><97>[m   ut={>t}`lit" ? "分栏模式
+[29;80H[94m>[m[30;1H下左侧是 Markdown，右侧是渲染结构。" : "正文区域直接按最终样式编辑，不再暴露 Ma
+[29;80Hr[30;1Hkdown 源码。"}
+[?25l[97m[41mE488: Trailing characters: {>t}`}   re== <9d><97>   ut={>t}`}   re== <9d><97>  [m
+[29;80H[97m[41m [30;1Hut={>t}`lit[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:        <div className={cn("text-xs", feedback ? "text-accent-strong" : "text-
+[29;80Hf[30;1Horeground-subtle")}>
+[?25l[97m[41mE488: Trailing characters: div className={cn([?25h[m
+:          {feedback || "默认就是所见即所得写作模式；需要核对阅读态时可切到分栏
+[29;80H[94m>[m[30;1H预览。"}
+[?25l[97m[41mE492: Not an editor command: {feedback || "默认就是所见即所得写作模式；需要核对[m
+[29;80H[94m>[m[30;1H[97m[41m阅读态时可切到分栏预览。"}[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:      </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      <input
+[?25l[97m[41mE488: Trailing characters: input[?25h[m
+:        ref={fileInputRef}
+[?25l[97m[41mE492: Not an editor command: ref={fileInputRef}[?25h[m
+:        type="file"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:        accept="image/*"
+[?25l[97m[41mE492: Not an editor command: accept="image/*"[?25h[m
+:        className="hidden"
+[?25l[97m[41mE492: Not an editor command: className="hidden"[?25h[m
+:        onChange={handleLocalImageChange}
+[?25l[97m[41mE492: Not an editor command: onChange={handleLocalImageChange}[?25h[m
+:      />
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:    </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:  );
+[?25l[97m[41mE492: Not an editor command: );[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:EOF'
+[?25l[97m[41mE492: Not an editor command: EOF'[?25h[m
+:
+:
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:
+: trae-sandbox 'python3 - <<'"'"'PY'"'"'
+[?25l[97m[41mE492: Not an editor command: trae-sandbox 'python3 - <<'"'"'PY'"'"'[?25h[m
+:from pathlib import Path
+[?25l[97m[41mE492: Not an editor command: from pathlib import Path[?25h[m
+:path = Path('"'"'/Users/bytedance/Desktop/3GLabVault/apps/web/src/app/knowledg
+[29;80He[30;1H/_components/knowledge-editor.tsx'"'"')
+[?25l[97m[41mE492: Not an editor command: path = Path('"'"'/Users/bytedance/Desktop/3GLabVau[m
+[29;80H[97m[41ml[30;1Ht/apps/web/src/app/knowledge/_components/knowledge-editor.tsx'"'"')[?25h[m
+:content = r'"'"''"'"''"'"'"use client";
+[?25l[97m[41mE492: Not an editor command: content = r'"'"''"'"''"'"'"use client";[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:import { useEffect, useMemo, useRef, useState } from "react";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Color from "@tiptap/extension-color";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Image from "@tiptap/extension-image";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Link from "@tiptap/extension-link";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Placeholder from "@tiptap/extension-placeholder";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Table from "@tiptap/extension-table";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TableCell from "@tiptap/extension-table-cell";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TableHeader from "@tiptap/extension-table-header";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TableRow from "@tiptap/extension-table-row";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TaskItem from "@tiptap/extension-task-item";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TaskList from "@tiptap/extension-task-list";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { TextStyle } from "@tiptap/extension-text-style";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import Underline from "@tiptap/extension-underline";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { Editor, EditorContent, useEditor } from "@tiptap/react";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import StarterKit from "@tiptap/starter-kit";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import TurndownService from "turndown";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { Button } from "@/components/ui/button";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { MarkdownContent } from "@/components/ui/markdown-content";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { ApiError, requestApi } from "@/lib/api";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import type { KnowledgeImageUploadResult } from "@/lib/contracts";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { renderMarkdownToHtml } from "@/lib/markdown";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:import { cn } from "@/lib/utils";
+[?25l[97m[41mE1094: Import can only be used in a script[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:type EditorMode = "visual" | "split" | "preview";
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:type ColorOption = {
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:  label: string;
+[?25l[97m[41mE492: Not an editor command: label: string;[?25h[m
+:  className: string;
+[?25l[97m[41mE492: Not an editor command: className: string;[?25h[m
+:  color: string | null;
+[?25l[97m[41mE185: Cannot find color scheme ': string'[m
+[97m[41mE749: Empty buffer[?25h[m
+:  previewClassName: string;
+[?25l[97m[41mE492: Not an editor command: previewClassName: string;[?25h[m
+:  shortcut: string;
+[?25l[97m[41mE492: Not an editor command: shortcut: string;[?25h[m
+:};
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:const COLOR_OPTIONS: ColorOption[] = [
+[?25l[97m[41mE121: Undefined variable: COLOR_OPTIONS[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "默认",
+[?25l[97m[41mE492: Not an editor command: label: "默认",[?25h[m
+:    className: "",
+[?25l[97m[41mE492: Not an editor command: className: "",[?25h[m
+:    color: null,
+[?25l[97m[41mE185: Cannot find color scheme ': null,'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-slate-400/60",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-slate-400/60",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 0",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 0",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "蓝色",
+[?25l[97m[41mE492: Not an editor command: label: "蓝色",[?25h[m
+:    className: "md-color-sky",
+[?25l[97m[41mE492: Not an editor command: className: "md-color-sky",[?25h[m
+:    color: "#0ea5e9",
+[?25l[97m[41mE185: Cannot find color scheme ':'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-sky-400",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-sky-400",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 1",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 1",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "绿色",
+[?25l[97m[41mE492: Not an editor command: label: "绿色",[?25h[m
+:    className: "md-color-emerald",
+[?25l[97m[41mE492: Not an editor command: className: "md-color-emerald",[?25h[m
+:    color: "#10b981",
+[?25l[97m[41mE185: Cannot find color scheme ':'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-emerald-400",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-emerald-400",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 2",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 2",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "黄色",
+[?25l[97m[41mE492: Not an editor command: label: "黄色",[?25h[m
+:    className: "md-color-amber",
+[?25l[97m[41mE492: Not an editor command: className: "md-color-amber",[?25h[m
+:    color: "#d97706",
+[?25l[97m[41mE185: Cannot find color scheme ':'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-amber-400",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-amber-400",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 3",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 3",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "红色",
+[?25l[97m[41mE492: Not an editor command: label: "红色",[?25h[m
+:    className: "md-color-rose",
+[?25l[97m[41mE492: Not an editor command: className: "md-color-rose",[?25h[m
+:    color: "#f43f5e",
+[?25l[97m[41mE185: Cannot find color scheme ':'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-rose-400",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-rose-400",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 4",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 4",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  {
+[?25l[97m[41mE492: Not an editor command: {[?25h[m
+:    label: "紫色",
+[?25l[97m[41mE492: Not an editor command: label: "紫色",[?25h[m
+:    className: "md-color-violet",
+[?25l[97m[41mE492: Not an editor command: className: "md-color-violet",[?25h[m
+:    color: "#8b5cf6",
+[?25l[97m[41mE185: Cannot find color scheme ':'[m
+[97m[41mE749: Empty buffer[?25h[m
+:    previewClassName: "bg-violet-400",
+[?25l[97m[41mE492: Not an editor command: previewClassName: "bg-violet-400",[?25h[m
+:    shortcut: "Cmd/Ctrl + Shift + 5",
+[?25l[97m[41mE492: Not an editor command: shortcut: "Cmd/Ctrl + Shift + 5",[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:];
+[?25l[97m[41mE492: Not an editor command: ];[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:const MARKDOWN_SNIPPETS = {
+[?25l[97m[41mE723: Missing end of Dictionary '}': [?25h[m
+:  taskList: "- [ ] 第一项\n- [ ] 第二项",
+[?25l[97m[41mE492: Not an editor command: taskList: "- [ ] 第一项\n- [ ] 第二项",[?25h[m
+:  compareTable:
+[?25l[97m[41mE492: Not an editor command: compareTable:[?25h[m
+:    "| 功能 | 说明 |\n| --- | --- |\n| 编辑器 | 支持快捷格式化 |\n| 渲染器 | 
+[29;79H支[30;1H持代码高亮 |",
+:  callout: "> 提示\n>\n> 在这里写下重点说明。",
+[?25l[97m[41mE492: Not an editor command: callout: "> 提示\n>\n> 在这里写下重点说明。",[?25h[m
+:  divider: "\n---\n",
+[?25l[97m[41mE492: Not an editor command: divider: "\n---\n",[?25h[m
+:} as const;
+[?25l[97m[41mE488: Trailing characters: as const;[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:const SHORTCUT_ITEMS = [
+[?25l[97m[41mE697: Missing end of List ']': [?25h[m
+:  { label: "加粗", shortcut: "Cmd/Ctrl + B" },
+[?25l[97m[41mE492: Not an editor command: { label: "加粗", shortcut: "Cmd/Ctrl + B" },[?25h[m
+:  { label: "斜体", shortcut: "Cmd/Ctrl + I" },
+[?25l[97m[41mE492: Not an editor command: { label: "斜体", shortcut: "Cmd/Ctrl + I" },[?25h[m
+:  { label: "行内代码", shortcut: "Cmd/Ctrl + Shift + E" },
+[?25l[97m[41mE492: Not an editor command: { label: "行内代码", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1HE" },[?25h[m
+:  { label: "链接", shortcut: "Cmd/Ctrl + K" },
+[?25l[97m[41mE492: Not an editor command: { label: "链接", shortcut: "Cmd/Ctrl + K" },[?25h[m
+:  { label: "引用", shortcut: "Cmd/Ctrl + Shift + U" },
+[?25l[97m[41mE492: Not an editor command: { label: "引用", shortcut: "Cmd/Ctrl + Shift + U" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "无序列表", shortcut: "Cmd/Ctrl + Shift + 8" },
+[?25l[97m[41mE492: Not an editor command: { label: "无序列表", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1H8" },[?25h[m
+:  { label: "有序列表", shortcut: "Cmd/Ctrl + Shift + 7" },
+[?25l[97m[41mE492: Not an editor command: { label: "有序列表", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1H7" },[?25h[m
+:  { label: "H1", shortcut: "Alt + 1" },
+[?25l[97m[41mE492: Not an editor command: { label: "H1", shortcut: "Alt + 1" },[?25h[m
+:  { label: "H2", shortcut: "Alt + 2" },
+[?25l[97m[41mE492: Not an editor command: { label: "H2", shortcut: "Alt + 2" },[?25h[m
+:  { label: "H3", shortcut: "Alt + 3" },
+[?25l[97m[41mE492: Not an editor command: { label: "H3", shortcut: "Alt + 3" },[?25h[m
+:  { label: "代码块", shortcut: "Cmd/Ctrl + Alt + C" },
+[?25l[97m[41mE492: Not an editor command: { label: "代码块", shortcut: "Cmd/Ctrl + Alt + C" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "图片链接", shortcut: "Cmd/Ctrl + Shift + P" },
+[?25l[97m[41mE492: Not an editor command: { label: "图片链接", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1HP" },[?25h[m
+:  { label: "本地图片", shortcut: "Cmd/Ctrl + Alt + P" },
+[?25l[97m[41mE492: Not an editor command: { label: "本地图片", shortcut: "Cmd/Ctrl + Alt + P[m
+[29;80H[97m[41m"[30;1H },[?25h[m
+:  { label: "待办清单", shortcut: "Cmd/Ctrl + Shift + T" },
+[?25l[97m[41mE492: Not an editor command: { label: "待办清单", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1HT" },[?25h[m
+:  { label: "对比表格", shortcut: "Cmd/Ctrl + Alt + T" },
+[?25l[97m[41mE492: Not an editor command: { label: "对比表格", shortcut: "Cmd/Ctrl + Alt + T[m
+[29;80H[97m[41m"[30;1H },[?25h[m
+:  { label: "提示块", shortcut: "Cmd/Ctrl + Shift + ." },
+[?25l[97m[41mE492: Not an editor command: { label: "提示块", shortcut: "Cmd/Ctrl + Shift + .[m
+[29;80H[97m[41m"[30;1H },[?25h[m
+:  { label: "分隔线", shortcut: "Cmd/Ctrl + Shift + -" },
+[?25l[97m[41mE492: Not an editor command: { label: "分隔线", shortcut: "Cmd/Ctrl + Shift + -[m
+[29;80H[97m[41m"[30;1H },[?25h[m
+:  { label: "默认颜色", shortcut: "Cmd/Ctrl + Shift + 0" },
+[?25l[97m[41mE492: Not an editor command: { label: "默认颜色", shortcut: "Cmd/Ctrl + Shift +[m
+[29;80H[97m[41m [30;1H0" },[?25h[m
+:  { label: "蓝色", shortcut: "Cmd/Ctrl + Shift + 1" },
+[?25l[97m[41mE492: Not an editor command: { label: "蓝色", shortcut: "Cmd/Ctrl + Shift + 1" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "绿色", shortcut: "Cmd/Ctrl + Shift + 2" },
+[?25l[97m[41mE492: Not an editor command: { label: "绿色", shortcut: "Cmd/Ctrl + Shift + 2" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "黄色", shortcut: "Cmd/Ctrl + Shift + 3" },
+[?25l[97m[41mE492: Not an editor command: { label: "黄色", shortcut: "Cmd/Ctrl + Shift + 3" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "红色", shortcut: "Cmd/Ctrl + Shift + 4" },
+[?25l[97m[41mE492: Not an editor command: { label: "红色", shortcut: "Cmd/Ctrl + Shift + 4" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:  { label: "紫色", shortcut: "Cmd/Ctrl + Shift + 5" },
+[?25l[97m[41mE492: Not an editor command: { label: "紫色", shortcut: "Cmd/Ctrl + Shift + 5" [m
+[29;80H[97m[41m}[30;1H,[?25h[m
+:] as const;
+[?25l[97m[41mE492: Not an editor command: ] as const;[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:const turndown = new TurndownService({
+[?25l[97m[41mE121: Undefined variable: new[?25h[m
+:  codeBlockStyle: "fenced",
+[?25l[97m[41mE492: Not an editor command: codeBlockStyle: "fenced",[?25h[m
+:  headingStyle: "atx",
+[?25l[97m[41mE492: Not an editor command: headingStyle: "atx",[?25h[m
+:});
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:turndown.addRule("underlineTag", {
+[?25l[97m[41mE492: Not an editor command: turndown.addRule("underlineTag", {[?25h[m
+:  filter: ["u"],
+[?25l[97m[41mE476: Invalid command: filter: ["u"],[?25h[m
+:  replacement(content) {
+[?25l[97m[41mE492: Not an editor command: replacement(content) {[?25h[m
+:    return `<u>${content}</u>`;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:});
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:function normalizeColorClassName(color: string) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": normalizeColorClassName([m
+[29;80H[97m[41mc[30;1Holor: string) {[?25h[m
+:  const normalized = color.replace(/\s+/g, "").toLowerCase();
+[?25l[97m[41mE121: Undefined variable: color[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  switch (normalized) {
+[?25l[97m[41mE492: Not an editor command: switch (normalized) {[?25h[m
+:    case "#0ea5e9":
+[?25l[97m[41mE492: Not an editor command: case "#0ea5e9":[?25h[m
+:    case "rgb(14,165,233)":
+[?25l[97m[41mE492: Not an editor command: case "rgb(14,165,233)":[?25h[m
+:      return "md-color-sky";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    case "#10b981":
+[?25l[97m[41mE492: Not an editor command: case "#10b981":[?25h[m
+:    case "rgb(16,185,129)":
+[?25l[97m[41mE492: Not an editor command: case "rgb(16,185,129)":[?25h[m
+:      return "md-color-emerald";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    case "#d97706":
+[?25l[97m[41mE492: Not an editor command: case "#d97706":[?25h[m
+:    case "rgb(217,119,6)":
+[?25l[97m[41mE492: Not an editor command: case "rgb(217,119,6)":[?25h[m
+:      return "md-color-amber";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    case "#f43f5e":
+[?25l[97m[41mE492: Not an editor command: case "#f43f5e":[?25h[m
+:    case "rgb(244,63,94)":
+[?25l[97m[41mE492: Not an editor command: case "rgb(244,63,94)":[?25h[m
+:      return "md-color-rose";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    case "#8b5cf6":
+[?25l[97m[41mE492: Not an editor command: case "#8b5cf6":[?25h[m
+:    case "rgb(139,92,246)":
+[?25l[97m[41mE492: Not an editor command: case "rgb(139,92,246)":[?25h[m
+:      return "md-color-violet";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    default:
+[?25l[97m[41mE492: Not an editor command: default:[?25h[m
+:      return "";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:turndown.addRule("colorSpan", {
+[?25l[97m[41mE492: Not an editor command: turndown.addRule("colorSpan", {[?25h[m
+:  filter(node) {
+[?25l[97m[41mE476: Invalid command: filter(node) {[?25h[m
+:    return (
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:      node.nodeName === "SPAN" &&
+[?25l[97m[41mE492: Not an editor command: node.nodeName === "SPAN" &&[?25h[m
+:      ((typeof (node as HTMLElement).className === "string" &&
+[?25l[97m[41mE492: Not an editor command: ((typeof (node as HTMLElement).className === "stri[m
+[29;80H[97m[41mn[30;1Hg" &&[?25h[m
+:        (node as HTMLElement).className.includes("md-color-")) ||
+[?25l[97m[41mE492: Not an editor command: (node as HTMLElement).className.includes("md-color[m
+[29;80H[97m[41m-[30;1H")) ||[?25h[m
+:        Boolean((node as HTMLElement).style?.color))
+[?25l[97m[41mE492: Not an editor command: Boolean((node as HTMLElement).style?.color))[?25h[m
+:    );
+[?25l[97m[41mE492: Not an editor command: );[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  replacement(content, node) {
+[?25l[97m[41mE492: Not an editor command: replacement(content, node) {[?25h[m
+:    const element = node as HTMLElement;
+[?25l[97m[41mE121: Undefined variable: node[?25h[m
+:    const className = element.className
+[?25l[97m[41mE121: Undefined variable: element[?25h[m
+:      .split(/\s+/)
+[?25l"(/s+/)" [New DIRECTORY][?25h
+:      .find((value) => value.startsWith("md-color-"));
+[?25l[97m[41mE345: Can't find file "((value) => value.startsWith(" in path[?25h[m
+:    const normalizedClassName = normalizeColorClassName(element.style.color);
+[?25l[97m[41mE121: Undefined variable: element[m
+[97m[41mE116: Invalid arguments for function normalizeColorClassName(element.style.colo[m
+[29;80H[97m[41mr[30;1H);[?25h[m
+:    const targetClassName = className || normalizedClassName;
+[?25l[97m[41mE121: Undefined variable: className[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!targetClassName) {
+[?25l[97m[41mE121: Undefined variable: targetClassName[?25h[m
+:      return content;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    return `<span class="${targetClassName}">${content}</span>`;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:});
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:function estimateReadMinutes(markdown: string) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": estimateReadMinutes(mark[m
+[29;80H[97m[41md[30;1Hown: string) {[?25h[m
+:  const wordCount = markdown
+[?25l[97m[41mE121: Undefined variable: markdown[?25h[m
+:    .replace(/[`*_#[\]()!>\-|]/g, " ")
+[?25l[97m[41mE492: Not an editor command: .replace(/[`*_#[\]()!>\-|]/g, " ")[?25h[m
+:    .trim()
+[?25l[97m[41mE492: Not an editor command: .trim()[?25h[m
+:    .split(/\s+/)
+[?25l"(/s+/)" [New] --No lines in buffer-- ((1) of 3)[?25h
+:    .filter(Boolean).length;
+[?25l[97m[41mE481: No range allowed[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  return Math.max(1, Math.ceil(wordCount / 220));
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:function buildEditorSnapshot(markdown: string, rawJson: unknown) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": buildEditorSnapshot(mark[m
+[29;80H[97m[41md[30;1Hown: string, rawJson: unknown) {[?25h[m
+:  const normalized = markdown.replace(/\r\n/g, "\n");
+[?25l[97m[41mE121: Undefined variable: markdown[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    schema: "knowledge-wysiwyg-editor",
+[?25l[97m[41mE33: No previous substitute regular expression[?25h[m
+:    version: 4,
+:    lineCount: normalized ? normalized.split("\n").length : 0,
+[?25l[97m[41mE492: Not an editor command: lineCount: normalized ? normalized.split("\n").len[m
+[29;80H[97m[41mg[30;1Hth : 0,[?25h[m
+:    characterCount: normalized.length,
+[?25l[97m[41mE492: Not an editor command: characterCount: normalized.length,[?25h[m
+:    updatedAt: new Date().toISOString(),
+[?25l[97m[41mE492: Not an editor command: updatedAt: new Date().toISOString(),[?25h[m
+:    document: rawJson,
+[?25l[97m[41mE492: Not an editor command: document: rawJson,[?25h[m
+:  };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:function applyColorStylesForEditor(html: string) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": applyColorStylesForEdito[m
+[29;80H[97m[41mr[30;1H(html: string) {[?25h[m
+:  return COLOR_OPTIONS.reduce((result, option) => {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    if (!option.className || !option.color) {
+[?25l[97m[41mE121: Undefined variable: option[?25h[m
+:      return result;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const pattern = new RegExp(`class="([^"]*${option.className}[^"]*)"`, "g")
+[29;80H;[30;1H
+[?25l[97m[41mE121: Undefined variable: new[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    return result.replace(pattern, `class="$1" style="color: ${option.color}"`
+[29;80H)[30;1H;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  }, html);
+[?25l[97m[41mE488: Trailing characters: , html);[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:export function KnowledgeEditor({
+[?25l[97m[41mE1042: Export can only be used in vim9script[?25h[m
+:  spaceId,
+[?25l[97m[41mE492: Not an editor command: spaceId,[?25h[m
+:  value,
+[?25l[97m[41mE492: Not an editor command: value,[?25h[m
+:  onChange,
+[?25l[97m[41mE492: Not an editor command: onChange,[?25h[m
+:}: {
+[?25l[97m[41mE488: Trailing characters: : {[?25h[m
+:  spaceId: string;
+[?25l[97m[41mE492: Not an editor command: spaceId: string;[?25h[m
+:  value: string;
+[?25l[97m[41mE492: Not an editor command: value: string;[?25h[m
+:  onChange: (payload: { markdown: string; rawJson: unknown }) => void;
+[?25l[97m[41mE492: Not an editor command: onChange: (payload: { markdown: string; rawJson: u[m
+[29;80H[97m[41mn[30;1Hknown }) => void;[?25h[m
+:}) {
+[?25l[97m[41mE488: Trailing characters: ) {[?25h[m
+:  const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+[?25l[97m[41mE121: Undefined variable: useRef[?25h[m
+:  const fileInputRef = useRef<HTMLInputElement | null>(null);
+[?25l[97m[41mE121: Undefined variable: useRef[?25h[m
+:  const [mode, setMode] = useState<EditorMode>("visual");
+[?25l[97m[41mE121: Undefined variable: useState[?25h[m
+:  const [feedback, setFeedback] = useState<string | null>(null);
+[?25l[97m[41mE121: Undefined variable: useState[?25h[m
+:  const [isUploadingImage, setIsUploadingImage] = useState(false);
+[?25l[97m[41mE121: Undefined variable: false[m
+[97m[41mE116: Invalid arguments for function useState(false);[?25h[m
+:  const previewHtml = useMemo(() => renderMarkdownToHtml(value || ""), [value]
+[29;80H)[30;1H;
+[?25l[97m[41mE15: Invalid expression: ") => renderMarkdownToHtml(value || ""), [value]);"[m
+[97m[41mE116: Invalid arguments for function useMemo(() => renderMarkdownToHtml(value |[m
+[29;80H[97m[41m|[30;1H ""), [value]);[?25h[m
+:  const initialHtml = useMemo(() => applyColorStylesForEditor(previewHtml), [p
+[29;80Hr[30;1HeviewHtml]);
+[?25l[97m[41mE15: Invalid expression: ") => applyColorStylesForEditor(previewHtml), [preview[m
+[29;80H[97m[41mH[30;1Html]);"[m
+[97m[41mE116: Invalid arguments for function useMemo(() => applyColorStylesForEditor(pr[m
+[29;80H[97m[41me[30;1HviewHtml), [previewHtml]);[?25h[m
+:  const characterCount = (value || "").length;
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:  const lineCount = value ? value.split(/\r?\n/).length : 0;
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:  const readMinutes = estimateReadMinutes(value || "");
+[?25l[97m[41mE121: Undefined variable: value[m
+[97m[41mE116: Invalid arguments for function estimateReadMinutes(value || "");[?25h[m
+:  const isPreviewMode = mode === "preview";
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function emitMarkdown(nextMarkdown: string, selection?: { start: number; end
+[29;80H:[30;1H number }) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": emitMarkdown(nextMarkdow[m
+[29;80H[97m[41mn[30;1H: string, selection?: { start: number; end: number }) {[?25h[m
+:    onChange({
+[?25l[97m[41mE492: Not an editor command: onChange({[?25h[m
+:      markdown: nextMarkdown,
+[?25l[97m[41mE492: Not an editor command: markdown: nextMarkdown,[?25h[m
+:      rawJson: buildEditorSnapshot(nextMarkdown, editor?.getJSON() ?? null),
+[?25l[97m[41mE492: Not an editor command: rawJson: buildEditorSnapshot(nextMarkdown, editor?[m
+[29;80H[97m[41m.[30;1HgetJSON() ?? null),[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!selection) {
+[?25l[97m[41mE121: Undefined variable: selection[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    window.requestAnimationFrame(() => {
+[?25l[97m[41mE492: Not an editor command: window.requestAnimationFrame(() => {[?25h[m
+:      const textarea = markdownTextareaRef.current;
+[?25l[97m[41mE121: Undefined variable: markdownTextareaRef[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      if (!textarea) {
+[?25l[97m[41mE121: Undefined variable: textarea[?25h[m
+:        return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      textarea.focus();
+[?25l[97m[41mE492: Not an editor command: textarea.focus();[?25h[m
+:      textarea.setSelectionRange(selection.start, selection.end);
+[?25l[97m[41mE492: Not an editor command: textarea.setSelectionRange(selection.start, select[m
+[29;80H[97m[41mi[30;1Hon.end);[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function withMarkdownSelection(
+[?25l[97m[41mE128: Function name must start with a capital or "s:": withMarkdownSelection([?25h[m
+:    updater: (selectedText: string, start: number, end: number) => {
+[?25l[97m[41mE492: Not an editor command: updater: (selectedText: string, start: number, end[m
+[29;80H[97m[41m:[30;1H number) => {[?25h[m
+:      markdown: string;
+[?25l[97m[41mE492: Not an editor command: markdown: string;[?25h[m
+:      selection?: { start: number; end: number };
+[?25l[97m[41mE492: Not an editor command: selection?: { start: number; end: number };[?25h[m
+:      feedback?: string | null;
+[?25l[97m[41mE492: Not an editor command: feedback?: string | null;[?25h[m
+:    },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:  ) {
+[?25l[97m[41mE492: Not an editor command: ) {[?25h[m
+:    const textarea = markdownTextareaRef.current;
+[?25l[97m[41mE121: Undefined variable: markdownTextareaRef[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!textarea) {
+[?25l[97m[41mE121: Undefined variable: textarea[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const start = textarea.selectionStart;
+[?25l[97m[41mE121: Undefined variable: textarea[?25h[m
+:    const end = textarea.selectionEnd;
+[?25l[97m[41mE121: Undefined variable: textarea[?25h[m
+:    const selectedText = (value || "").slice(start, end);
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:    const result = updater(selectedText, start, end);
+[?25l[97m[41mE121: Undefined variable: selectedText[m
+[97m[41mE116: Invalid arguments for function updater(selectedText, start, end);[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    emitMarkdown(result.markdown, result.selection);
+[?25l[97m[41mE492: Not an editor command: emitMarkdown(result.markdown, result.selection);[?25h[m
+:    setFeedback(result.feedback ?? null);
+[?25l[97m[41mE492: Not an editor command: setFeedback(result.feedback ?? null);[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertMarkdownSnippet(template: string, feedbackMessage: string, pr
+[29;80He[30;1HserveFocus = false) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertMarkdownSnippet(te[m
+[29;80H[97m[41mm[30;1Hplate: string, feedbackMessage: string, preserveFocus = false) {[?25h[m
+:    withMarkdownSelection((_, start, end) => {
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((_, start, end) => {[?25h[m
+:      const prefix = start > 0 && !(value || "").slice(0, start).endsWith("\n"
+[29;80H)[30;1H ? "\n" : "";
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:      const suffix =
+[?25l[97m[41mE15: Invalid expression: ""[?25h[m
+:        end < (value || "").length && !(value || "").slice(end).startsWith("\n
+[29;80H"[30;1H) ? "\n" : "";
+[?25l[97m[41mE488: Trailing characters: < (value[?25h[m
+:      const markdown = (value || "").slice(0, start) + prefix + template + suf
+[29;80Hf[30;1Hix + (value || "").slice(end);
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:      const caret = start + prefix.length + template.length;
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:        markdown,
+[?25l[97m[41mE492: Not an editor command: markdown,[?25h[m
+:        selection: preserveFocus ? { start: caret, end: caret } : undefined,
+[?25l[97m[41mE492: Not an editor command: selection: preserveFocus ? { start: caret, end: ca[m
+[29;80H[97m[41mr[30;1Het } : undefined,[?25h[m
+:        feedback: feedbackMessage,
+[?25l[97m[41mE492: Not an editor command: feedback: feedbackMessage,[?25h[m
+:      };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function applyMarkdownWrap(before: string, after = before, placeholder = "内
+[29;80H[94m>[m[30;1H容") {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": applyMarkdownWrap(before[m
+[29;80H[97m[41m:[30;1H string, after = before, placeholder = "内容") {[?25h[m
+:    withMarkdownSelection((selectedText, start, end) => {
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((selectedText, start, end) =[m
+[29;80H[97m[41m>[30;1H {[?25h[m
+:      const content = selectedText || placeholder;
+[?25l[97m[41mE121: Undefined variable: selectedText[?25h[m
+:      const markdown = (value || "").slice(0, start) + before + content + afte
+[29;80Hr[30;1H + (value || "").slice(end);
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:      const selectionStart = start + before.length;
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:        markdown,
+[?25l[97m[41mE492: Not an editor command: markdown,[?25h[m
+:        selection: {
+[?25l[97m[41mE492: Not an editor command: selection: {[?25h[m
+:          start: selectionStart,
+[?25l[97m[41mE488: Trailing characters: : selectionStart,[?25h[m
+:          end: selectionStart + content.length,
+[?25l[97m[41mE488: Trailing characters: : selectionStart + content.length,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:      };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function applyMarkdownLinePrefix(prefix: string, placeholder: string) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": applyMarkdownLinePrefix([m
+[29;80H[97m[41mp[30;1Hrefix: string, placeholder: string) {[?25h[m
+:    withMarkdownSelection((selectedText, start, end) => {
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((selectedText, start, end) =[m
+[29;80H[97m[41m>[30;1H {[?25h[m
+:      if (!selectedText) {
+[?25l[97m[41mE121: Undefined variable: selectedText[?25h[m
+:        const snippet = `${prefix}${placeholder}`;
+[?25l[97m[41mE15: Invalid expression: "`${prefix}${placeholder}`;"[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:          markdown: (value || "").slice(0, start) + snippet + (value || "").sl
+[29;80Hi[30;1Hce(end),
+[?25l[97m[41mE492: Not an editor command: markdown: (value || "").slice(0, start) + snippet [m
+[29;80H[97m[41m+[30;1H (value || "").slice(end),[?25h[m
+:          selection: {
+[?25l[97m[41mE492: Not an editor command: selection: {[?25h[m
+:            start: start + prefix.length,
+[?25l[97m[41mE488: Trailing characters: : start + prefix.length,[?25h[m
+:            end: start + snippet.length,
+[?25l[97m[41mE488: Trailing characters: : start + snippet.length,[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      const prefixedText = selectedText
+[?25l[97m[41mE121: Undefined variable: selectedText[?25h[m
+:        .split("\n")
+[?25l"(" [New][?25h
+:        .map((line) => (line ? `${prefix}${line}` : prefix.trimEnd()))
+[?25l[97m[41mE481: No range allowed[?25h[m
+:        .join("\n");
+[?25l[97m[41mE488: Trailing characters: ([?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:        markdown: (value || "").slice(0, start) + prefixedText + (value || "")
+[29;80H.[30;1Hslice(end),
+[?25l[97m[41mE492: Not an editor command: markdown: (value || "").slice(0, start) + prefixed[m
+[29;80H[97m[41mT[30;1Hext + (value || "").slice(end),[?25h[m
+:        selection: {
+[?25l[97m[41mE492: Not an editor command: selection: {[?25h[m
+:          start,
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:          end: start + prefixedText.length,
+[?25l[97m[41mE488: Trailing characters: : start + prefixedText.length,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:      };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertMarkdownLink() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertMarkdownLink() {[?25h[m
+:    const url = window.prompt("输入链接地址", "https://");
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!url) {
+[?25l[97m[41mE121: Undefined variable: url[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    applyMarkdownWrap("[", `](${url.trim()})`, "链接文本");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownWrap("[", `](${url.trim()})`, "链接文[m
+[29;80H[94m>[m[30;1H[97m[41m本");[?25h[m
+:    setFeedback("已插入链接。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入链接。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertMarkdownImage() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertMarkdownImage() {[?25h[m
+:    const url = window.prompt("输入图片地址", "https://");
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!url) {
+[?25l[97m[41mE121: Undefined variable: url[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const alt = window.prompt("输入图片说明", "图片") || "图片";
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:    insertMarkdownSnippet(`![${alt.trim() || "图片"}](${url.trim()})`, "已插入
+[29;80H[94m>[m[30;1H图片地址。", true);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(`![${alt.trim() || "图片"}]([m
+[29;80H[97m[41m$[30;1H{url.trim()})`, "已插入图片地址。", true);[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertMarkdownCodeBlock() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertMarkdownCodeBlock([m
+[29;80H[97m[41m)[30;1H {[?25h[m
+:    const language = window.prompt("输入代码语言，例如 ts、tsx、python、bash",
+[29;80H [30;1H"ts") || "plaintext";
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    withMarkdownSelection((selectedText, start, end) => {
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((selectedText, start, end) =[m
+[29;80H[97m[41m>[30;1H {[?25h[m
+:      const code = selectedText.trim() || "// 在这里输入代码";
+[?25l[97m[41mE121: Undefined variable: selectedText[?25h[m
+:      const prefix = start > 0 && !(value || "").slice(0, start).endsWith("\n"
+[29;80H)[30;1H ? "\n" : "";
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:      const snippet = `\`\`\`${language.trim()}\n${code}\n\`\`\``;
+[?25l[97m[41mE15: Invalid expression: "`\`\`\`${language.trim()}\n${code}\n\`\`\``;"[?25h[m
+:      const markdown = (value || "").slice(0, start) + prefix + snippet + (val
+[29;80Hu[30;1He || "").slice(end);
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:      const selectionStart = start + prefix.length + 4 + language.trim().lengt
+[29;80Hh[30;1H;
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:        markdown,
+[?25l[97m[41mE492: Not an editor command: markdown,[?25h[m
+:        selection: {
+[?25l[97m[41mE492: Not an editor command: selection: {[?25h[m
+:          start: selectionStart,
+[?25l[97m[41mE488: Trailing characters: : selectionStart,[?25h[m
+:          end: selectionStart + 1 + code.length,
+[?25l[97m[41mE488: Trailing characters: : selectionStart + 1 + code.length,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        feedback: `已插入 ${language.trim() || "plaintext"} 代码块。`,
+[?25l[97m[41mE492: Not an editor command: feedback: `已插入 ${language.trim() || "plaintext"[m
+[29;80H[97m[41m}[30;1H 代码块。`,[?25h[m
+:      };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:    });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  const editor = useEditor({
+[?25l[97m[41mE723: Missing end of Dictionary '}': [m
+[97m[41mE116: Invalid arguments for function useEditor({[?25h[m
+:    extensions: [
+[?25l[97m[41mE492: Not an editor command: extensions: [[?25h[m
+:      StarterKit.configure({
+[?25l[97m[41mE492: Not an editor command: StarterKit.configure({[?25h[m
+:        heading: {
+[?25l[97m[41mE492: Not an editor command: heading: {[?25h[m
+:          levels: [1, 2, 3],
+[?25l[97m[41mE492: Not an editor command: levels: [1, 2, 3],[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        blockquote: {
+[?25l[97m[41mE492: Not an editor command: blockquote: {[?25h[m
+:          HTMLAttributes: {
+[?25l[97m[41mE492: Not an editor command: HTMLAttributes: {[?25h[m
+:            class: "md-blockquote",
+[?25l[97m[41mE1316: Class can only be defined in Vim9 script[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        bulletList: {
+[?25l[97m[41mE492: Not an editor command: bulletList: {[?25h[m
+:          HTMLAttributes: {
+[?25l[97m[41mE492: Not an editor command: HTMLAttributes: {[?25h[m
+:            class: "md-list-disc",
+[?25l[97m[41mE1316: Class can only be defined in Vim9 script[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        orderedList: {
+[?25l[97m[41mE492: Not an editor command: orderedList: {[?25h[m
+:          HTMLAttributes: {
+[?25l[97m[41mE492: Not an editor command: HTMLAttributes: {[?25h[m
+:            class: "md-list-decimal",
+[?25l[97m[41mE1316: Class can only be defined in Vim9 script[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        codeBlock: {
+[?25l[97m[41mE492: Not an editor command: codeBlock: {[?25h[m
+:          HTMLAttributes: {
+[?25l[97m[41mE492: Not an editor command: HTMLAttributes: {[?25h[m
+:            class: "language-plaintext",
+[?25l[97m[41mE1316: Class can only be defined in Vim9 script[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:      }),
+[?25l[97m[41mE488: Trailing characters: ),[?25h[m
+:      Underline,
+[?25l[97m[41mE492: Not an editor command: Underline,[?25h[m
+:      TaskList,
+[?25l[97m[41mE492: Not an editor command: TaskList,[?25h[m
+:      TaskItem.configure({ nested: true }),
+[?25l[97m[41mE492: Not an editor command: TaskItem.configure({ nested: true }),[?25h[m
+:      Table.configure({ resizable: false }),
+[?25l[97m[41mE492: Not an editor command: Table.configure({ resizable: false }),[?25h[m
+:      TableRow,
+[?25l[97m[41mE492: Not an editor command: TableRow,[?25h[m
+:      TableHeader,
+[?25l[97m[41mE492: Not an editor command: TableHeader,[?25h[m
+:      TableCell,
+[?25l[97m[41mE492: Not an editor command: TableCell,[?25h[m
+:      Link.configure({
+[?25l[97m[41mE492: Not an editor command: Link.configure({[?25h[m
+:        openOnClick: false,
+[?25l[97m[41mE492: Not an editor command: openOnClick: false,[?25h[m
+:        autolink: true,
+[?25l[97m[41mE492: Not an editor command: autolink: true,[?25h[m
+:        defaultProtocol: "https",
+[?25l[97m[41mE492: Not an editor command: defaultProtocol: "https",[?25h[m
+:        HTMLAttributes: {
+[?25l[97m[41mE492: Not an editor command: HTMLAttributes: {[?25h[m
+:          rel: "noopener noreferrer nofollow",
+[?25l[97m[41mE492: Not an editor command: rel: "noopener noreferrer nofollow",[?25h[m
+:          target: "_blank",
+[?25l[97m[41mE492: Not an editor command: target: "_blank",[?25h[m
+:        },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:      }),
+[?25l[97m[41mE488: Trailing characters: ),[?25h[m
+:      Image.configure({
+[?25l[97m[41mE492: Not an editor command: Image.configure({[?25h[m
+:        allowBase64: false,
+[?25l[97m[41mE492: Not an editor command: allowBase64: false,[?25h[m
+:        inline: false,
+[?25l[97m[41mE492: Not an editor command: inline: false,[?25h[m
+:      }),
+[?25l[97m[41mE488: Trailing characters: ),[?25h[m
+:      Placeholder.configure({
+[?25l[97m[41mE492: Not an editor command: Placeholder.configure({[?25h[m
+:        placeholder: "直接开始写内容，正文会按最终样式实时呈现。",
+[?25l[97m[41mE492: Not an editor command: placeholder: "直接开始写内容，正文会按最终样式实时[m
+[29;80H[94m>[m[30;1H[97m[41m呈现。",[?25h[m
+:      }),
+[?25l[97m[41mE488: Trailing characters: ),[?25h[m
+:      TextStyle,
+[?25l[97m[41mE492: Not an editor command: TextStyle,[?25h[m
+:      Color,
+[?25l[97m[41mE492: Not an editor command: Color,[?25h[m
+:    ],
+[?25l[97m[41mE492: Not an editor command: ],[?25h[m
+:    content: initialHtml,
+[?25l[97m[41mE492: Not an editor command: content: initialHtml,[?25h[m
+:    editorProps: {
+[?25l[97m[41mE492: Not an editor command: editorProps: {[?25h[m
+:      attributes: {
+[?25l[97m[41mE492: Not an editor command: attributes: {[?25h[m
+:        class:
+[?25l[97m[41mE1316: Class can only be defined in Vim9 script[?25h[m
+:          "markdown-content knowledge-editor-prosemirror min-h-[560px] max-w-n
+[29;80Ho[30;1Hne px-5 py-5 outline-none",
+:      },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:    },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:    onUpdate({ editor: currentEditor }) {
+[?25l[97m[41mE492: Not an editor command: onUpdate({ editor: currentEditor }) {[?25h[m
+:      const markdown = turndown.turndown(currentEditor.getHTML());
+[?25l[97m[41mE121: Undefined variable: turndown[?25h[m
+:      const rawDocument = currentEditor.getJSON();
+[?25l[97m[41mE121: Undefined variable: currentEditor[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      onChange({
+[?25l[97m[41mE492: Not an editor command: onChange({[?25h[m
+:        markdown,
+[?25l[97m[41mE492: Not an editor command: markdown,[?25h[m
+:        rawJson: buildEditorSnapshot(markdown, rawDocument),
+[?25l[97m[41mE492: Not an editor command: rawJson: buildEditorSnapshot(markdown, rawDocument[m
+[29;80H[97m[41m)[30;1H,[?25h[m
+:      });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:    },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:    immediatelyRender: false,
+[?25l[97m[41mE492: Not an editor command: immediatelyRender: false,[?25h[m
+:  });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  useEffect(() => {
+[?25l[97m[41mE492: Not an editor command: useEffect(() => {[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const currentMarkdown = turndown.turndown(editor.getHTML()).trim();
+[?25l[97m[41mE121: Undefined variable: turndown[?25h[m
+:    const incomingMarkdown = (value || "").trim();
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (currentMarkdown === incomingMarkdown) {
+[?25l[97m[41mE121: Undefined variable: currentMarkdown[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor.commands.setContent(initialHtml, { emitUpdate: false });
+[?25l[97m[41mE492: Not an editor command: editor.commands.setContent(initialHtml, { emitUpda[m
+[29;80H[97m[41mt[30;1He: false });[?25h[m
+:  }, [editor, initialHtml, value]);
+[?25l[97m[41mE488: Trailing characters: , [editor, initialHtml, value]);[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertLinkPrompt(currentEditor: Editor) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertLinkPrompt(current[m
+[29;80H[97m[41mE[30;1Hditor: Editor) {[?25h[m
+:    const url = window.prompt("输入链接地址", "https://");
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!url) {
+[?25l[97m[41mE121: Undefined variable: url[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const trimmedUrl = url.trim();
+[?25l[97m[41mE121: Undefined variable: url[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (currentEditor.state.selection.empty) {
+[?25l[97m[41mE121: Undefined variable: currentEditor[?25h[m
+:      const label = window.prompt("输入链接文本", "链接文本") || "链接文本";
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:      currentEditor
+[?25l[97m[41mE492: Not an editor command: currentEditor[?25h[m
+:        .chain()
+[?25l[97m[41mE492: Not an editor command: .chain()[?25h[m
+:        .focus()
+[?25l[97m[41mE492: Not an editor command: .focus()[?25h[m
+:        .insertContent(`<a href="${trimmedUrl}">${label}</a>`)
+[?25l[97m[41mE492: Not an editor command: .insertContent(`<a href="${trimmedUrl}">${label}</[m
+[29;80H[97m[41ma[30;1H>`)[?25h[m
+:        .run();
+[?25l[97m[41mE481: No range allowed[?25h[m
+:    } else {
+[?25l[97m[41mE488: Trailing characters: else {[?25h[m
+:      currentEditor.chain().focus().extendMarkRange("link").setLink({ href: tr
+[29;80Hi[30;1HmmedUrl }).run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().extendMarkRange("lin[m
+[29;80H[97m[41mk[30;1H").setLink({ href: trimmedUrl }).run();[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertLink() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertLink() {[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    insertLinkPrompt(editor);
+[?25l[97m[41mE492: Not an editor command: insertLinkPrompt(editor);[?25h[m
+:    setFeedback("已插入链接。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入链接。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertImageByUrlPrompt(currentEditor: Editor) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertImageByUrlPrompt(c[m
+[29;80H[97m[41mu[30;1HrrentEditor: Editor) {[?25h[m
+:    const url = window.prompt("输入图片地址", "https://");
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!url) {
+[?25l[97m[41mE121: Undefined variable: url[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const alt = window.prompt("输入图片说明", "图片") || "图片";
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:    currentEditor.chain().focus().setImage({ src: url.trim(), alt: alt.trim() 
+[29;80H|[30;1H| "图片" }).run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().setImage({ src: url.[m
+[29;80H[97m[41mt[30;1Hrim(), alt: alt.trim() || "图片" }).run();[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertImageByUrl() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertImageByUrl() {[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    insertImageByUrlPrompt(editor);
+[?25l[97m[41mE492: Not an editor command: insertImageByUrlPrompt(editor);[?25h[m
+:    setFeedback("已插入图片地址。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入图片地址。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertCodeBlockPrompt(currentEditor: Editor) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertCodeBlockPrompt(cu[m
+[29;80H[97m[41mr[30;1HrentEditor: Editor) {[?25h[m
+:    const language = (
+[?25l[97m[41mE15: Invalid expression: "("[?25h[m
+:      window.prompt("输入代码语言，例如 ts、tsx、python、bash", "ts") || "plai
+[29;80Hn[30;1Htext"
+[?25l[97m[41mE492: Not an editor command: window.prompt("输入代码语言，例如 ts、tsx、python[m
+[29;79H[97m[41m、[30;1Hbash", "ts") || "plaintext"[?25h[m
+:    ).trim();
+[?25l[97m[41mE492: Not an editor command: ).trim();[?25h[m
+:    const code = window.prompt("输入代码内容", "// 在这里输入代码") || "// 在
+[29;79H这[30;1H里输入代码";
+[?25l[97m[41mE121: Undefined variable: window[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    currentEditor
+[?25l[97m[41mE492: Not an editor command: currentEditor[?25h[m
+:      .chain()
+[?25l[97m[41mE492: Not an editor command: .chain()[?25h[m
+:      .focus()
+[?25l[97m[41mE492: Not an editor command: .focus()[?25h[m
+:      .insertContent(
+[?25l[97m[41mE492: Not an editor command: .insertContent([?25h[m
+:        `<pre><code class="language-${language || "plaintext"}">${code
+[?25l[97m[41mE492: Not an editor command: `<pre><code class="language-${language || "plainte[m
+[29;80H[97m[41mx[30;1Ht"}">${code[?25h[m
+:          .replace(/&/g, "&amp;")
+[?25l[97m[41mE492: Not an editor command: .replace(/&/g, "&amp;")[?25h[m
+:          .replace(/</g, "&lt;")
+[?25l[97m[41mE492: Not an editor command: .replace(/</g, "&lt;")[?25h[m
+:          .replace(/>/g, "&gt;")}</code></pre>`,
+[?25l[97m[41mE492: Not an editor command: .replace(/>/g, "&gt;")}</code></pre>`,[?25h[m
+:      )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:      .run();
+[?25l[97m[41mE481: No range allowed[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    return language || "plaintext";
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertCodeBlock() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertCodeBlock() {[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    const language = insertCodeBlockPrompt(editor);
+[?25l[97m[41mE121: Undefined variable: editor[m
+[97m[41mE116: Invalid arguments for function insertCodeBlockPrompt(editor);[?25h[m
+:    setFeedback(`已插入 ${language} 代码块。`);
+[?25l[97m[41mE492: Not an editor command: setFeedback(`已插入 ${language} 代码块。`);[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function applyColor(option: ColorOption) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": applyColor(option: Color[m
+[29;80H[97m[41mO[30;1Hption) {[?25h[m
+:    if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:      if (!option.className) {
+[?25l[97m[41mE121: Undefined variable: option[?25h[m
+:        withMarkdownSelection((selectedText, start, end) => ({
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((selectedText, start, end) =[m
+[29;80H[97m[41m>[30;1H ({[?25h[m
+:          markdown: (value || "").slice(0, start) + selectedText + (value || "
+[29;80H"[30;1H).slice(end),
+[?25l[97m[41mE492: Not an editor command: markdown: (value || "").slice(0, start) + selected[m
+[29;80H[97m[41mT[30;1Hext + (value || "").slice(end),[?25h[m
+:          selection: { start, end: start + selectedText.length },
+[?25l[97m[41mE492: Not an editor command: selection: { start, end: start + selectedText.leng[m
+[29;80H[97m[41mt[30;1Hh },[?25h[m
+:          feedback: "已恢复默认颜色。",
+[?25l[97m[41mE492: Not an editor command: feedback: "已恢复默认颜色。",[?25h[m
+:        }));
+[?25l[97m[41mE488: Trailing characters: ));[?25h[m
+:        return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      withMarkdownSelection((selectedText, start, end) => {
+[?25l[97m[41mE492: Not an editor command: withMarkdownSelection((selectedText, start, end) =[m
+[29;80H[97m[41m>[30;1H {[?25h[m
+:        const content = selectedText || "强调文本";
+[?25l[97m[41mE121: Undefined variable: selectedText[?25h[m
+:        const prefix = `<span class="${option.className}">`;
+[?25l[97m[41mE15: Invalid expression: "`<span class="${option.className}">`;"[?25h[m
+:        const markdown = (value || "").slice(0, start) + prefix + content + "<
+[29;80H/[30;1Hspan>" + (value || "").slice(end);
+[?25l[97m[41mE121: Undefined variable: value[?25h[m
+:        const selectionStart = start + prefix.length;
+[?25l[97m[41mE121: Undefined variable: start[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        return {
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:          markdown,
+[?25l[97m[41mE492: Not an editor command: markdown,[?25h[m
+:          selection: {
+[?25l[97m[41mE492: Not an editor command: selection: {[?25h[m
+:            start: selectionStart,
+[?25l[97m[41mE488: Trailing characters: : selectionStart,[?25h[m
+:            end: selectionStart + content.length,
+[?25l[97m[41mE488: Trailing characters: : selectionStart + content.length,[?25h[m
+:          },
+[?25l[97m[41mE488: Trailing characters: ,[?25h[m
+:          feedback: `已应用${option.label}。`,
+[?25l[97m[41mE492: Not an editor command: feedback: `已应用${option.label}。`,[?25h[m
+:        };
+[?25l[97m[41mE488: Trailing characters: ;[?25h[m
+:      });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!option.color) {
+[?25l[97m[41mE121: Undefined variable: option[?25h[m
+:      editor.chain().focus().unsetColor().run();
+[?25l[97m[41mE492: Not an editor command: editor.chain().focus().unsetColor().run();[?25h[m
+:      setFeedback("已恢复默认颜色。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已恢复默认颜色。");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor.chain().focus().setColor(option.color).run();
+[?25l[97m[41mE492: Not an editor command: editor.chain().focus().setColor(option.color).run([m
+[29;80H[97m[41m)[30;1H;[?25h[m
+:    setFeedback(`已应用${option.label}。`);
+[?25l[97m[41mE492: Not an editor command: setFeedback(`已应用${option.label}。`);[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertTaskList() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertTaskList() {[?25h[m
+:    if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.taskList, "已插入待办清单。", tr
+[29;80Hu[30;1He);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.taskList, [m
+[29;80H[97m[41m"[30;1H已插入待办清单。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor
+[?25l[97m[41mE492: Not an editor command: editor[?25h[m
+:      .chain()
+[?25l[97m[41mE492: Not an editor command: .chain()[?25h[m
+:      .focus()
+[?25l[97m[41mE492: Not an editor command: .focus()[?25h[m
+:      .insertContent(
+[?25l[97m[41mE492: Not an editor command: .insertContent([?25h[m
+:        '"'"'<ul data-type="taskList"><li data-type="taskItem" data-checked="f
+[29;80Ha[30;1Hlse"><p>第一项</p></li><li data-type="taskItem" data-checked="false"><p>第二项<
+[29;80H/[30;1Hp></li></ul>'"'"',
+[?25l[97m[41mE492: Not an editor command: '"'"'<ul data-type="taskList"><li data-type="taskI[m
+[29;80H[97m[41mt[30;1Hem" data-checked="false"><p>第一项</p></li><li data-type="taskItem" data-checke[m
+[29;80H[97m[41md[30;1H="false"><p>第二项</p></li></ul>'"'"',[?25h[m
+:      )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:      .run();
+[?25l[97m[41mE481: No range allowed[?25h[m
+:    setFeedback("已插入待办清单。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入待办清单。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertCompareTable() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertCompareTable() {[?25h[m
+:    if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.compareTable, "已插入对比表格。"
+[29;80H,[30;1H true);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.compareTab[m
+[29;80H[97m[41ml[30;1He, "已插入对比表格。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor.chain().focus().insertTable({ rows: 3, cols: 2, withHeaderRow: true
+[29;80H [30;1H}).run();
+[?25l[97m[41mE492: Not an editor command: editor.chain().focus().insertTable({ rows: 3, cols[m
+[29;80H[97m[41m:[30;1H 2, withHeaderRow: true }).run();[?25h[m
+:    setFeedback("已插入对比表格。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入对比表格。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertCallout() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertCallout() {[?25h[m
+:    if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.callout, "已插入提示块。", true)
+[29;80H;[30;1H
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.callout, "[m
+[29;80H[94m>[m[30;1H[97m[41m已插入提示块。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor
+[?25l[97m[41mE492: Not an editor command: editor[?25h[m
+:      .chain()
+[?25l[97m[41mE492: Not an editor command: .chain()[?25h[m
+:      .focus()
+[?25l[97m[41mE492: Not an editor command: .focus()[?25h[m
+:      .insertContent("<blockquote><p>提示</p><p>在这里写下重点说明。</p></bloc
+[29;80Hk[30;1Hquote>")
+[?25l[97m[41mE492: Not an editor command: .insertContent("<blockquote><p>提示</p><p>在这里写[m
+[29;80H[94m>[m[30;1H[97m[41m下重点说明。</p></blockquote>")[?25h[m
+:      .run();
+[?25l[97m[41mE481: No range allowed[?25h[m
+:    setFeedback("已插入提示块。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入提示块。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function insertDivider() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": insertDivider() {[?25h[m
+:    if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.divider, "已插入分隔线。", true)
+[29;80H;[30;1H
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.divider, "[m
+[29;80H[94m>[m[30;1H[97m[41m已插入分隔线。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!editor) {
+[?25l[97m[41mE121: Undefined variable: editor[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    editor.chain().focus().setHorizontalRule().run();
+[?25l[97m[41mE492: Not an editor command: editor.chain().focus().setHorizontalRule().run();[?25h[m
+:    setFeedback("已插入分隔线。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("已插入分隔线。");[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function triggerLocalImagePicker() {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": triggerLocalImagePicker([m
+[29;80H[97m[41m)[30;1H {[?25h[m
+:    fileInputRef.current?.click();
+[?25l[97m[41mE492: Not an editor command: fileInputRef.current?.click();[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  async function handleLocalImageChange(event: React.ChangeEvent<HTMLInputElem
+[29;80He[30;1Hnt>) {
+[?25l[97m[41mE492: Not an editor command: async function handleLocalImageChange(event: React[m
+[29;80H[97m[41m.[30;1HChangeEvent<HTMLInputElement>) {[?25h[m
+:    const file = event.target.files?.[0];
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!file) {
+[?25l[97m[41mE121: Undefined variable: file[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (!file.type.startsWith("image/")) {
+[?25l[97m[41mE121: Undefined variable: file[?25h[m
+:      setFeedback("只能插入图片文件。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("只能插入图片文件。");[?25h[m
+:      event.target.value = "";
+[?25l[97m[41mE492: Not an editor command: event.target.value = "";[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (file.size > 10 * 1024 * 1024) {
+[?25l[97m[41mE121: Undefined variable: file[?25h[m
+:      setFeedback("单张图片请控制在 10MB 以内，上传后会自动做保真压缩。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("单张图片请控制在 10MB 以内，上传后会[m
+[29;79H[97m[41m自[30;1H动做保真压缩。");[?25h[m
+:      event.target.value = "";
+[?25l[97m[41mE492: Not an editor command: event.target.value = "";[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    setIsUploadingImage(true);
+[?25l[97m[41mE492: Not an editor command: setIsUploadingImage(true);[?25h[m
+:    setFeedback("正在上传并压缩图片...");
+[?25l[97m[41mE492: Not an editor command: setFeedback("正在上传并压缩图片...");[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    try {
+[?25l[97m[41mE488: Trailing characters: {[?25h[m
+:      const formData = new FormData();
+[?25l[97m[41mE121: Undefined variable: new[?25h[m
+:      formData.set("spaceId", spaceId);
+[?25l[97m[41mE492: Not an editor command: formData.set("spaceId", spaceId);[?25h[m
+:      formData.set("file", file);
+[?25l[97m[41mE492: Not an editor command: formData.set("file", file);[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      const uploadedImage = await requestApi<KnowledgeImageUploadResult>("/kno
+[29;80Hw[30;1Hledge/pages/images", {
+[?25l[97m[41mE121: Undefined variable: await[?25h[m
+:        method: "POST",
+[?25l[97m[41mE492: Not an editor command: method: "POST",[?25h[m
+:        body: formData,
+[?25l[97m[41mE492: Not an editor command: body: formData,[?25h[m
+:      });
+[?25l[97m[41mE488: Trailing characters: );[?25h[m
+:      const alt = file.name.replace(/\.[^.]+$/, "") || "图片";
+[?25l[97m[41mE121: Undefined variable: file[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      if (mode === "split") {
+[?25l[97m[41mE121: Undefined variable: mode[?25h[m
+:        insertMarkdownSnippet(`![${alt}](${uploadedImage.url})`, "图片已上传并
+[29;80H[94m>[m[30;1H插入 Markdown。", true);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(`![${alt}](${uploadedImage.u[m
+[29;80H[97m[41mr[30;1Hl})`, "图片已上传并插入 Markdown。", true);[?25h[m
+:      } else if (editor) {
+[?25l[97m[41mE488: Trailing characters: else if (editor) {[?25h[m
+:        editor.chain().focus().setImage({ src: uploadedImage.url, alt }).run()
+[29;80H;[30;1H
+[?25l[97m[41mE492: Not an editor command: editor.chain().focus().setImage({ src: uploadedIma[m
+[29;80H[97m[41mg[30;1He.url, alt }).run();[?25h[m
+:        setFeedback("图片已上传到 MinIO，并以保真压缩结果插入正文。");
+[?25l[97m[41mE492: Not an editor command: setFeedback("图片已上传到 MinIO，并以保真压缩结果[m
+[29;79H[97m[41m插[30;1H入正文。");[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:    } catch (error) {
+[?25l[97m[41mE488: Trailing characters: catch (error) {[?25h[m
+:      setFeedback(error instanceof ApiError ? error.message : "图片上传失败，
+[29;79H请[30;1H重试。");
+[?25l[97m[41mE492: Not an editor command: setFeedback(error instanceof ApiError ? error.mess[m
+[29;80H[97m[41ma[30;1Hge : "图片上传失败，请重试。");[?25h[m
+:    } finally {
+[?25l[97m[41mE488: Trailing characters: finally {[?25h[m
+:      setIsUploadingImage(false);
+[?25l[97m[41mE492: Not an editor command: setIsUploadingImage(false);[?25h[m
+:      event.target.value = "";
+[?25l[97m[41mE492: Not an editor command: event.target.value = "";[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function handleVisualShortcut(event: KeyboardEvent | React.KeyboardEvent, cu
+[29;80Hr[30;1HrentEditor: Editor) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": handleVisualShortcut(eve[m
+[29;80H[97m[41mn[30;1Ht: KeyboardEvent | React.KeyboardEvent, currentEditor: Editor) {[?25h[m
+:    const hasPrimaryKey = event.metaKey || event.ctrlKey;
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "b") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleBold().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleBold().run();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "i") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleItalic().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleItalic().run()[m
+[29;80H[97m[41m;[?25h[m[30;1H
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "k") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertLinkPrompt(currentEditor);
+[?25l[97m[41mE492: Not an editor command: insertLinkPrompt(currentEditor);[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "e") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleCode().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleCode().run();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "8") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleBulletList().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleBulletList().r[m
+[29;80H[97m[41mu[30;1Hn();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "7") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleOrderedList().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleOrderedList().[m
+[29;80H[97m[41mr[30;1Hun();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "u") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleBlockquote().run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleBlockquote().r[m
+[29;80H[97m[41mu[30;1Hn();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "1") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleHeading({ level: 1 }).run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleHeading({ leve[m
+[29;80H[97m[41ml[30;1H: 1 }).run();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "2") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleHeading({ level: 2 }).run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleHeading({ leve[m
+[29;80H[97m[41ml[30;1H: 2 }).run();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "3") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      currentEditor.chain().focus().toggleHeading({ level: 3 }).run();
+[?25l[97m[41mE492: Not an editor command: currentEditor.chain().focus().toggleHeading({ leve[m
+[29;80H[97m[41ml[30;1H: 3 }).run();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "c") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertCodeBlockPrompt(currentEditor);
+[?25l[97m[41mE492: Not an editor command: insertCodeBlockPrompt(currentEditor);[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "p") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertImageByUrlPrompt(currentEditor);
+[?25l[97m[41mE492: Not an editor command: insertImageByUrlPrompt(currentEditor);[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "p") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      triggerLocalImagePicker();
+[?25l[97m[41mE492: Not an editor command: triggerLocalImagePicker();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "t") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertTaskList();
+[?25l[97m[41mE492: Not an editor command: insertTaskList();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "t") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertCompareTable();
+[?25l[97m[41mE492: Not an editor command: insertCompareTable();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === ".") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertCallout();
+[?25l[97m[41mE492: Not an editor command: insertCallout();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "-") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertDivider();
+[?25l[97m[41mE492: Not an editor command: insertDivider();[?25h[m
+:      return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey) {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      const colorOption = COLOR_OPTIONS.find((option, index) => event.key === 
+[29;80HS[30;1Htring(index));
+[?25l[97m[41mE121: Undefined variable: COLOR_OPTIONS[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      if (colorOption) {
+[?25l[97m[41mE121: Undefined variable: colorOption[?25h[m
+:        event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:        applyColor(colorOption);
+[?25l[97m[41mE492: Not an editor command: applyColor(colorOption);[?25h[m
+:        return true;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    return false;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function handleMarkdownShortcut(event: React.KeyboardEvent<HTMLTextAreaEleme
+[29;80Hn[30;1Ht>) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": handleMarkdownShortcut(e[m
+[29;80H[97m[41mv[30;1Hent: React.KeyboardEvent<HTMLTextAreaElement>) {[?25h[m
+:    const hasPrimaryKey = event.metaKey || event.ctrlKey;
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "b") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownWrap("**", "**", "加粗文本");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownWrap("**", "**", "加粗文本");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "i") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownWrap("*", "*", "斜体文本");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownWrap("*", "*", "斜体文本");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && !event.shiftKey && event.key.toLowerCase() === "k") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownLink();
+[?25l[97m[41mE492: Not an editor command: insertMarkdownLink();[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "e") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownWrap("`", "`", "inline code");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownWrap("`", "`", "inline code");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "8") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("- ", "列表项");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("- ", "列表项");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "7") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("1. ", "列表项");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("1. ", "列表项");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "u") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("> ", "引用内容");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("> ", "引用内容");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "1") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("# ", "一级标题");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("# ", "一级标题");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "2") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("## ", "二级标题");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("## ", "二级标题");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (event.altKey && event.key === "3") {
+[?25l[97m[41mE121: Undefined variable: event[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      applyMarkdownLinePrefix("### ", "三级标题");
+[?25l[97m[41mE492: Not an editor command: applyMarkdownLinePrefix("### ", "三级标题");[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "c") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownCodeBlock();
+[?25l[97m[41mE492: Not an editor command: insertMarkdownCodeBlock();[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "p") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownImage();
+[?25l[97m[41mE492: Not an editor command: insertMarkdownImage();[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "p") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      triggerLocalImagePicker();
+[?25l[97m[41mE492: Not an editor command: triggerLocalImagePicker();[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key.toLowerCase() === "t") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.taskList, "已插入待办清单。", tr
+[29;80Hu[30;1He);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.taskList, [m
+[29;80H[97m[41m"[30;1H已插入待办清单。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.altKey && event.key.toLowerCase() === "t") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.compareTable, "已插入对比表格。"
+[29;80H,[30;1H true);
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.compareTab[m
+[29;80H[97m[41ml[30;1He, "已插入对比表格。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === ".") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.callout, "已插入提示块。", true)
+[29;80H;[30;1H
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.callout, "[m
+[29;80H[94m>[m[30;1H[97m[41m已插入提示块。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey && event.key === "-") {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:      insertMarkdownSnippet(MARKDOWN_SNIPPETS.divider, "已插入分隔线。", true)
+[29;80H;[30;1H
+[?25l[97m[41mE492: Not an editor command: insertMarkdownSnippet(MARKDOWN_SNIPPETS.divider, "[m
+[29;80H[94m>[m[30;1H[97m[41m已插入分隔线。", true);[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    if (hasPrimaryKey && event.shiftKey) {
+[?25l[97m[41mE121: Undefined variable: hasPrimaryKey[?25h[m
+:      const colorOption = COLOR_OPTIONS.find((option, index) => event.key === 
+[29;80HS[30;1Htring(index));
+[?25l[97m[41mE121: Undefined variable: COLOR_OPTIONS[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      if (colorOption) {
+[?25l[97m[41mE121: Undefined variable: colorOption[?25h[m
+:        event.preventDefault();
+[?25l[97m[41mE492: Not an editor command: event.preventDefault();[?25h[m
+:        applyColor(colorOption);
+[?25l[97m[41mE492: Not an editor command: applyColor(colorOption);[?25h[m
+:      }
+[?25l[97m[41mE1128: } without {[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  function runToolbarAction(action: () => void) {
+[?25l[97m[41mE128: Function name must start with a capital or "s:": runToolbarAction(action:[m
+[29;80H[97m[41m [30;1H() => void) {[?25h[m
+:    if (isPreviewMode) {
+[?25l[97m[41mE121: Undefined variable: isPreviewMode[?25h[m
+:      return;
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:    action();
+[?25l[97m[41mE492: Not an editor command: action();[?25h[m
+:  }
+[?25l[97m[41mE1128: } without {[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:  return (
+[?25l[97m[41mE133: :return not inside a function[?25h[m
+:    <div className="knowledge-editor-shell">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:      <div className="flex flex-wrap items-center justify-between gap-3">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:        <div className="app-segmented-tabs knowledge-editor-mode-tabs">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          {[
+[?25l[97m[41mE492: Not an editor command: {[[?25h[m
+:            { key: "visual", label: "可视化编辑" },
+[?25l[97m[41mE492: Not an editor command: { key: "visual", label: "可视化编辑" },[?25h[m
+:            { key: "split", label: "分栏编辑" },
+[?25l[97m[41mE492: Not an editor command: { key: "split", label: "分栏编辑" },[?25h[m
+:            { key: "preview", label: "阅读预览" },
+[?25l[97m[41mE492: Not an editor command: { key: "preview", label: "阅读预览" },[?25h[m
+:          ].map((item) => (
+[?25l[97m[41mE492: Not an editor command: ].map((item) => ([?25h[m
+:            <button
+[?25l[97m[41mE488: Trailing characters: button[?25h[m
+:              key={item.key}
+[?25l[97m[41mE488: Trailing characters: ey={item.key}[?25h[m
+:              type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:              onClick={() => setMode(item.key as EditorMode)}
+[?25l[97m[41mE492: Not an editor command: onClick={() => setMode(item.key as EditorMode)}[?25h[m
+:              aria-pressed={mode === item.key}
+[?25l[97m[41mE492: Not an editor command: aria-pressed={mode === item.key}[?25h[m
+:              className={cn(
+[?25l[97m[41mE492: Not an editor command: className={cn([?25h[m
+:                "app-segmented-tab knowledge-editor-mode-tab",
+:                mode === item.key ? "is-active" : "",
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:              )}
+[?25l[97m[41mE492: Not an editor command: )}[?25h[m
+:            >
+ 
+:              {item.label}
+[?25l[97m[41mE492: Not an editor command: {item.label}[?25h[m
+:            </button>
+[?25l[97m[41mE488: Trailing characters: /button>[?25h[m
+:          ))}
+[?25l[97m[41mE492: Not an editor command: ))}[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        <div className="flex flex-wrap items-center gap-2 text-xs text-foregro
+[29;80Hu[30;1Hnd-muted">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          <span>字符 {characterCount}</span>
+[?25l[97m[41mE488: Trailing characters: span>字符 {characterCount}</span>[?25h[m
+:          <span>行数 {lineCount}</span>
+[?25l[97m[41mE488: Trailing characters: span>行数 {lineCount}</span>[?25h[m
+:          <span>预计阅读 {readMinutes} 分钟</span>
+[?25l[97m[41mE488: Trailing characters: span>预计阅读 {readMinutes} 分钟</span>[?25h[m
+:          <details className="knowledge-editor-shortcut-help">
+[?25l[97m[41mE488: Trailing characters: details className=[?25h[m
+:            <summary
+[?25l[97m[41mE488: Trailing characters: summary[?25h[m
+:              className="knowledge-editor-shortcut-button"
+[?25l[97m[41mE492: Not an editor command: className="knowledge-editor-shortcut-button"[?25h[m
+:              aria-label="查看快捷键说明"
+[?25l[97m[41mE492: Not an editor command: aria-label="查看快捷键说明"[?25h[m
+:              title="查看快捷键说明"
+[?25l[97m[41mE492: Not an editor command: title="查看快捷键说明"[?25h[m
+:            >
+ 
+:              ?
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:            </summary>
+[?25l[97m[41mE488: Trailing characters: /summary>[?25h[m
+:            <div className="knowledge-editor-shortcut-panel">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:              <div className="mb-2 text-sm font-semibold text-foreground-stron
+[29;80Hg[30;1H">快捷键说明</div>
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:              <div className="grid gap-2 text-xs text-foreground-muted sm:grid
+[29;80H-[30;1Hcols-2">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:                {SHORTCUT_ITEMS.map((item) => (
+[?25l[97m[41mE492: Not an editor command: {SHORTCUT_ITEMS.map((item) => ([?25h[m
+:                  <div
+[?25l[97m[41mE488: Trailing characters: div[?25h[m
+:                    key={`${item.label}-${item.shortcut}`}
+[?25l[97m[41mE488: Trailing characters: ey={`${item.label}-${item.shortcut}`}[?25h[m
+:                    className="flex items-center justify-between gap-3 rounded
+[29;80H-[30;1Hxl bg-surface-soft px-3 py-2"
+[?25l[97m[41mE492: Not an editor command: className="flex items-center justify-between gap-3[m
+[29;80H[97m[41m [30;1Hrounded-xl bg-surface-soft px-3 py-2"[?25h[m
+:                  >
+ 
+:                    <span>{item.label}</span>
+[?25l[97m[41mE488: Trailing characters: span>{item.label}</span>[?25h[m
+:                    <span className="font-mono text-[11px] text-foreground-str
+[29;80Ho[30;1Hng">{item.shortcut}</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:                  </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:                ))}
+[?25l[97m[41mE492: Not an editor command: ))}[?25h[m
+:              </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:            </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:          </details>
+[?25l[97m[41mE488: Trailing characters: /details>[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:      </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      <div className="knowledge-editor-toolbar">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:        <div className="flex flex-wrap gap-2">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("bold") ? "bg-surface text-foreground-
+[29;80Hs[30;1Htrong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("bold") ? "bg-surface [m
+[29;80H[97m[41mt[30;1Hext-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownWrap("**", "**", "加粗文本")
+[?25l[97m[41mE61: Nested *[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleBold().run(
+[29;80H)[30;1H),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleBol[m
+[29;80H[97m[41md[30;1H().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            加粗
+[?25l[97m[41mE492: Not an editor command: 加粗[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("italic") ? "bg-surface text-foregroun
+[29;80Hd[30;1H-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("italic") ? "bg-surfac[m
+[29;80H[97m[41me[30;1H text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownWrap("*", "*", "斜体文本")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownWrap("*", "*", "斜体文本")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleItalic().ru
+[29;80Hn[30;1H()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleIta[m
+[29;80H[97m[41ml[30;1Hic().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            斜体
+[?25l[97m[41mE492: Not an editor command: 斜体[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("code") ? "bg-surface text-foreground-
+[29;80Hs[30;1Htrong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("code") ? "bg-surface [m
+[29;80H[97m[41mt[30;1Hext-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownWrap("`", "`", "inline code")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownWrap("`", "`", "inline code")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleCode().run(
+[29;80H)[30;1H),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleCod[m
+[29;80H[97m[41me[30;1H().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            行内代码
+[?25l[97m[41mE492: Not an editor command: 行内代码[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            onClick={() => runToolbarAction(() => (mode === "split" ? insertMa
+[29;80Hr[30;1HkdownLink() : insertLink()))}
+[?25l[97m[41mE492: Not an editor command: onClick={() => runToolbarAction(() => (mode === "s[m
+[29;80H[97m[41mp[30;1Hlit" ? insertMarkdownLink() : insertLink()))}[?25h[m
+:          >
+ 
+:            链接
+[?25l[97m[41mE492: Not an editor command: 链接[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("blockquote") ? "bg-surface text-foreg
+[29;80Hr[30;1Hound-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("blockquote") ? "bg-su[m
+[29;80H[97m[41mr[30;1Hface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("> ", "引用内容")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("> ", "引用内容")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleBlockquote(
+[29;80H)[30;1H.run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleBlo[m
+[29;80H[97m[41mc[30;1Hkquote().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            引用
+[?25l[97m[41mE492: Not an editor command: 引用[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("bulletList") ? "bg-surface text-foreg
+[29;80Hr[30;1Hound-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("bulletList") ? "bg-su[m
+[29;80H[97m[41mr[30;1Hface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("- ", "列表项")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("- ", "列表项")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleBulletList(
+[29;80H)[30;1H.run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleBul[m
+[29;80H[97m[41ml[30;1HetList().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            无序列表
+[?25l[97m[41mE492: Not an editor command: 无序列表[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("orderedList") ? "bg-surface text-fore
+[29;80Hg[30;1Hround-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("orderedList") ? "bg-s[m
+[29;80H[97m[41mu[30;1Hrface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("1. ", "列表项")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("1. ", "列表项")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleOrderedList
+[29;80H([30;1H).run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleOrd[m
+[29;80H[97m[41me[30;1HredList().run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            有序列表
+[?25l[97m[41mE492: Not an editor command: 有序列表[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("heading", { level: 1 }) ? "bg-surface
+[29;80H [30;1Htext-foreground-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("heading", { level: 1 [m
+[29;80H[97m[41m}[30;1H) ? "bg-surface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("# ", "一级标题")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("# ", "一级标题")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleHeading({ l
+[29;80He[30;1Hvel: 1 }).run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleHea[m
+[29;80H[97m[41md[30;1Hing({ level: 1 }).run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            H1
+[?25l[97m[41mE492: Not an editor command: H1[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("heading", { level: 2 }) ? "bg-surface
+[29;80H [30;1Htext-foreground-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("heading", { level: 2 [m
+[29;80H[97m[41m}[30;1H) ? "bg-surface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("## ", "二级标题")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("## ", "二级标题")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleHeading({ l
+[29;80He[30;1Hvel: 2 }).run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleHea[m
+[29;80H[97m[41md[30;1Hing({ level: 2 }).run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            H2
+[?25l[97m[41mE492: Not an editor command: H2[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("heading", { level: 3 }) ? "bg-surface
+[29;80H [30;1Htext-foreground-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("heading", { level: 3 [m
+[29;80H[97m[41m}[30;1H) ? "bg-surface text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() =>
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() =>[?25h[m
+:                mode === "split"
+[?25l[97m[41mE359: Screen mode setting not supported[?25h[m
+:                  ? applyMarkdownLinePrefix("### ", "三级标题")
+[?25l[31msearch hit TOP, continuing at BOTTOM[m[97m[41mE486: Pattern not found:  applyMarkdownLinePrefix("### ", "三级标题")[?25h[m
+:                  : withEditor(() => editor?.chain().focus().toggleHeading({ l
+[29;80He[30;1Hvel: 3 }).run()),
+[?25l[97m[41mE492: Not an editor command: withEditor(() => editor?.chain().focus().toggleHea[m
+[29;80H[97m[41md[30;1Hing({ level: 3 }).run()),[?25h[m
+:              )
+[?25l[97m[41mE492: Not an editor command: )[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            H3
+[?25l[97m[41mE492: Not an editor command: H3[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            className={editor?.isActive("codeBlock") ? "bg-surface text-foregr
+[29;80Ho[30;1Hund-strong" : ""}
+[?25l[97m[41mE492: Not an editor command: className={editor?.isActive("codeBlock") ? "bg-sur[m
+[29;80H[97m[41mf[30;1Hace text-foreground-strong" : ""}[?25h[m
+:            onClick={() =>
+[?25l[97m[41mE492: Not an editor command: onClick={() =>[?25h[m
+:              runToolbarAction(() => (mode === "split" ? insertMarkdownCodeBlo
+[29;80Hc[30;1Hk() : insertCodeBlock()))
+[?25l[97m[41mE492: Not an editor command: runToolbarAction(() => (mode === "split" ? insertM[m
+[29;80H[97m[41ma[30;1HrkdownCodeBlock() : insertCodeBlock()))[?25h[m
+:            }
+[?25l[97m[41mE1128: } without {[?25h[m
+:          >
+ 
+:            代码块
+[?25l[97m[41mE492: Not an editor command: 代码块[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            onClick={() => runToolbarAction(() => (mode === "split" ? insertMa
+[29;80Hr[30;1HkdownImage() : insertImageByUrl()))}
+[?25l[97m[41mE492: Not an editor command: onClick={() => runToolbarAction(() => (mode === "s[m
+[29;80H[97m[41mp[30;1Hlit" ? insertMarkdownImage() : insertImageByUrl()))}[?25h[m
+:          >
+ 
+:            图片链接
+[?25l[97m[41mE492: Not an editor command: 图片链接[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode || isUploadingImage}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode || isUploadingImage}[?25h[m
+:            onClick={() => runToolbarAction(() => triggerLocalImagePicker())}
+[?25l[97m[41mE492: Not an editor command: onClick={() => runToolbarAction(() => triggerLocal[m
+[29;80H[97m[41mI[30;1HmagePicker())}[?25h[m
+:          >
+ 
+:            {isUploadingImage ? "上传中..." : "本地图片"}
+[?25l[97m[41mE492: Not an editor command: {isUploadingImage ? "上传中..." : "本地图片"}[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        <div className="flex flex-wrap items-center gap-2">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          <span className="text-xs text-foreground-muted">文字颜色</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:          {COLOR_OPTIONS.map((option) => (
+[?25l[97m[41mE492: Not an editor command: {COLOR_OPTIONS.map((option) => ([?25h[m
+:            <button
+[?25l[97m[41mE488: Trailing characters: button[?25h[m
+:              key={option.label}
+[?25l[97m[41mE488: Trailing characters: ey={option.label}[?25h[m
+:              type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:              disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:              className="knowledge-editor-color-chip"
+[?25l[97m[41mE492: Not an editor command: className="knowledge-editor-color-chip"[?25h[m
+:              title={`${option.label}：${option.shortcut}`}
+[?25l[97m[41mE492: Not an editor command: title={`${option.label}：${option.shortcut}`}[?25h[m
+:              aria-label={`${option.label}，快捷键 ${option.shortcut}`}
+[?25l[97m[41mE492: Not an editor command: aria-label={`${option.label}，快捷键 ${option.shor[m
+[29;80H[97m[41mt[30;1Hcut}`}[?25h[m
+:              onClick={() => runToolbarAction(() => applyColor(option))}
+[?25l[97m[41mE492: Not an editor command: onClick={() => runToolbarAction(() => applyColor(o[m
+[29;80H[97m[41mp[30;1Htion))}[?25h[m
+:            >
+ 
+:              <span className={cn("knowledge-editor-color-dot", option.preview
+[29;80HC[30;1HlassName)} />
+[?25l[97m[41mE488: Trailing characters: span className={cn([?25h[m
+:              {option.label}
+[?25l[97m[41mE492: Not an editor command: {option.label}[?25h[m
+:            </button>
+[?25l[97m[41mE488: Trailing characters: /button>[?25h[m
+:          ))}
+[?25l[97m[41mE492: Not an editor command: ))}[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        <div className="flex flex-wrap gap-2">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => runToolbarAction(() => insertTaskList())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            待办清单
+[?25l[97m[41mE492: Not an editor command: 待办清单[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => runToolbarAction(() => insertCompareTable())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            对比表格
+[?25l[97m[41mE492: Not an editor command: 对比表格[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => runToolbarAction(() => insertCallout())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            提示块
+[?25l[97m[41mE492: Not an editor command: 提示块[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => runToolbarAction(() => insertDivider())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            分隔线
+[?25l[97m[41mE492: Not an editor command: 分隔线[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        <div className="flex flex-wrap gap-2">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => withEditor(() => editor?.chain().focus().undo().run())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            撤销
+[?25l[97m[41mE492: Not an editor command: 撤销[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button type="button" variant="toolbar" disabled={isPreviewMode} onC
+[29;80Hl[30;1Hick={() => withEditor(() => editor?.chain().focus().redo().run())}>
+[?25l[97m[41mE488: Trailing characters: Button type=[?25h[m
+:            重做
+[?25l[97m[41mE492: Not an editor command: 重做[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:          <Button
+[?25l[97m[41mE488: Trailing characters: Button[?25h[m
+:            type="button"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:            variant="toolbar"
+[?25l[97m[41mE492: Not an editor command: variant="toolbar"[?25h[m
+:            disabled={isPreviewMode}
+[?25l[97m[41mE492: Not an editor command: disabled={isPreviewMode}[?25h[m
+:            onClick={() => withEditor(() => editor?.chain().focus().unsetLink(
+[29;80H)[30;1H.unsetColor().unsetAllMarks().clearNodes().run())}
+[?25l[97m[41mE492: Not an editor command: onClick={() => withEditor(() => editor?.chain().fo[m
+[29;80H[97m[41mc[30;1Hus().unsetLink().unsetColor().unsetAllMarks().clearNodes().run())}[?25h[m
+:          >
+ 
+:            清除格式
+[?25l[97m[41mE492: Not an editor command: 清除格式[?25h[m
+:          </Button>
+[?25l[97m[41mE488: Trailing characters: /Button>[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:      </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      <div className={cn("knowledge-editor-workspace", mode === "split" ? "is-
+[29;80Hs[30;1Hplit" : "is-single")}>
+[?25l[97m[41mE488: Trailing characters: div className={cn([?25h[m
+:        {mode === "visual" ? (
+[?25l[97m[41mE492: Not an editor command: {mode === "visual" ? ([?25h[m
+:          <section className="knowledge-editor-pane">
+[?25l[97m[41mE488: Trailing characters: section className=[?25h[m
+:            <div className="knowledge-editor-pane-header">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:              <span className="font-medium text-foreground-strong">正文编辑</s
+[29;80Hp[30;1Han>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:              <span className="text-xs text-foreground-muted">支持 `Cmd/Ctrl +
+[29;80H [30;1HB`、`Cmd/Ctrl + I`、`Cmd/Ctrl + K`、`Alt + 1/2/3`</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:            </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:            <div className="knowledge-editor-surface">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:              <EditorContent editor={editor} />
+[?25l[97m[41mE488: Trailing characters: EditorContent editor={editor} />[?25h[m
+:            </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:          </section>
+[?25l[97m[41mE488: Trailing characters: /section>[?25h[m
+:        ) : null}
+[?25l[97m[41mE492: Not an editor command: ) : null}[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        {mode === "split" ? (
+[?25l[97m[41mE492: Not an editor command: {mode === "split" ? ([?25h[m
+:          <>
+[?25l[97m[41mE488: Trailing characters: >[?25h[m
+:            <section className="knowledge-editor-pane">
+[?25l[97m[41mE488: Trailing characters: section className=[?25h[m
+:              <div className="knowledge-editor-pane-header">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:                <span className="font-medium text-foreground-strong">Markdown 
+[29;80H[94m>[m[30;1H语法</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:                <span className="text-xs text-foreground-muted">支持 `Cmd/Ctrl
+[29;80H [30;1H+ B`、`Cmd/Ctrl + I`、`Cmd/Ctrl + K`、`Alt + 1/2/3`</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:              </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:              <textarea
+[?25l[97m[41mE488: Trailing characters: textarea[?25h[m
+:                ref={markdownTextareaRef}
+[?25l[97m[41mE492: Not an editor command: ref={markdownTextareaRef}[?25h[m
+:                value={value || ""}
+[?25l[97m[41mE492: Not an editor command: value={value || ""}[?25h[m
+:                onChange={(event) =>
+[?25l[97m[41mE492: Not an editor command: onChange={(event) =>[?25h[m
+:                  emitMarkdown(event.target.value, {
+[?25l[97m[41mE492: Not an editor command: emitMarkdown(event.target.value, {[?25h[m
+:                    start: event.target.selectionStart,
+[?25l[97m[41mE488: Trailing characters: : event.target.selectionStart,[?25h[m
+:                    end: event.target.selectionEnd,
+[?25l[97m[41mE488: Trailing characters: : event.target.selectionEnd,[?25h[m
+:                  })
+[?25l[97m[41mE488: Trailing characters: )[?25h[m
+:                }
+[?25l[97m[41mE1128: } without {[?25h[m
+:                onKeyDown={handleMarkdownShortcut}
+[?25l[97m[41mE492: Not an editor command: onKeyDown={handleMarkdownShortcut}[?25h[m
+:                className="knowledge-editor-textarea"
+[?25l[97m[41mE492: Not an editor command: className="knowledge-editor-textarea"[?25h[m
+:                spellCheck={false}
+[?25l[97m[41mE492: Not an editor command: spellCheck={false}[?25h[m
+:                placeholder="# 页面标题"
+[?25l[97m[41mE492: Not an editor command: placeholder="# 页面标题"[?25h[m
+:              />
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:            </section>
+[?25l[97m[41mE488: Trailing characters: /section>[?25h[m
+:            <section className="knowledge-editor-pane">
+[?25l[97m[41mE488: Trailing characters: section className=[?25h[m
+:              <div className="knowledge-editor-pane-header">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:                <span className="font-medium text-foreground-strong">渲染结果<
+[29;80H/[30;1Hspan>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:                <span className="text-xs text-foreground-muted">左侧写 Markdow
+[29;80Hn[30;1H，右侧同步查看最终结构</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:              </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:              <MarkdownContent
+[?25l[97m[41mE488: Trailing characters: MarkdownContent[?25h[m
+:                markdown={value || ""}
+[?25l[97m[41mE492: Not an editor command: markdown={value || ""}[?25h[m
+:                className="knowledge-editor-preview"
+[?25l[97m[41mE492: Not an editor command: className="knowledge-editor-preview"[?25h[m
+:                emptyHtml={'"'"'<p class="text-foreground-subtle">开始输入内容
+[29;80H[94m>[m[30;1H后，这里会实时渲染。</p>'"'"'}
+[?25l[97m[41mE492: Not an editor command: emptyHtml={'"'"'<p class="text-foreground-subtle">[m
+[29;80H[94m>[m[30;1H[97m[41m开始输入内容后，这里会实时渲染。</p>'"'"'}[?25h[m
+:              />
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:            </section>
+[?25l[97m[41mE488: Trailing characters: /section>[?25h[m
+:          </>
+[?25l[97m[41mE488: Trailing characters: />[?25h[m
+:        ) : null}
+[?25l[97m[41mE492: Not an editor command: ) : null}[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:        {mode === "preview" ? (
+[?25l[97m[41mE492: Not an editor command: {mode === "preview" ? ([?25h[m
+:          <section className="knowledge-editor-pane">
+[?25l[97m[41mE488: Trailing characters: section className=[?25h[m
+:            <div className="knowledge-editor-pane-header">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:              <span className="font-medium text-foreground-strong">阅读预览</s
+[29;80Hp[30;1Han>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:              <span className="text-xs text-foreground-muted">这里显示最终阅读
+[29;80H[94m>[m[30;1H态，便于确认代码块、图片和标题层级</span>
+[?25l[97m[41mE488: Trailing characters: span className=[?25h[m
+:            </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:            <MarkdownContent
+[?25l[97m[41mE488: Trailing characters: MarkdownContent[?25h[m
+:              markdown={value || ""}
+[?25l[97m[41mE492: Not an editor command: markdown={value || ""}[?25h[m
+:              className="knowledge-editor-preview"
+[?25l[97m[41mE492: Not an editor command: className="knowledge-editor-preview"[?25h[m
+:              emptyHtml={'"'"'<p class="text-foreground-subtle">开始输入内容后
+[29;80H[94m>[m[30;1H，这里会实时渲染。</p>'"'"'}
+[?25l[97m[41mE492: Not an editor command: emptyHtml={'"'"'<p class="text-foreground-subtle">[m
+[29;80H[94m>[m[30;1H[97m[41m开始输入内容后，这里会实时渲染。</p>'"'"'}[?25h[m
+:            />
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:          </section>
+[?25l[97m[41mE488: Trailing characters: /section>[?25h[m
+:        ) : null}
+[?25l[97m[41mE492: Not an editor command: ) : null}[?25h[m
+:      </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      <div className="flex flex-wrap items-center justify-between gap-3">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:        <div className="text-xs text-foreground-muted">
+[?25l[97m[41mE488: Trailing characters: div className=[?25h[m
+:          {mode === "split" ? "分栏模式下左侧是 Markdown，右侧是渲染结构。" : 
+[29;80H"[30;1H正文区域直接按最终样式编辑，不再暴露 Markdown 源码。"}
+[?25l[97m[41mE492: Not an editor command: {mode === "split" ? "分栏模式下左侧是 Markdown，右[m
+[29;80H[94m>[m[30;1H[97m[41m侧是渲染结构。" : "正文区域直接按最终样式编辑，不再暴露 Markdown 源码。"}[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:        <div className={cn("text-xs", feedback ? "text-accent-strong" : "text-
+[29;80Hf[30;1Horeground-subtle")}>
+[?25l[97m[41mE488: Trailing characters: div className={cn([?25h[m
+:          {feedback || "默认就是所见即所得写作模式；需要核对阅读态时可切到分栏
+[29;80H[94m>[m[30;1H预览。"}
+[?25l[97m[41mE492: Not an editor command: {feedback || "默认就是所见即所得写作模式；需要核对[m
+[29;80H[94m>[m[30;1H[97m[41m阅读态时可切到分栏预览。"}[?25h[m
+:        </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:      </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:
+[?25l[97m[41mE749: Empty buffer[?25h[m
+:      <input
+[?25l[97m[41mE488: Trailing characters: input[?25h[m
+:        ref={fileInputRef}
+[?25l[97m[41mE492: Not an editor command: ref={fileInputRef}[?25h[m
+:        type="file"
+[?25l[97m[41mE1393: Type can only be defined in Vim9 script[?25h[m
+:        accept="image/*"
+[?25l[97m[41mE492: Not an editor command: accept="image/*"[?25h[m
+:        className="hidden"
+[?25l[97m[41mE492: Not an editor command: className="hidden"[?25h[m
+:        onChange={handleLocalImageChange}
+[?25l[97m[41mE492: Not an editor command: onChange={handleLocalImageChange}[?25h[m
+:      />
+[?25l[31msearch hit BOTTOM, continuing at TOP[m[97m[41mE486: Pattern not found: >[m[30;27H[K[?25h[30;1H
+:    </div>
+[?25l[97m[41mE488: Trailing characters: /div>[?25h[m
+:  );
+[?25l[97m[41mE492: Not an editor command: );[?25h[m
+:}
+[?25l[97m[41mE1128: } without {[?25h[m
+:'"'"''"'"''"'"'
+[?25l[97m[41mE492: Not an editor command: '"'"''"'"''"'"'[?25h[m
+:path.write_text(content)
+[?25l[97m[41mE492: Not an editor command: path.write_text(content)[?25h[m
+:PY'
+[?25l[97m[41mE492: Not an editor command: PY'[?25h[m
+:[?1004l[?2004l[?1l>[?1049l[>4;mVim: Caught deadly signal TERM
+Vim: preserving files...
+Vim: Finished.
+[30;1H[23;2t[23;1t

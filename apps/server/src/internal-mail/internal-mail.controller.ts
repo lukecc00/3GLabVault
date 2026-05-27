@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -27,8 +28,8 @@ export class InternalMailController {
   }
 
   @Get('composer/options')
-  getComposerOptions() {
-    return this.internalMailService.getComposerOptions();
+  getComposerOptions(@CurrentUser() user: AuthenticatedUser) {
+    return this.internalMailService.getComposerOptions(user);
   }
 
   @Get('inbox')
@@ -69,6 +70,11 @@ export class InternalMailController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.internalMailService.getTrash(user, query);
+  }
+
+  @Delete('trash')
+  emptyTrash(@CurrentUser() user: AuthenticatedUser) {
+    return this.internalMailService.emptyTrash(user);
   }
 
   @Get('messages/:id')

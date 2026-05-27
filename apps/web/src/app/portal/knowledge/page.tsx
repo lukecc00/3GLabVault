@@ -3,11 +3,15 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { DangerConfirmDialog } from "@/components/ui/danger-confirm-dialog";
+import { DisabledActionHint } from "@/components/ui/disabled-action-hint";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type {
   CreateKnowledgeSpacePayload,
   GroupSummary,
+  KnowledgePageSummary,
   KnowledgeSpaceSummary,
   SpaceVisibility,
 } from "@/lib/contracts";
@@ -19,10 +23,56 @@ const visibilityMap: Record<SpaceVisibility, string> = {
   GROUP_RESTRICTED: "群组可见",
 };
 
+function getDeleteSpaceBlockedReason(space: KnowledgeSpaceSummary) {
+  if (space._count.pages === 0) {
+    return null;
+  }
+
+  return `当前仍有 ${space._count.pages} 篇页面，请先删除或迁移页面后再删除空间。`;
+}
+
+function canDeleteKnowledgeSpace(
+  space: KnowledgeSpaceSummary,
+  activeRoleCode: string | null,
+  userGroupIds: string[],
+) {
+  if (!space.ownerGroupId) {
+    return false;
+  }
+
+  if (activeRoleCode === "GRADE_ADMIN") {
+    return userGroupIds.includes(space.ownerGroupId) && space.ownerGroup?.type === "GRADE";
+  }
+
+  if (activeRoleCode === "DIRECTION_ADMIN") {
+    return (
+      userGroupIds.includes(space.ownerGroupId) &&
+      space.ownerGroup?.type === "DIRECTION"
+    );
+  }
+
+  return false;
+}
+
 export default function PortalKnowledgeHomePage() {
-  const { isAdmin } = useAuth();
+  const { user, status, activeWorkspace } = useAuth();
+  const activeRoleCode = activeWorkspace?.roleCode ?? null;
+  const canManageSpaces = Boolean(
+    activeRoleCode &&
+      (activeRoleCode === "SUPER_ADMIN" ||
+        activeRoleCode === "LAB_ADMIN" ||
+        activeRoleCode === "GRADE_ADMIN" ||
+        activeRoleCode === "DIRECTION_ADMIN"),
+  );
+  const isGlobalKnowledgeAdmin =
+    activeRoleCode === "SUPER_ADMIN" || activeRoleCode === "LAB_ADMIN";
+  const isScopedGradeKnowledgeAdmin = activeRoleCode === "GRADE_ADMIN";
+  const isScopedDirectionKnowledgeAdmin = activeRoleCode === "DIRECTION_ADMIN";
   const [spaces, setSpaces] = useState<KnowledgeSpaceSummary[]>([]);
   const [groups, setGroups] = useState<GroupSummary[]>([]);
+  const [pageQuery, setPageQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<KnowledgePageSummary[]>([]);
+  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -31,18 +81,46 @@ export default function PortalKnowledgeHomePage() {
     useState<KnowledgeSpaceSummary | null>(null);
   const [form, setForm] = useState<CreateKnowledgeSpacePayload>({
     code: "",
-    slug: "",
     name: "",
     description: "",
     visibility: "PUBLIC",
     ownerGroupId: "",
   });
+  const deleteSpaceBlockedReasonById = new Map(
+    spaces.map((space) => [space.id, getDeleteSpaceBlockedReason(space)]),
+  );
+  const selectableGroups = groups.filter((group) => {
+    if (!user || isGlobalKnowledgeAdmin) {
+      return true;
+    }
 
-  async function fetchKnowledgeHomeData() {
-    const [spacesData, groupsData] = await Promise.all([
-      fetchApi<KnowledgeSpaceSummary[]>("/knowledge/spaces"),
-      fetchApi<GroupSummary[]>("/groups"),
-    ]);
+    if (isScopedGradeKnowledgeAdmin) {
+      return group.type === "GRADE" && user.groupIds.includes(group.id);
+    }
+
+    if (isScopedDirectionKnowledgeAdmin) {
+      return group.type === "DIRECTION" && user.groupIds.includes(group.id);
+    }
+
+    return false;
+  });
+  const resolvedVisibility =
+    isScopedGradeKnowledgeAdmin || isScopedDirectionKnowledgeAdmin
+      ? "GROUP_RESTRICTED"
+      : form.visibility;
+  const resolvedOwnerGroupId =
+    !form.ownerGroupId || selectableGroups.some((group) => group.id === form.ownerGroupId)
+      ? form.ownerGroupId
+      : isScopedGradeKnowledgeAdmin || isScopedDirectionKnowledgeAdmin
+        ? (selectableGroups[0]?.id ?? "")
+        : "";
+
+  async function fetchKnowledgeHomeData(adminView: boolean) {
+    const spacesData =
+      await fetchApi<KnowledgeSpaceSummary[]>("/knowledge/spaces");
+    const groupsData = adminView
+      ? await fetchApi<GroupSummary[]>("/groups")
+      : [];
 
     return { spacesData, groupsData };
   }
@@ -52,7 +130,7 @@ export default function PortalKnowledgeHomePage() {
     setError(null);
 
     try {
-      const { spacesData, groupsData } = await fetchKnowledgeHomeData();
+      const { spacesData, groupsData } = await fetchKnowledgeHomeData(canManageSpaces);
       setSpaces(spacesData);
       setGroups(groupsData);
     } catch (error) {
@@ -65,11 +143,15 @@ export default function PortalKnowledgeHomePage() {
   }
 
   useEffect(() => {
+    if (status === "loading") {
+      return;
+    }
+
     let active = true;
 
     void (async () => {
       try {
-        const { spacesData, groupsData } = await fetchKnowledgeHomeData();
+        const { spacesData, groupsData } = await fetchKnowledgeHomeData(canManageSpaces);
 
         if (!active) {
           return;
@@ -95,7 +177,50 @@ export default function PortalKnowledgeHomePage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [canManageSpaces, status]);
+
+  useEffect(() => {
+    const keyword = pageQuery.trim();
+
+    if (!keyword) {
+      return;
+    }
+
+    let active = true;
+
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        if (active) {
+          setSearching(true);
+        }
+
+        try {
+          const results = await fetchApi<KnowledgePageSummary[]>(
+            `/knowledge/pages?q=${encodeURIComponent(keyword)}`,
+          );
+
+          if (active) {
+            setSearchResults(results);
+          }
+        } catch {
+          if (active) {
+            setSearchResults([]);
+          }
+        } finally {
+          if (active) {
+            setSearching(false);
+          }
+        }
+      })();
+    }, 250);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [pageQuery]);
+
+  const visibleSearchResults = pageQuery.trim() ? searchResults : [];
 
   async function handleCreateSpace(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -108,17 +233,15 @@ export default function PortalKnowledgeHomePage() {
         "POST",
         {
           code: form.code.trim(),
-          slug: form.slug.trim(),
           name: form.name.trim(),
           description: form.description?.trim() || undefined,
-          visibility: form.visibility,
-          ownerGroupId: form.ownerGroupId?.trim() || undefined,
+          visibility: resolvedVisibility,
+          ownerGroupId: resolvedOwnerGroupId?.trim() || undefined,
         },
       );
 
       setForm({
         code: "",
-        slug: "",
         name: "",
         description: "",
         visibility: "PUBLIC",
@@ -136,10 +259,10 @@ export default function PortalKnowledgeHomePage() {
   }
 
   function handleDeleteSpace(space: KnowledgeSpaceSummary) {
-    if (space._count.pages > 0) {
-      setMessage(
-        `知识空间 ${space.name} 当前无法删除：仍有 ${space._count.pages} 篇页面。请先删除或迁移页面后再删除空间。`,
-      );
+    const blockedReason = getDeleteSpaceBlockedReason(space);
+
+    if (blockedReason) {
+      setMessage(`知识空间 ${space.name} 当前无法删除：${blockedReason}`);
       return;
     }
 
@@ -161,7 +284,7 @@ export default function PortalKnowledgeHomePage() {
         {},
       );
       setPendingDeleteSpace(null);
-      setMessage(`知识空间 ${pendingDeleteSpace.name} 已删除。`);
+      setMessage(`知识空间 ${pendingDeleteSpace.name} 已删除，14 天内系统管理员可恢复。`);
       await loadData();
     } catch (error) {
       setMessage(
@@ -181,7 +304,7 @@ export default function PortalKnowledgeHomePage() {
         <DangerConfirmDialog
           open
           title={`删除空间 ${pendingDeleteSpace.name}`}
-          description="删除知识空间前必须再次确认。该操作不可撤销，且只有在空间内没有页面时才允许执行。"
+          description="删除知识空间前必须再次确认。删除后空间会立即对普通用户不可见，并进入 14 天保留期；仅系统管理员可在到期前恢复。当前仍仅允许删除空空间。"
           confirmText={`确认删除空间 ${pendingDeleteSpace.name}`}
           confirmLabel="请输入确认文案"
           actionLabel="确认删除空间"
@@ -195,7 +318,7 @@ export default function PortalKnowledgeHomePage() {
         />
       ) : null}
       <section className="grid gap-6 xl:grid-cols-[1.05fr_1.4fr]">
-        {isAdmin ? (
+        {canManageSpaces ? (
           <form
             onSubmit={handleCreateSpace}
             className="app-panel p-6"
@@ -227,21 +350,9 @@ export default function PortalKnowledgeHomePage() {
                 />
               </label>
               <label className="text-sm">
-                <div className="mb-2 text-zinc-300">Slug</div>
-                <input
-                  required
-                  value={form.slug}
-                  onChange={(event) =>
-                    setForm((prev) => ({ ...prev, slug: event.target.value }))
-                  }
-                  className="app-input"
-                  placeholder="例如：android-space"
-                />
-              </label>
-              <label className="text-sm">
                 <div className="mb-2 text-zinc-300">可见性</div>
                 <select
-                  value={form.visibility}
+                  value={resolvedVisibility}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
@@ -250,15 +361,21 @@ export default function PortalKnowledgeHomePage() {
                   }
                   className="app-input"
                 >
-                  <option value="PUBLIC">公开</option>
-                  <option value="PRIVATE">私有</option>
-                  <option value="GROUP_RESTRICTED">群组可见</option>
+                  {isScopedGradeKnowledgeAdmin || isScopedDirectionKnowledgeAdmin ? (
+                    <option value="GROUP_RESTRICTED">群组可见</option>
+                  ) : (
+                    <>
+                      <option value="PUBLIC">公开</option>
+                      <option value="PRIVATE">私有</option>
+                      <option value="GROUP_RESTRICTED">群组可见</option>
+                    </>
+                  )}
                 </select>
               </label>
               <label className="text-sm">
                 <div className="mb-2 text-zinc-300">归属群组</div>
                 <select
-                  value={form.ownerGroupId ?? ""}
+                  value={resolvedOwnerGroupId ?? ""}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
@@ -267,13 +384,25 @@ export default function PortalKnowledgeHomePage() {
                   }
                   className="app-input"
                 >
-                  <option value="">无</option>
-                  {groups.map((group) => (
+                  {isScopedGradeKnowledgeAdmin || isScopedDirectionKnowledgeAdmin ? null : (
+                    <option value="">无</option>
+                  )}
+                  {selectableGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
                     </option>
                   ))}
                 </select>
+                {isScopedDirectionKnowledgeAdmin ? (
+                  <p className="mt-2 text-xs text-zinc-500">
+                    当前以方向管理员身份创建空间，只能绑定你负责的方向群组。
+                  </p>
+                ) : null}
+                {isScopedGradeKnowledgeAdmin ? (
+                  <p className="mt-2 text-xs text-zinc-500">
+                    当前以年级管理员身份创建空间，只能绑定你负责的年级群组。
+                  </p>
+                ) : null}
               </label>
               <label className="text-sm">
                 <div className="mb-2 text-zinc-300">空间描述</div>
@@ -290,13 +419,14 @@ export default function PortalKnowledgeHomePage() {
                 />
               </label>
             </div>
-            <button
+            <Button
               type="submit"
               disabled={submitting}
-              className="app-button-primary mt-6"
+              variant="primary"
+              className="mt-6"
             >
               创建空间
-            </button>
+            </Button>
           </form>
         ) : (
           <section className="app-panel p-6">
@@ -308,6 +438,49 @@ export default function PortalKnowledgeHomePage() {
         )}
 
         <section className="space-y-6">
+          <section className="app-panel p-6">
+            <h2 className="text-xl font-semibold">搜索文章</h2>
+            <input
+              value={pageQuery}
+              onChange={(event) => setPageQuery(event.target.value)}
+              className="app-input mt-4"
+              placeholder="搜索标题、正文或标签"
+            />
+            {pageQuery.trim() ? (
+              <div className="mt-4 divide-y divide-white/10">
+                {searching ? (
+                  <div className="py-4 text-sm text-zinc-400">正在搜索...</div>
+                ) : visibleSearchResults.length > 0 ? (
+                  visibleSearchResults.slice(0, 8).map((page) => (
+                    <article
+                      key={page.id}
+                      className="group relative isolate py-4 transition-colors duration-200 hover:text-sky-200"
+                    >
+                      <Link
+                        href={`/portal/knowledge/pages/${page.id}`}
+                        aria-label={`查看页面 ${page.title}`}
+                        className="absolute inset-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                      />
+                      <div className="pointer-events-none">
+                        <div className="text-sm text-zinc-500">{page.space.name}</div>
+                        <div className="mt-1 font-medium text-foreground-strong transition-colors duration-200 group-hover:text-accent-strong">
+                          {page.title}
+                        </div>
+                        <MarkdownContent
+                          markdown={page.summary || page.contentMd}
+                          className="markdown-list-preview mt-1 text-sm text-zinc-400"
+                          emptyHtml='<p class="text-zinc-500">暂无摘要</p>'
+                        />
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="py-4 text-sm text-zinc-400">没有匹配文章</div>
+                )}
+              </div>
+            ) : null}
+          </section>
+
           {message ? (
             <div
               className={`rounded-3xl border p-5 ${
@@ -330,57 +503,85 @@ export default function PortalKnowledgeHomePage() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {spaces.map((space) => (
-                <article
-                  key={space.id}
-                  className="app-panel p-6"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">
-                        {space.code}
+              {spaces.map((space) => {
+                const deleteBlockedReason =
+                  deleteSpaceBlockedReasonById.get(space.id) ?? null;
+                const accessGroups = space.accessGroups ?? [];
+
+                return (
+                  <article
+                    key={space.id}
+                    className="app-panel p-6"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div>
+                        <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+                          {space.parentSpace ? `子知识库 · ${space.code}` : space.code}
+                        </div>
+                        <h2 className="mt-2 text-2xl font-semibold">{space.name}</h2>
+                        <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-300">
+                          {space.description || "暂无空间描述"}
+                        </p>
+                        {space.parentSpace ? (
+                          <div className="mt-3 text-xs text-zinc-500">
+                            上级空间：{space.parentSpace.name}
+                          </div>
+                        ) : null}
+                        {accessGroups.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {accessGroups.map((item) => (
+                              <span key={item.id} className="app-pill text-xs">
+                                {item.group.name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                      <h2 className="mt-2 text-2xl font-semibold">{space.name}</h2>
-                      <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-300">
-                        {space.description || "暂无空间描述"}
-                      </p>
-                    </div>
-                    <div className="text-right text-sm text-zinc-300">
-                      <div>{visibilityMap[space.visibility]}</div>
-                      <div className="mt-2">{space._count.pages} 篇页面</div>
-                      <div className="mt-2 text-xs text-zinc-500">
-                        {space.ownerGroup?.name || "未绑定群组"}
+                      <div className="text-right text-sm text-zinc-300">
+                        <div>{visibilityMap[space.visibility]}</div>
+                        <div className="mt-2">{space._count.pages} 篇页面</div>
+                        <div className="mt-2 text-xs text-zinc-500">
+                          {space.ownerGroup?.name || "未绑定群组"}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <Link
-                      href={`/portal/knowledge/spaces/${space.id}`}
-                      className="app-button-primary px-4 py-2"
-                    >
-                      进入空间
-                    </Link>
-                    <span className="app-pill px-4 py-2">
-                      slug: {space.slug}
-                    </span>
-                    {isAdmin ? (
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteSpace(space)}
-                        disabled={submitting || space._count.pages > 0}
-                        className="inline-flex cursor-pointer items-center justify-center rounded-full border border-red-400/20 px-4 py-2 text-sm text-red-100 transition-colors duration-200 hover:bg-red-400/10 disabled:cursor-not-allowed disabled:opacity-50"
-                        title={
-                          space._count.pages > 0
-                            ? "请先删除或迁移该空间下的页面后再删除"
-                            : `删除空间 ${space.name}`
-                        }
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link
+                        href={`/portal/knowledge/spaces/${space.id}`}
+                        className={buttonClassName({ variant: "primary", size: "sm" })}
                       >
-                        删除空间
-                      </button>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
+                        进入空间
+                      </Link>
+                      {user &&
+                      canDeleteKnowledgeSpace(
+                        space,
+                        activeRoleCode,
+                        user.groupIds,
+                      ) ? (
+                        <DisabledActionHint
+                          disabled={Boolean(deleteBlockedReason)}
+                          reason={deleteBlockedReason}
+                        >
+                          <Button
+                            type="button"
+                            onClick={() => handleDeleteSpace(space)}
+                            variant="dangerOutline"
+                            size="sm"
+                            disabled={submitting || Boolean(deleteBlockedReason)}
+                            title={
+                              deleteBlockedReason
+                                ? undefined
+                                : `删除空间 ${space.name}`
+                            }
+                          >
+                            删除空间
+                          </Button>
+                        </DisabledActionHint>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

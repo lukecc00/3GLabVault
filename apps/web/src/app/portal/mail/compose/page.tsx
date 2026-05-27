@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { MailMessageBody } from "../_components/mail-message-body";
 import { useMailContext } from "../_components/mail-context";
 import {
   EntitySelector,
@@ -15,7 +16,6 @@ import type {
   InternalMailMessageDetail,
   InternalMailComposerUserOption,
 } from "@/lib/contracts";
-import { renderMarkdownToHtml } from "@/lib/markdown";
 
 type ComposeMode = "new" | "reply" | "forward" | "draft";
 type MailSelectableEntity = "user" | "group";
@@ -338,7 +338,7 @@ export default function PortalMailComposePage() {
         payload,
       );
 
-      await refreshSummary();
+      void refreshSummary();
 
       if (saveAsDraft) {
         setMessage("草稿已保存。");
@@ -368,9 +368,8 @@ export default function PortalMailComposePage() {
     <div className="space-y-6">
       <section className="app-panel p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="app-eyebrow app-eyebrow-neutral">Compose</div>
-            <h2 className="mt-4 text-2xl font-semibold text-balance text-slate-50">
+          <div className="min-w-0">
+            <h2 className="text-2xl font-semibold text-balance text-foreground-strong">
               {composeMode === "reply"
                 ? "回复内部邮件"
                 : composeMode === "forward"
@@ -380,7 +379,7 @@ export default function PortalMailComposePage() {
                     : "新建内部邮件"}
             </h2>
             <p className="mt-3 max-w-[62ch] text-sm leading-7 text-slate-300 text-pretty">
-              按企业邮箱的写信流程组织内部沟通，支持收件人、抄送、草稿保存、回复和转发。
+              填写收件人、主题和正文。
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -403,13 +402,62 @@ export default function PortalMailComposePage() {
           </div>
         </div>
 
+        <div className="mt-6 grid gap-4 xl:grid-cols-2 xl:items-start">
+          <EntitySelector
+            title="收件人"
+            items={recipientSelectorOptions}
+            selectedIds={toSelectedIds}
+            onSelectionChange={(nextSelectedIds) => {
+              const nextSelection = parseSelectableEntityIds(nextSelectedIds);
+
+              setForm((prev) => ({
+                ...prev,
+                toUserIds: nextSelection.userIds,
+                toGroupIds: nextSelection.groupIds,
+              }));
+            }}
+            selectedTitle="已选收件人"
+            selectedEmptyLabel="选择收件人或群组"
+            tone="sky"
+            variant="floating"
+            floatingLayout="inline"
+            floatingActionLabel="选择对象"
+            floatingSummaryMaxItems={6}
+            floatingSummaryClassName="text-base leading-7 text-foreground-strong"
+            searchPlaceholder="搜索成员或群组"
+          />
+          <EntitySelector
+            title="抄送"
+            items={recipientSelectorOptions}
+            selectedIds={ccSelectedIds}
+            onSelectionChange={(nextSelectedIds) => {
+              const nextSelection = parseSelectableEntityIds(nextSelectedIds);
+
+              setForm((prev) => ({
+                ...prev,
+                ccUserIds: nextSelection.userIds,
+                ccGroupIds: nextSelection.groupIds,
+              }));
+            }}
+            selectedTitle="已选抄送"
+            selectedEmptyLabel="选择抄送对象"
+            tone="amber"
+            variant="floating"
+            floatingLayout="inline"
+            floatingActionLabel="选择对象"
+            floatingSummaryMaxItems={6}
+            floatingSummaryClassName="text-base leading-7 text-foreground-strong"
+            searchPlaceholder="搜索成员或群组"
+          />
+        </div>
+
         {message ? (
-          <div className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+          <div className="mt-5 text-sm text-foreground-muted">
             {message}
           </div>
         ) : null}
         {error ? (
-          <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">
+          <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-[var(--danger-strong)]">
             {error}
           </div>
         ) : null}
@@ -420,7 +468,7 @@ export default function PortalMailComposePage() {
           <div className="app-panel p-6">
             <div className="grid gap-4">
               <label className="text-sm">
-                <div className="mb-2 text-slate-300">主题</div>
+                <div className="mb-2 text-foreground-muted">主题</div>
                 <input
                   value={form.subject}
                   onChange={(event) =>
@@ -431,14 +479,14 @@ export default function PortalMailComposePage() {
                 />
               </label>
               <label className="text-sm">
-                <div className="mb-2 text-slate-300">正文</div>
+                <div className="mb-2 text-foreground-muted">正文</div>
                 <textarea
                   value={form.bodyMarkdown}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, bodyMarkdown: event.target.value }))
                   }
                   className="app-textarea min-h-[340px]"
-                  placeholder="输入内部邮件内容，支持 Markdown 语法。"
+                  placeholder="输入正文"
                 />
               </label>
             </div>
@@ -446,82 +494,24 @@ export default function PortalMailComposePage() {
         </div>
 
         <div className="space-y-6">
-          <section className="app-panel-muted p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="text-sm font-medium text-slate-100">当前选择</div>
-                <p className="mt-2 max-w-[50ch] text-sm leading-6 text-slate-400">
-                  采用邮件式收件条布局。正文区域不再被长列表挤占，点击任一条目即可进入悬浮选择器。
-                </p>
-              </div>
-              <div className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs tabular-nums text-slate-300">
-                已选 {selectedEntityCount} 项
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              <EntitySelector
-                title="To"
-                description="收件人可同时选择具体成员和群组，适合精确投递与批量投递混合使用。"
-                items={recipientSelectorOptions}
-                selectedIds={toSelectedIds}
-                onSelectionChange={(nextSelectedIds) => {
-                  const nextSelection = parseSelectableEntityIds(nextSelectedIds);
-
-                  setForm((prev) => ({
-                    ...prev,
-                    toUserIds: nextSelection.userIds,
-                    toGroupIds: nextSelection.groupIds,
-                  }));
-                }}
-                selectedTitle="当前收件对象"
-                selectedEmptyLabel="尚未选择收件人或群组"
-                tone="sky"
-                variant="floating"
-                floatingLayout="inline"
-                floatingActionLabel="选择对象"
-                floatingSummaryMaxItems={3}
-                floatingSummaryClassName="text-xs leading-5 text-slate-300"
-                searchPlaceholder="搜索成员、群组、邮箱、账号或组类型"
-              />
-              <EntitySelector
-                title="Cc"
-                description="抄送对象可同时包含成员和群组，适合通知协作人、管理组或旁路团队。"
-                items={recipientSelectorOptions}
-                selectedIds={ccSelectedIds}
-                onSelectionChange={(nextSelectedIds) => {
-                  const nextSelection = parseSelectableEntityIds(nextSelectedIds);
-
-                  setForm((prev) => ({
-                    ...prev,
-                    ccUserIds: nextSelection.userIds,
-                    ccGroupIds: nextSelection.groupIds,
-                  }));
-                }}
-                selectedTitle="当前抄送对象"
-                selectedEmptyLabel="尚未选择抄送人或群组"
-                tone="amber"
-                variant="floating"
-                floatingLayout="inline"
-                floatingActionLabel="选择对象"
-                floatingSummaryMaxItems={3}
-                floatingSummaryClassName="text-xs leading-5 text-slate-300"
-                searchPlaceholder="搜索成员、群组、邮箱、账号或组类型"
-              />
-            </div>
-          </section>
-
           <section className="app-panel p-5">
-            <div className="text-sm font-medium text-slate-100">邮件预览</div>
-            <div className="mt-4">
-              <div className="text-2xl font-semibold text-balance text-slate-50">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-foreground-strong">邮件预览</div>
+              </div>
+              <div className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-foreground-muted">
+                投递对象 {selectedEntityCount} 项
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+              <div className="text-xs uppercase tracking-[0.18em] text-foreground-subtle">主题</div>
+              <div className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-balance text-foreground-strong">
                 {form.subject.trim() || "无主题"}
               </div>
-              <div
-                className="prose prose-invert mt-5 max-w-none text-sm leading-7"
-                dangerouslySetInnerHTML={{
-                  __html: renderMarkdownToHtml(form.bodyMarkdown || "（无正文）"),
-                }}
-              />
+              <div className="mt-5 border-t border-white/8 pt-5">
+                <MailMessageBody markdown={form.bodyMarkdown} />
+              </div>
             </div>
           </section>
         </div>

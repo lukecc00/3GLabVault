@@ -26,7 +26,7 @@ function generateTemporaryPassword(length = 18) {
 }
 
 async function main() {
-  const mailDomain = process.env.MAIL_DOMAIN || '3glab.local';
+  const mailDomain = process.env.MAIL_DOMAIN || '3glab';
   const adminUsername = process.env.ADMIN_INITIAL_USERNAME || 'xiyou3g';
   const adminEmail =
     process.env.ADMIN_INITIAL_EMAIL || `${adminUsername}@${mailDomain}`;

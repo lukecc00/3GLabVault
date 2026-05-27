@@ -3,8 +3,14 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { GroupType, Prisma, UserGroupMembership } from '../generated/prisma';
+import {
+  GLOBAL_ADMIN_ROLE_CODES,
+  GRADE_ADMIN_ROLE_CODE,
+} from '../auth/auth.constants';
+import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddGroupMemberDto } from './dto/add-group-member.dto';
 import { CreateGroupDto } from './dto/create-group.dto';
@@ -52,8 +58,11 @@ const defaultDirectionGroupTemplates = [
 export class GroupService {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll() {
+  findAll(currentUser?: AuthenticatedUser) {
+    const scopedWhere = this.buildScopedGroupWhere(currentUser);
+
     return this.prisma.group.findMany({
+      where: scopedWhere,
       include: groupInclude,
       orderBy: [
         {
@@ -64,6 +73,39 @@ export class GroupService {
         },
       ],
     });
+  }
+
+  private buildScopedGroupWhere(
+    currentUser?: AuthenticatedUser,
+  ): Prisma.GroupWhereInput | undefined {
+    if (!currentUser || this.hasGlobalAdminRole(currentUser.roleCodes)) {
+      return undefined;
+    }
+
+    if (currentUser.roleCodes.includes(GRADE_ADMIN_ROLE_CODE)) {
+      const scopedGradeGroupIds = currentUser.groupIds;
+
+      if (scopedGradeGroupIds.length === 0) {
+        throw new ForbiddenException('年级管理员未绑定年级群组，无法查看群组列表');
+      }
+
+      return {
+        id: {
+          in: scopedGradeGroupIds,
+        },
+        type: GroupType.GRADE,
+      };
+    }
+
+    return undefined;
+  }
+
+  private hasGlobalAdminRole(roleCodes: string[]) {
+    return roleCodes.some((roleCode) =>
+      GLOBAL_ADMIN_ROLE_CODES.includes(
+        roleCode as (typeof GLOBAL_ADMIN_ROLE_CODES)[number],
+      ),
+    );
   }
 
   async create(dto: CreateGroupDto) {

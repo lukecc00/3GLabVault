@@ -1,9 +1,19 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { UserStatus } from '../generated/prisma';
+import { GroupType, UserStatus } from '../generated/prisma';
 import { MailcowService } from '../mailcow/mailcow.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { AUTH_TOKEN_TTL_SECONDS } from './auth.constants';
+import {
+  AUTH_TOKEN_TTL_SECONDS,
+  DIRECTION_ADMIN_ROLE_CODE,
+  DIRECTION_ADMIN_WORKSPACE_ID,
+  GRADE_ADMIN_ROLE_CODE,
+  GRADE_ADMIN_WORKSPACE_ID,
+  LAB_ADMIN_WORKSPACE_ID,
+  MEMBER_ROLE_CODE,
+  MEMBER_WORKSPACE_ID,
+  SYSTEM_ADMIN_WORKSPACE_ID,
+} from './auth.constants';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import {
@@ -20,10 +30,16 @@ const authUserSelect = {
   passwordHash: true,
   mustChangePassword: true,
   status: true,
-  archivedAt: true,
   memberships: {
     select: {
       groupId: true,
+      group: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+        },
+      },
     },
   },
   roles: {
@@ -56,7 +72,6 @@ export class AuthService {
     if (
       !user ||
       user.status !== UserStatus.ACTIVE ||
-      user.archivedAt !== null ||
       !user.passwordHash ||
       !(await verifyPassword(dto.password, user.passwordHash))
     ) {
@@ -86,7 +101,6 @@ export class AuthService {
     if (
       !user ||
       user.status !== UserStatus.ACTIVE ||
-      user.archivedAt !== null ||
       !user.passwordHash ||
       !(await verifyPassword(dto.currentPassword, user.passwordHash))
     ) {
@@ -115,18 +129,24 @@ export class AuthService {
     return this.getCurrentUser(userId);
   }
 
-  async authenticate(token: string): Promise<AuthenticatedUser> {
+  async authenticate(
+    token: string,
+    activeWorkspaceId?: string,
+  ): Promise<AuthenticatedUser> {
     const payload = this.verifyToken(token);
-    return this.findActiveUserById(payload.sub);
+    return this.findActiveUserById(payload.sub, activeWorkspaceId);
   }
 
-  private async findActiveUserById(userId: string): Promise<AuthenticatedUser> {
+  private async findActiveUserById(
+    userId: string,
+    activeWorkspaceId?: string,
+  ): Promise<AuthenticatedUser> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: authUserSelect,
     });
 
-    return this.ensureActiveUser(user);
+    return this.ensureActiveUser(user, activeWorkspaceId);
   }
 
   private ensureActiveUser(
@@ -138,16 +158,19 @@ export class AuthService {
       passwordHash?: string | null;
       mustChangePassword: boolean;
       status: UserStatus;
-      archivedAt: Date | null;
-      memberships: Array<{ groupId: string }>;
+      memberships: Array<{
+        groupId: string;
+        group: { id: string; name: string; type: GroupType };
+      }>;
       roles: Array<{ role: { code: string } }>;
     } | null,
+    activeWorkspaceId?: string,
   ): AuthenticatedUser {
-    if (!user || user.status !== UserStatus.ACTIVE || user.archivedAt !== null) {
+    if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('账号不存在或尚未启用');
     }
 
-    return this.toAuthenticatedUser(user);
+    return this.toAuthenticatedUser(user, activeWorkspaceId);
   }
 
   private toAuthenticatedUser(user: {
@@ -157,9 +180,24 @@ export class AuthService {
     realName: string;
     mustChangePassword: boolean;
     status: UserStatus;
-    memberships: Array<{ groupId: string }>;
+    memberships: Array<{
+      groupId: string;
+      group: { id: string; name: string; type: GroupType };
+    }>;
     roles: Array<{ role: { code: string } }>;
-  }): AuthenticatedUser {
+  }, activeWorkspaceId?: string): AuthenticatedUser {
+    const roleCodes = user.roles.map(({ role }) => role.code);
+    this.ensureWorkspaceAccessible(roleCodes, activeWorkspaceId);
+    const scopedRoleCodes = this.resolveWorkspaceRoleCodes(
+      roleCodes,
+      activeWorkspaceId,
+    );
+    const scopedMemberships = this.resolveWorkspaceMemberships(
+      user.memberships,
+      activeWorkspaceId,
+      scopedRoleCodes,
+    );
+
     return {
       id: user.id,
       username: user.username,
@@ -167,9 +205,107 @@ export class AuthService {
       realName: user.realName,
       mustChangePassword: user.mustChangePassword,
       status: user.status,
-      groupIds: user.memberships.map((membership) => membership.groupId),
-      roleCodes: user.roles.map(({ role }) => role.code),
+      groupIds: scopedMemberships.map((membership) => membership.groupId),
+      memberships: scopedMemberships.map((membership) => ({
+        groupId: membership.groupId,
+        group: {
+          id: membership.group.id,
+          name: membership.group.name,
+          type: membership.group.type,
+        },
+      })),
+      roleCodes: scopedRoleCodes,
     };
+  }
+
+  private ensureWorkspaceAccessible(
+    roleCodes: string[],
+    activeWorkspaceId?: string,
+  ) {
+    if (!activeWorkspaceId) {
+      return;
+    }
+
+    const accessibleWorkspaceIds = this.resolveAccessibleWorkspaceIds(roleCodes);
+    if (!accessibleWorkspaceIds.includes(activeWorkspaceId)) {
+      throw new UnauthorizedException('当前工作身份无效，请重新选择');
+    }
+  }
+
+  private resolveAccessibleWorkspaceIds(roleCodes: string[]) {
+    const workspaceIds: string[] = [];
+
+    if (roleCodes.includes('SUPER_ADMIN')) {
+      workspaceIds.push(SYSTEM_ADMIN_WORKSPACE_ID);
+    }
+
+    if (roleCodes.includes('LAB_ADMIN')) {
+      workspaceIds.push(LAB_ADMIN_WORKSPACE_ID);
+    }
+
+    if (roleCodes.includes(DIRECTION_ADMIN_ROLE_CODE)) {
+      workspaceIds.push(DIRECTION_ADMIN_WORKSPACE_ID);
+    }
+
+    if (roleCodes.includes(GRADE_ADMIN_ROLE_CODE)) {
+      workspaceIds.push(GRADE_ADMIN_WORKSPACE_ID);
+    }
+
+    if (roleCodes.includes(MEMBER_ROLE_CODE) || workspaceIds.length === 0) {
+      workspaceIds.push(MEMBER_WORKSPACE_ID);
+    }
+
+    return workspaceIds;
+  }
+
+  private resolveWorkspaceRoleCodes(
+    roleCodes: string[],
+    activeWorkspaceId?: string,
+  ) {
+    switch (activeWorkspaceId) {
+      case SYSTEM_ADMIN_WORKSPACE_ID:
+        return roleCodes.includes('SUPER_ADMIN') ? ['SUPER_ADMIN'] : roleCodes;
+      case LAB_ADMIN_WORKSPACE_ID:
+        return roleCodes.includes('LAB_ADMIN') ? ['LAB_ADMIN'] : roleCodes;
+      case DIRECTION_ADMIN_WORKSPACE_ID:
+        return roleCodes.includes(DIRECTION_ADMIN_ROLE_CODE)
+          ? [DIRECTION_ADMIN_ROLE_CODE]
+          : roleCodes;
+      case GRADE_ADMIN_WORKSPACE_ID:
+        return roleCodes.includes(GRADE_ADMIN_ROLE_CODE)
+          ? [GRADE_ADMIN_ROLE_CODE]
+          : roleCodes;
+      case MEMBER_WORKSPACE_ID:
+        return roleCodes.includes(MEMBER_ROLE_CODE) ? [MEMBER_ROLE_CODE] : [];
+      default:
+        return roleCodes;
+    }
+  }
+
+  private resolveWorkspaceMemberships(
+    memberships: Array<{
+      groupId: string;
+      group: { id: string; name: string; type: GroupType };
+    }>,
+    activeWorkspaceId: string | undefined,
+    scopedRoleCodes: string[],
+  ) {
+    switch (activeWorkspaceId) {
+      case DIRECTION_ADMIN_WORKSPACE_ID:
+        return scopedRoleCodes.includes(DIRECTION_ADMIN_ROLE_CODE)
+          ? memberships.filter(
+              (membership) => membership.group.type === GroupType.DIRECTION,
+            )
+          : memberships;
+      case GRADE_ADMIN_WORKSPACE_ID:
+        return scopedRoleCodes.includes(GRADE_ADMIN_ROLE_CODE)
+          ? memberships.filter(
+              (membership) => membership.group.type === GroupType.GRADE,
+            )
+          : memberships;
+      default:
+        return memberships;
+    }
   }
 
   private signToken(userId: string): string {

@@ -1,25 +1,25 @@
 import {
+  Allow,
   IsArray,
   IsEnum,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
 } from 'class-validator';
 import { PageStatus } from '../../generated/prisma';
 
 export class UpdateKnowledgePageDto {
+  @Allow()
+  @IsOptional()
+  parentId?: string | null;
+
   @IsOptional()
   @IsString()
   @MaxLength(100)
   title?: string;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(80)
-  @Matches(/^[a-z0-9-]+$/, {
-    message: 'slug 只能包含小写字母、数字和连字符',
-  })
+  @Allow()
   slug?: string;
 
   @IsOptional()

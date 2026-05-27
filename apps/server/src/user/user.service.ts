@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   OnModuleDestroy,
@@ -14,15 +15,24 @@ import {
   UserStatus,
 } from '../generated/prisma';
 import { generateTemporaryPassword, hashPassword } from '../auth/password.util';
-import { ADMIN_ROLE_CODES } from '../auth/auth.constants';
+import {
+  ADMIN_ROLE_CODES,
+  GLOBAL_ADMIN_ROLE_CODES,
+  GRADE_ADMIN_ROLE_CODE,
+} from '../auth/auth.constants';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { GroupService } from '../group/group.service';
 import { MailcowService } from '../mailcow/mailcow.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BatchGenerateUsersDto } from './dto/batch-generate-users.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { FindUsersDirectoryDto } from './dto/find-users-directory.dto';
 import { RegisterOptionsDto } from './dto/register-options.dto';
 import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
+import {
+  RestoreArchivedContentDto,
+  RestoreArchivedContentTarget,
+} from './dto/restore-archived-content.dto';
 import { ReviewUserDto } from './dto/review-user.dto';
 import { UpdateUserGroupAssignmentsDto } from './dto/update-user-group-assignments.dto';
 import { UpdateUserRoleAssignmentsDto } from './dto/update-user-role-assignments.dto';
@@ -36,10 +46,13 @@ const userDetailSelect = {
   id: true,
   username: true,
   email: true,
+  notificationEmail: true,
   realName: true,
   studentId: true,
   avatarUrl: true,
   bio: true,
+  emailReminderEnabled: true,
+  lastExternalMailReminderAt: true,
   keycloakUserId: true,
   mustChangePassword: true,
   mailboxProvisioningStatus: true,
@@ -67,10 +80,22 @@ type UserDetail = Prisma.UserGetPayload<{
   select: typeof userDetailSelect;
 }>;
 
+type ArchivedKnowledgeMembership = {
+  groupId: string;
+  membershipRole: MembershipRole;
+  group: {
+    id: string;
+    type: GroupType;
+  };
+};
+
 const USER_ARCHIVE_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
 const USER_ARCHIVE_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+const USER_DIRECTORY_DEFAULT_PAGE_SIZE = 25;
+const USER_DIRECTORY_MAX_PAGE_SIZE = 100;
 const PROTECTED_SYSTEM_ADMIN_USERNAME = 'xiyou3g';
 const SYSTEM_ADMIN_ROLE_CODE = 'SUPER_ADMIN';
+const GRADE_ADMIN_ASSIGNABLE_ROLE_CODES = ['MEMBER', GRADE_ADMIN_ROLE_CODE];
 
 @Injectable()
 export class UserService implements OnModuleInit, OnModuleDestroy {
@@ -98,11 +123,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async findAll() {
+  async findAll(currentUser?: AuthenticatedUser) {
     await this.runExpiredArchiveCleanup();
+    const managementScope = await this.buildManageableUserWhere(currentUser);
+
     return this.prisma.user.findMany({
       where: {
         archivedAt: null,
+        ...managementScope,
       },
       select: userDetailSelect,
       orderBy: {
@@ -111,20 +139,137 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  async findArchived() {
+  async findDirectory(
+    query: FindUsersDirectoryDto,
+    currentUser?: AuthenticatedUser,
+  ) {
     await this.runExpiredArchiveCleanup();
+
+    const pageSize = Math.min(
+      Math.max(query.pageSize ?? USER_DIRECTORY_DEFAULT_PAGE_SIZE, 1),
+      USER_DIRECTORY_MAX_PAGE_SIZE,
+    );
+    const requestedPage = Math.max(query.page ?? 1, 1);
+    const keyword = query.q?.trim();
+    const groupId = query.groupId?.trim();
+    const managementScope = await this.buildManageableUserWhere(
+      currentUser,
+      groupId,
+    );
+
+    const where: Prisma.UserWhereInput = {
+      archivedAt: null,
+      ...managementScope,
+      ...(groupId
+        ? {
+            memberships: {
+              some: {
+                groupId,
+              },
+            },
+          }
+        : {}),
+      ...(keyword
+        ? {
+            OR: [
+              {
+                realName: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                email: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                username: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                notificationEmail: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                studentId: {
+                  contains: keyword,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                roles: {
+                  some: {
+                    role: {
+                      name: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
+              },
+              {
+                memberships: {
+                  some: {
+                    group: {
+                      name: {
+                        contains: keyword,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const total = await this.prisma.user.count({ where });
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const page = Math.min(requestedPage, totalPages);
+    const items = await this.prisma.user.findMany({
+      where,
+      select: userDetailSelect,
+      orderBy: [{ createdAt: 'asc' }, { realName: 'asc' }],
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    });
+
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages,
+      hasPreviousPage: page > 1,
+      hasNextPage: page < totalPages,
+    };
+  }
+
+  async findArchived(currentUser?: AuthenticatedUser) {
+    await this.runExpiredArchiveCleanup();
+    const managementScope = await this.buildManageableUserWhere(currentUser);
+
     return this.prisma.user.findMany({
       where: {
         archivedAt: {
           not: null,
         },
+        ...managementScope,
       },
       select: userDetailSelect,
       orderBy: [{ archiveExpiresAt: 'asc' }, { archivedAt: 'desc' }],
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, currentUser?: AuthenticatedUser) {
     await this.runExpiredArchiveCleanup();
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -134,6 +279,8 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     if (!user) {
       throw new NotFoundException('用户不存在');
     }
+
+    await this.ensureUserManageable(id, currentUser);
 
     return user;
   }
@@ -162,14 +309,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
   }
 
   async register(dto: CreateUserDto) {
-    const groupIds = this.normalizeIds(dto.groupIds);
+    const groupIds = await this.ensureAssignableGroupIds(dto.groupIds);
     const usernamePrefix = createUsernameBaseFromPinyin(dto.namePinyin);
-    await this.ensureGroupsExist(groupIds);
     await this.ensureUsernamePrefixAvailable(usernamePrefix);
     const createdUser = await this.createUserRecord({
       realName: dto.realName,
       usernamePrefix,
       password: dto.password,
+      notificationEmail: dto.notificationEmail,
       avatarUrl: dto.avatarUrl,
       bio: dto.bio,
       groupIds,
@@ -205,10 +352,23 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     return this.findOne(createdUser.id);
   }
 
-  async batchGenerate(dto: BatchGenerateUsersDto) {
-    const groupIds = this.normalizeIds(dto.groupIds);
-    await this.ensureGroupsExist(groupIds);
-    this.ensureBatchStudentIdsUnique(dto.users);
+  async batchGenerate(
+    dto: BatchGenerateUsersDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    const groupIds = await this.ensureAssignableGroupIds(
+      dto.groupIds,
+      currentUser,
+    );
+    const temporaryPassword = dto.password.trim();
+
+    if (temporaryPassword.length < 8) {
+      throw new BadRequestException('统一初始密码至少需要 8 位');
+    }
+
+    if (groupIds.length === 0) {
+      throw new BadRequestException('请至少绑定一个群组');
+    }
     const reservedUsernames = new Set<string>();
     const createdUsers: Array<{
       temporaryPassword: string;
@@ -216,18 +376,16 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }> = [];
     const failedUsers: Array<{
       realName: string;
-      studentId?: string;
+      notificationEmail?: string;
       reason: string;
     }> = [];
 
     for (const entry of dto.users) {
-      const temporaryPassword = generateTemporaryPassword();
-
       try {
         const createdUser = await this.createUserRecord({
           realName: entry.realName,
           password: temporaryPassword,
-          studentId: entry.studentId,
+          notificationEmail: entry.notificationEmail,
           groupIds,
           status: UserStatus.ACTIVE,
           mustChangePassword: true,
@@ -254,7 +412,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
 
           createdUsers.push({
             temporaryPassword,
-            user: await this.findOne(createdUser.id),
+            user: await this.findOne(createdUser.id, currentUser),
           });
         } catch (error) {
           await this.prisma.user.delete({
@@ -265,7 +423,8 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       } catch (error) {
         failedUsers.push({
           realName: entry.realName,
-          studentId: entry.studentId?.trim() || undefined,
+          notificationEmail:
+            entry.notificationEmail?.trim().toLowerCase() || undefined,
           reason: error instanceof Error ? error.message : '未知错误',
         });
       }
@@ -277,10 +436,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  async review(id: string, dto: ReviewUserDto) {
+  async review(
+    id: string,
+    dto: ReviewUserDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureUserManageable(id, currentUser);
     const existingUser = await this.getUserAuthMaterial(id);
     const normalizedRoleIds = dto.roleIds
       ? this.normalizeIds(dto.roleIds)
+      : undefined;
+    const normalizedGroupIds = dto.groupIds
+      ? await this.ensureAssignableGroupIds(dto.groupIds, currentUser)
       : undefined;
 
     if (dto.status === UserStatus.PENDING) {
@@ -289,11 +456,8 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
 
     if (normalizedRoleIds) {
       await this.ensureRolesExist(normalizedRoleIds);
+      await this.ensureManageableRoleIds(normalizedRoleIds, currentUser);
       await this.ensureProtectedSystemAdminRoleRetained(id, normalizedRoleIds);
-    }
-
-    if (dto.groupIds) {
-      await this.ensureGroupsExist(dto.groupIds);
     }
 
     if (existingUser.archivedAt) {
@@ -307,6 +471,12 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         where: { id },
         data: {
           status: dto.status,
+          notificationEmail: dto.notificationEmail?.trim().toLowerCase(),
+          ...(dto.notificationEmail
+            ? {
+                emailReminderEnabled: true,
+              }
+            : {}),
         },
       });
 
@@ -325,14 +495,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      if (dto.groupIds) {
+      if (normalizedGroupIds) {
         await tx.userGroupMembership.deleteMany({
           where: { userId: id },
         });
 
-        if (dto.groupIds.length > 0) {
+        if (normalizedGroupIds.length > 0) {
           await tx.userGroupMembership.createMany({
-            data: dto.groupIds.map((groupId) => ({
+            data: normalizedGroupIds.map((groupId) => ({
               userId: id,
               groupId,
               membershipRole: MembershipRole.MEMBER,
@@ -358,10 +528,15 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    return this.findOne(id);
+    return this.findOne(id, currentUser);
   }
 
-  async resetPassword(id: string, dto: ResetUserPasswordDto) {
+  async resetPassword(
+    id: string,
+    dto: ResetUserPasswordDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureUserManageable(id, currentUser);
     const user = await this.getUserAuthMaterial(id);
 
     if (user.archivedAt) {
@@ -399,14 +574,20 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
 
     return {
       temporaryPassword,
-      user: await this.findOne(id),
+      user: await this.findOne(id, currentUser),
     };
   }
 
-  async updateRoles(id: string, dto: UpdateUserRoleAssignmentsDto) {
+  async updateRoles(
+    id: string,
+    dto: UpdateUserRoleAssignmentsDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureUserManageable(id, currentUser);
     await this.ensureUserNotArchived(id, '不能修改角色');
     const normalizedRoleIds = this.normalizeIds(dto.roleIds);
     await this.ensureRolesExist(normalizedRoleIds);
+    await this.ensureManageableRoleIds(normalizedRoleIds, currentUser);
     await this.ensureProtectedSystemAdminRoleRetained(id, normalizedRoleIds);
 
     await this.prisma.$transaction(async (tx) => {
@@ -424,21 +605,29 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    return this.findOne(id);
+    return this.findOne(id, currentUser);
   }
 
-  async updateGroups(id: string, dto: UpdateUserGroupAssignmentsDto) {
+  async updateGroups(
+    id: string,
+    dto: UpdateUserGroupAssignmentsDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureUserManageable(id, currentUser);
     await this.ensureUserNotArchived(id, '不能修改群组');
-    await this.ensureGroupsExist(dto.groupIds);
+    const groupIds = await this.ensureAssignableGroupIds(
+      dto.groupIds,
+      currentUser,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.userGroupMembership.deleteMany({
         where: { userId: id },
       });
 
-      if (dto.groupIds.length > 0) {
+      if (groupIds.length > 0) {
         await tx.userGroupMembership.createMany({
-          data: dto.groupIds.map((groupId) => ({
+          data: groupIds.map((groupId) => ({
             userId: id,
             groupId,
             membershipRole: MembershipRole.MEMBER,
@@ -447,11 +636,12 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
-    return this.findOne(id);
+    return this.findOne(id, currentUser);
   }
 
   async archive(id: string, currentUser: AuthenticatedUser) {
     await this.runExpiredArchiveCleanup();
+    await this.ensureUserManageable(id, currentUser);
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -461,6 +651,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         status: true,
         archivedAt: true,
         mailboxProvisioningStatus: true,
+        memberships: {
+          select: {
+            groupId: true,
+            membershipRole: true,
+            group: {
+              select: {
+                id: true,
+                type: true,
+              },
+            },
+          },
+        },
         roles: {
           select: {
             role: {
@@ -523,19 +725,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
 
     const now = new Date();
-    const archiveExpiresAt = new Date(now.getTime() + USER_ARCHIVE_RETENTION_MS);
+    const archiveExpiresAt = new Date(
+      now.getTime() + USER_ARCHIVE_RETENTION_MS,
+    );
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.userRole.deleteMany({
-        where: {
-          userId: user.id,
-        },
-      });
-
-      await tx.userGroupMembership.deleteMany({
-        where: {
-          userId: user.id,
-        },
+      await this.transferArchivedKnowledgePages(tx, {
+        userId: user.id,
+        memberships: user.memberships,
       });
 
       await tx.user.update({
@@ -549,10 +746,15 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       });
     });
 
-    return this.findOne(user.id);
+    return this.findOne(user.id, currentUser);
   }
 
-  async restoreArchivedContent(id: string) {
+  async restoreArchivedContent(
+    id: string,
+    dto: RestoreArchivedContentDto,
+    currentUser?: AuthenticatedUser,
+  ) {
+    await this.ensureUserManageable(id, currentUser);
     await this.runExpiredArchiveCleanup();
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -562,6 +764,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         archivedAt: true,
         archiveExpiresAt: true,
         contentRestoredAt: true,
+        memberships: {
+          select: {
+            groupId: true,
+            membershipRole: true,
+            group: {
+              select: {
+                id: true,
+                type: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -573,53 +787,259 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       throw new BadRequestException('当前用户未归档，无法恢复内容');
     }
 
-    if (user.archiveExpiresAt && user.archiveExpiresAt.getTime() <= Date.now()) {
+    if (
+      user.archiveExpiresAt &&
+      user.archiveExpiresAt.getTime() <= Date.now()
+    ) {
       throw new ConflictException('当前用户归档已到期，内容即将被自动清理');
     }
 
     if (user.contentRestoredAt) {
-      throw new ConflictException('该用户内容已恢复到系统管理员名下');
+      throw new ConflictException('该用户内容已恢复，无需重复操作');
     }
 
-    const systemAdmin = await this.findSystemAdminUser(user.id);
-
     await this.prisma.$transaction(async (tx) => {
-      await tx.knowledgePage.updateMany({
-        where: { authorId: user.id },
-        data: { authorId: systemAdmin.id },
+      const recipientId = await this.findRestoreContentRecipientId(tx, {
+        userId: user.id,
+        target: dto.target,
+        memberships: user.memberships,
       });
 
-      await tx.knowledgePage.updateMany({
-        where: { editorId: user.id },
-        data: { editorId: systemAdmin.id },
+      await this.transferArchivedKnowledgePages(tx, {
+        userId: user.id,
+        memberships: user.memberships,
+        recipientId,
       });
 
       await tx.internalMailThread.updateMany({
         where: { createdById: user.id },
-        data: { createdById: systemAdmin.id },
+        data: { createdById: recipientId },
       });
 
       await tx.internalMailMessage.updateMany({
         where: { senderId: user.id },
-        data: { senderId: systemAdmin.id },
+        data: { senderId: recipientId },
       });
 
-      await this.transferDraftUserReferences(tx, user.id, systemAdmin.id);
-      await this.transferMailboxEntries(tx, user.id, systemAdmin.id);
+      await this.transferDraftUserReferences(tx, user.id, recipientId);
+      await this.transferMailboxEntries(tx, user.id, recipientId);
 
       await tx.user.update({
         where: { id: user.id },
         data: {
           contentRestoredAt: new Date(),
+          archiveExpiresAt: new Date(Date.now() + USER_ARCHIVE_RETENTION_MS),
         },
       });
     });
 
-    return this.findOne(user.id);
+    return this.findOne(user.id, currentUser);
+  }
+
+  async reactivate(id: string, currentUser?: AuthenticatedUser) {
+    await this.ensureUserManageable(id, currentUser);
+    await this.runExpiredArchiveCleanup();
+    const user = await this.getUserAuthMaterial(id);
+
+    if (!user.archivedAt) {
+      throw new BadRequestException('当前用户未归档，无法重新启用账号');
+    }
+
+    if (
+      user.archiveExpiresAt &&
+      user.archiveExpiresAt.getTime() <= Date.now()
+    ) {
+      throw new ConflictException('当前用户归档已到期，无法重新启用账号');
+    }
+
+    if (user.contentRestoredAt) {
+      throw new ConflictException('该用户内容已恢复，无法重新启用账号');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          status: UserStatus.ACTIVE,
+          archivedAt: null,
+          archiveExpiresAt: null,
+          contentRestoredAt: null,
+        },
+      });
+
+      const existingRoleCount = await tx.userRole.count({
+        where: {
+          userId: user.id,
+        },
+      });
+
+      if (existingRoleCount === 0) {
+        await this.assignMemberRole(tx, user.id);
+      }
+    });
+
+    if (this.mailcowService.isEnabled()) {
+      await this.syncMailboxActivation(user, true);
+    }
+
+    return this.findOne(user.id, currentUser);
   }
 
   async remove(id: string, currentUser: AuthenticatedUser) {
     return this.archive(id, currentUser);
+  }
+
+  private async buildManageableUserWhere(
+    currentUser?: AuthenticatedUser,
+    requestedGroupId?: string,
+  ): Promise<Prisma.UserWhereInput> {
+    const manageableGradeGroupIds =
+      await this.resolveManageableGradeGroupIds(currentUser);
+
+    if (!manageableGradeGroupIds) {
+      return {};
+    }
+
+    if (
+      requestedGroupId &&
+      !manageableGradeGroupIds.includes(requestedGroupId.trim())
+    ) {
+      throw new ForbiddenException('年级管理员只能管理自己所在年级的成员');
+    }
+
+    return {
+      memberships: {
+        some: {
+          groupId: {
+            in: manageableGradeGroupIds,
+          },
+        },
+      },
+    };
+  }
+
+  private async ensureUserManageable(
+    userId: string,
+    currentUser?: AuthenticatedUser,
+  ) {
+    const manageableGradeGroupIds =
+      await this.resolveManageableGradeGroupIds(currentUser);
+
+    if (!manageableGradeGroupIds) {
+      return;
+    }
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        memberships: {
+          some: {
+            groupId: {
+              in: manageableGradeGroupIds,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!user) {
+      throw new ForbiddenException('年级管理员只能管理自己所在年级的成员');
+    }
+  }
+
+  private async ensureManageableGroupIds(
+    groupIds: string[],
+    currentUser?: AuthenticatedUser,
+  ) {
+    const manageableGradeGroupIds =
+      await this.resolveManageableGradeGroupIds(currentUser);
+
+    if (!manageableGradeGroupIds) {
+      return;
+    }
+
+    if (groupIds.length === 0) {
+      throw new ForbiddenException('年级管理员至少需要保留一个所属年级群组');
+    }
+
+    if (!groupIds.every((groupId) => manageableGradeGroupIds.includes(groupId))) {
+      throw new ForbiddenException('年级管理员只能分配自己所在年级的群组');
+    }
+  }
+
+  private async ensureManageableRoleIds(
+    roleIds: string[],
+    currentUser?: AuthenticatedUser,
+  ) {
+    const manageableGradeGroupIds =
+      await this.resolveManageableGradeGroupIds(currentUser);
+
+    if (!manageableGradeGroupIds || roleIds.length === 0) {
+      return;
+    }
+
+    const roles = await this.prisma.role.findMany({
+      where: {
+        id: {
+          in: roleIds,
+        },
+      },
+      select: {
+        code: true,
+      },
+    });
+
+    if (
+      roles.some(
+        (role) => !GRADE_ADMIN_ASSIGNABLE_ROLE_CODES.includes(role.code),
+      )
+    ) {
+      throw new ForbiddenException(
+        '年级管理员只能分配普通成员或年级管理员角色',
+      );
+    }
+  }
+
+  private async resolveManageableGradeGroupIds(
+    currentUser?: AuthenticatedUser,
+  ): Promise<string[] | null> {
+    if (!currentUser || this.hasGlobalAdminRole(currentUser.roleCodes)) {
+      return null;
+    }
+
+    if (!currentUser.roleCodes.includes(GRADE_ADMIN_ROLE_CODE)) {
+      return null;
+    }
+
+    const gradeGroups = await this.prisma.group.findMany({
+      where: {
+        id: {
+          in: currentUser.groupIds,
+        },
+        type: GroupType.GRADE,
+      },
+      select: {
+        id: true,
+      },
+    });
+    const manageableGradeGroupIds = gradeGroups.map((group) => group.id);
+
+    if (manageableGradeGroupIds.length === 0) {
+      throw new ForbiddenException('年级管理员未绑定年级群组，无法执行该操作');
+    }
+
+    return manageableGradeGroupIds;
+  }
+
+  private hasGlobalAdminRole(roleCodes: string[]) {
+    return roleCodes.some((roleCode) =>
+      GLOBAL_ADMIN_ROLE_CODES.includes(
+        roleCode as (typeof GLOBAL_ADMIN_ROLE_CODES)[number],
+      ),
+    );
   }
 
   private async ensureUserNotArchived(id: string, actionMessage: string) {
@@ -654,6 +1074,8 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         passwordHash: true,
         status: true,
         archivedAt: true,
+        archiveExpiresAt: true,
+        contentRestoredAt: true,
         mustChangePassword: true,
         mailboxProvisioningStatus: true,
         mailboxLastError: true,
@@ -717,7 +1139,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         error: active
           ? '账号已启用，但邮箱尚未成功开户；当前可登录系统，邮箱功能暂不可用。'
           : user.mailboxProvisioningStatus === MailboxProvisioningStatus.FAILED
-            ? user.mailboxLastError ?? '邮箱停用状态未知'
+            ? (user.mailboxLastError ?? '邮箱停用状态未知')
             : null,
       });
       return;
@@ -858,6 +1280,40 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  private async ensureAssignableGroupIds(
+    groupIds?: string[],
+    currentUser?: AuthenticatedUser,
+  ) {
+    const normalizedGroupIds = this.normalizeIds(groupIds);
+    await this.ensureGroupsExist(normalizedGroupIds);
+    await this.ensureSingleGradeGroupSelection(normalizedGroupIds);
+    await this.ensureManageableGroupIds(normalizedGroupIds, currentUser);
+
+    return normalizedGroupIds;
+  }
+
+  private async ensureSingleGradeGroupSelection(groupIds: string[]) {
+    if (groupIds.length <= 1) {
+      return;
+    }
+
+    const gradeGroups = await this.prisma.group.findMany({
+      where: {
+        id: {
+          in: groupIds,
+        },
+        type: GroupType.GRADE,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (gradeGroups.length > 1) {
+      throw new BadRequestException('一个用户只能选择一个年级组');
+    }
+  }
+
   private async isUsernamePrefixAvailable(prefix: string) {
     const email = createMailboxAddress(prefix, this.getMailDomain());
     const existing = await this.prisma.user.findFirst({
@@ -941,27 +1397,27 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
   ) {
     const base = createUsernameBase(realName);
 
-    for (let index = 0; index < 500; index += 1) {
-      const suffix = index === 0 ? '' : `${index + 1}`;
-      const username = `${base.slice(0, Math.max(1, 30 - suffix.length))}${suffix}`;
-
-      if (reservedUsernames.has(username)) {
+    for (const candidate of [
+      base,
+      ...this.getRandomizedTwoDigitUsernameCandidates(base),
+    ]) {
+      if (reservedUsernames.has(candidate)) {
         continue;
       }
 
-      const email = createMailboxAddress(username, this.getMailDomain());
+      const email = createMailboxAddress(candidate, this.getMailDomain());
       const existing = await tx.user.findFirst({
         where: {
-          OR: [{ username }, { email }],
+          OR: [{ username: candidate }, { email }],
         },
         select: { id: true },
       });
 
       if (!existing) {
-        reservedUsernames.add(username);
+        reservedUsernames.add(candidate);
 
         return {
-          username,
+          username: candidate,
           email,
         };
       }
@@ -974,6 +1430,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     realName: string;
     usernamePrefix?: string;
     password: string;
+    notificationEmail?: string;
     studentId?: string;
     avatarUrl?: string;
     bio?: string;
@@ -1000,12 +1457,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         const user = await tx.user.create({
           data: {
             email: identity.email,
+            notificationEmail: input.notificationEmail?.trim().toLowerCase(),
             username: identity.username,
             passwordHash,
             realName: input.realName,
             studentId: input.studentId?.trim() || undefined,
             avatarUrl: input.avatarUrl,
             bio: input.bio,
+            emailReminderEnabled: true,
             status: input.status,
             mustChangePassword: input.mustChangePassword,
             passwordUpdatedAt: new Date(),
@@ -1145,18 +1604,25 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     return [...new Set((ids ?? []).map((id) => id.trim()).filter(Boolean))];
   }
 
-  private ensureBatchStudentIdsUnique(users: BatchGenerateUsersDto['users']) {
-    const studentIds = users
-      .map((user) => user.studentId?.trim())
-      .filter((studentId): studentId is string => Boolean(studentId));
+  private getRandomizedTwoDigitUsernameCandidates(base: string) {
+    const suffixes = Array.from({ length: 100 }, (_, index) =>
+      index.toString().padStart(2, '0'),
+    );
 
-    if (studentIds.length !== new Set(studentIds).size) {
-      throw new BadRequestException('批量导入数据中存在重复学号');
+    for (let index = suffixes.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      const current = suffixes[index];
+      suffixes[index] = suffixes[randomIndex];
+      suffixes[randomIndex] = current;
     }
+
+    return suffixes.map(
+      (suffix) => `${base.slice(0, Math.max(1, 30 - suffix.length))}${suffix}`,
+    );
   }
 
   private getMailDomain() {
-    return process.env.MAIL_DOMAIN ?? '3glab.local';
+    return process.env.MAIL_DOMAIN ?? '3glab';
   }
 
   private async runExpiredArchiveCleanup() {
@@ -1196,8 +1662,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
             await this.mailcowService.deleteMailbox(user.email);
           }
 
-          await this.prisma.user.delete({
-            where: { id: user.id },
+          await this.prisma.$transaction(async (tx) => {
+            await this.transferArchivedKnowledgePages(tx, {
+              userId: user.id,
+            });
+
+            await tx.user.delete({
+              where: { id: user.id },
+            });
           });
         } catch (error) {
           await this.prisma.user.update({
@@ -1214,37 +1686,534 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async findSystemAdminUser(excludeUserId?: string) {
-    const user = await this.prisma.user.findFirst({
+  private async findRestoreContentRecipientId(
+    tx: Prisma.TransactionClient,
+    input: {
+      userId: string;
+      target: RestoreArchivedContentTarget;
+      memberships?: ArchivedKnowledgeMembership[];
+    },
+  ) {
+    if (input.target === RestoreArchivedContentTarget.LAB_ADMIN) {
+      return this.findLabAdminUserId(tx, input.userId);
+    }
+
+    return this.findDirectionAdminUserId(tx, {
+      userId: input.userId,
+      memberships: input.memberships,
+    });
+  }
+
+  private async findLabAdminUserId(
+    tx: Prisma.TransactionClient,
+    excludeUserId: string,
+  ) {
+    const candidates = await tx.user.findMany({
       where: {
-        id: excludeUserId
-          ? {
-              not: excludeUserId,
-            }
-          : undefined,
+        id: {
+          not: excludeUserId,
+        },
         status: UserStatus.ACTIVE,
         archivedAt: null,
         roles: {
           some: {
             role: {
-              code: 'SUPER_ADMIN',
+              code: {
+                in: ['LAB_ADMIN', 'SUPER_ADMIN'],
+              },
             },
           },
         },
       },
       select: {
         id: true,
+        createdAt: true,
+        roles: {
+          select: {
+            role: {
+              select: {
+                code: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'asc',
       },
     });
 
-    if (!user) {
-      throw new ConflictException('未找到可接收内容的系统管理员账号');
+    if (candidates.length === 0) {
+      throw new ConflictException('未找到可接收内容的实验室管理员账号');
     }
 
-    return user;
+    const rolePriority = {
+      LAB_ADMIN: 0,
+      SUPER_ADMIN: 1,
+    } as const;
+
+    const bestCandidate = [...candidates].sort((left, right) => {
+      const leftPriority = Math.min(
+        ...left.roles.map(
+          ({ role }) => rolePriority[role.code as keyof typeof rolePriority],
+        ),
+      );
+      const rightPriority = Math.min(
+        ...right.roles.map(
+          ({ role }) => rolePriority[role.code as keyof typeof rolePriority],
+        ),
+      );
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return left.createdAt.getTime() - right.createdAt.getTime();
+    })[0];
+
+    return bestCandidate.id;
+  }
+
+  private async findDirectionAdminUserId(
+    tx: Prisma.TransactionClient,
+    input: {
+      userId: string;
+      memberships?: ArchivedKnowledgeMembership[];
+    },
+  ) {
+    const pages = await tx.knowledgePage.findMany({
+      where: {
+        OR: [{ authorId: input.userId }, { editorId: input.userId }],
+      },
+      select: {
+        space: {
+          select: {
+            ownerGroup: {
+              select: {
+                id: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const directionGroupIds = this.collectArchiveGroupIds(
+      GroupType.DIRECTION,
+      pages,
+      input.memberships,
+    );
+
+    if (directionGroupIds.length === 0) {
+      throw new BadRequestException(
+        '该用户未归属任何方向，无法恢复到方向管理员名下',
+      );
+    }
+
+    const directionAdminsByGroupId = await this.findScopedArchiveAdminsByGroup(
+      tx,
+      {
+        excludeUserId: input.userId,
+        roleCode: 'DIRECTION_ADMIN',
+        groupIds: directionGroupIds,
+      },
+    );
+
+    const directionAdminId = this.pickFirstArchiveAdmin(
+      directionGroupIds,
+      directionAdminsByGroupId,
+    );
+
+    if (!directionAdminId) {
+      throw new ConflictException('未找到可接收内容的方向管理员账号');
+    }
+
+    return directionAdminId;
+  }
+
+  private async transferArchivedKnowledgePages(
+    tx: Prisma.TransactionClient,
+    input: {
+      userId: string;
+      memberships?: ArchivedKnowledgeMembership[];
+      recipientId?: string;
+    },
+  ) {
+    const pages = await tx.knowledgePage.findMany({
+      where: {
+        OR: [{ authorId: input.userId }, { editorId: input.userId }],
+      },
+      select: {
+        id: true,
+        authorId: true,
+        editorId: true,
+        space: {
+          select: {
+            ownerGroup: {
+              select: {
+                id: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (pages.length === 0) {
+      return;
+    }
+
+    if (input.recipientId) {
+      for (const page of pages) {
+        const data: {
+          authorId?: string;
+          editorId?: string;
+        } = {};
+
+        if (page.authorId === input.userId) {
+          data.authorId = input.recipientId;
+        }
+
+        if (page.editorId === input.userId) {
+          data.editorId = input.recipientId;
+        }
+
+        await tx.knowledgePage.update({
+          where: { id: page.id },
+          data,
+        });
+      }
+
+      return;
+    }
+
+    const directionGroupIds = this.collectArchiveGroupIds(
+      GroupType.DIRECTION,
+      pages,
+      input.memberships,
+    );
+    const gradeGroupIds = this.collectArchiveGroupIds(
+      GroupType.GRADE,
+      pages,
+      input.memberships,
+    );
+
+    const [directionAdminsByGroupId, gradeAdminsByGroupId, fallbackAdminId] =
+      await Promise.all([
+        this.findScopedArchiveAdminsByGroup(tx, {
+          excludeUserId: input.userId,
+          roleCode: 'DIRECTION_ADMIN',
+          groupIds: directionGroupIds,
+        }),
+        this.findScopedArchiveAdminsByGroup(tx, {
+          excludeUserId: input.userId,
+          roleCode: 'GRADE_ADMIN',
+          groupIds: gradeGroupIds,
+        }),
+        this.findArchiveFallbackAdminId(tx, input.userId),
+      ]);
+
+    const preferredDirectionAdminId = this.pickFirstArchiveAdmin(
+      directionGroupIds,
+      directionAdminsByGroupId,
+    );
+    const preferredGradeAdminId = this.pickFirstArchiveAdmin(
+      gradeGroupIds,
+      gradeAdminsByGroupId,
+    );
+
+    for (const page of pages) {
+      const recipientId = this.resolveArchivedKnowledgeRecipientId({
+        page,
+        directionAdminsByGroupId,
+        gradeAdminsByGroupId,
+        preferredDirectionAdminId,
+        preferredGradeAdminId,
+        fallbackAdminId,
+      });
+
+      if (!recipientId) {
+        throw new ConflictException('未找到可接管知识内容的管理员账号');
+      }
+
+      const data: {
+        authorId?: string;
+        editorId?: string;
+      } = {};
+
+      if (page.authorId === input.userId) {
+        data.authorId = recipientId;
+      }
+
+      if (page.editorId === input.userId) {
+        data.editorId = recipientId;
+      }
+
+      await tx.knowledgePage.update({
+        where: { id: page.id },
+        data,
+      });
+    }
+  }
+
+  private collectArchiveGroupIds(
+    groupType: GroupType,
+    pages: Array<{
+      space: {
+        ownerGroup: {
+          id: string;
+          type: GroupType;
+        } | null;
+      };
+    }>,
+    memberships?: ArchivedKnowledgeMembership[],
+  ) {
+    const groupIds = new Set<string>();
+
+    for (const membership of memberships ?? []) {
+      if (membership.group.type === groupType) {
+        groupIds.add(membership.groupId);
+      }
+    }
+
+    for (const page of pages) {
+      if (page.space.ownerGroup?.type === groupType) {
+        groupIds.add(page.space.ownerGroup.id);
+      }
+    }
+
+    return [...groupIds].sort();
+  }
+
+  private async findScopedArchiveAdminsByGroup(
+    tx: Prisma.TransactionClient,
+    input: {
+      excludeUserId: string;
+      roleCode: 'DIRECTION_ADMIN' | 'GRADE_ADMIN';
+      groupIds: string[];
+    },
+  ) {
+    const recipientsByGroupId = new Map<string, string>();
+
+    if (input.groupIds.length === 0) {
+      return recipientsByGroupId;
+    }
+
+    const candidates = await tx.user.findMany({
+      where: {
+        id: {
+          not: input.excludeUserId,
+        },
+        status: UserStatus.ACTIVE,
+        archivedAt: null,
+        roles: {
+          some: {
+            role: {
+              code: input.roleCode,
+            },
+          },
+        },
+        memberships: {
+          some: {
+            groupId: {
+              in: input.groupIds,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        memberships: {
+          where: {
+            groupId: {
+              in: input.groupIds,
+            },
+          },
+          select: {
+            groupId: true,
+            membershipRole: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    const candidateByGroupId = new Map<
+      string,
+      {
+        id: string;
+        createdAt: Date;
+        isManager: boolean;
+      }
+    >();
+
+    for (const candidate of candidates) {
+      for (const membership of candidate.memberships) {
+        const existing = candidateByGroupId.get(membership.groupId);
+        const next = {
+          id: candidate.id,
+          createdAt: candidate.createdAt,
+          isManager: membership.membershipRole === MembershipRole.MANAGER,
+        };
+
+        if (!existing) {
+          candidateByGroupId.set(membership.groupId, next);
+          continue;
+        }
+
+        if (next.isManager && !existing.isManager) {
+          candidateByGroupId.set(membership.groupId, next);
+          continue;
+        }
+
+        if (
+          next.isManager === existing.isManager &&
+          next.createdAt.getTime() < existing.createdAt.getTime()
+        ) {
+          candidateByGroupId.set(membership.groupId, next);
+        }
+      }
+    }
+
+    for (const [groupId, candidate] of candidateByGroupId.entries()) {
+      recipientsByGroupId.set(groupId, candidate.id);
+    }
+
+    return recipientsByGroupId;
+  }
+
+  private async findArchiveFallbackAdminId(
+    tx: Prisma.TransactionClient,
+    excludeUserId: string,
+  ) {
+    const candidates = await tx.user.findMany({
+      where: {
+        id: {
+          not: excludeUserId,
+        },
+        status: UserStatus.ACTIVE,
+        archivedAt: null,
+        roles: {
+          some: {
+            role: {
+              code: {
+                in: [...ADMIN_ROLE_CODES],
+              },
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        roles: {
+          select: {
+            role: {
+              select: {
+                code: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    if (candidates.length === 0) {
+      return null;
+    }
+
+    const rolePriority = {
+      LAB_ADMIN: 0,
+      SUPER_ADMIN: 1,
+      DIRECTION_ADMIN: 2,
+      GRADE_ADMIN: 3,
+    } satisfies Record<(typeof ADMIN_ROLE_CODES)[number], number>;
+
+    const bestCandidate = [...candidates].sort((left, right) => {
+      const leftPriority = Math.min(
+        ...left.roles.map(
+          ({ role }) => rolePriority[role.code as keyof typeof rolePriority],
+        ),
+      );
+      const rightPriority = Math.min(
+        ...right.roles.map(
+          ({ role }) => rolePriority[role.code as keyof typeof rolePriority],
+        ),
+      );
+
+      if (leftPriority !== rightPriority) {
+        return leftPriority - rightPriority;
+      }
+
+      return left.createdAt.getTime() - right.createdAt.getTime();
+    })[0];
+
+    return bestCandidate?.id ?? null;
+  }
+
+  private pickFirstArchiveAdmin(
+    groupIds: string[],
+    recipientsByGroupId: Map<string, string>,
+  ) {
+    for (const groupId of groupIds) {
+      const recipientId = recipientsByGroupId.get(groupId);
+
+      if (recipientId) {
+        return recipientId;
+      }
+    }
+
+    return null;
+  }
+
+  private resolveArchivedKnowledgeRecipientId(input: {
+    page: {
+      space: {
+        ownerGroup: {
+          id: string;
+          type: GroupType;
+        } | null;
+      };
+    };
+    directionAdminsByGroupId: Map<string, string>;
+    gradeAdminsByGroupId: Map<string, string>;
+    preferredDirectionAdminId: string | null;
+    preferredGradeAdminId: string | null;
+    fallbackAdminId: string | null;
+  }) {
+    const ownerGroup = input.page.space.ownerGroup;
+
+    if (ownerGroup?.type === GroupType.DIRECTION) {
+      return (
+        input.directionAdminsByGroupId.get(ownerGroup.id) ??
+        input.preferredDirectionAdminId ??
+        input.preferredGradeAdminId ??
+        input.fallbackAdminId
+      );
+    }
+
+    if (ownerGroup?.type === GroupType.GRADE) {
+      return (
+        input.gradeAdminsByGroupId.get(ownerGroup.id) ??
+        input.preferredGradeAdminId ??
+        input.preferredDirectionAdminId ??
+        input.fallbackAdminId
+      );
+    }
+
+    return (
+      input.preferredDirectionAdminId ??
+      input.preferredGradeAdminId ??
+      input.fallbackAdminId
+    );
   }
 
   private async transferDraftUserReferences(

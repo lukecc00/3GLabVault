@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsEmail,
   IsOptional,
   IsString,
   Matches,
@@ -23,6 +24,10 @@ export class CreateUserDto {
   @MinLength(8)
   @MaxLength(64)
   password: string;
+
+  @IsEmail({}, { message: '请输入有效的外部通知邮箱' })
+  @MaxLength(255)
+  notificationEmail: string;
 
   @IsOptional()
   @IsString()

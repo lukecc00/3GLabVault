@@ -1,18 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMailContext } from "./mail-context";
 import { DangerConfirmDialog } from "@/components/ui/danger-confirm-dialog";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type {
   InternalMailListItem,
-  InternalMailMessageDetail,
   UpdateInternalMailMailboxPayload,
 } from "@/lib/contracts";
-import { cn } from "@/lib/utils";
+import { renderMarkdownToPlainText } from "@/lib/markdown";
 
 type FolderKey = "inbox" | "sent" | "drafts" | "archive" | "trash";
+const EMPTY_TRASH_ACTION_ID = "__empty-trash__";
+
+type PendingDangerAction =
+  | {
+      kind: "delete";
+      mailboxEntryId: string;
+      subject: string;
+    }
+  | {
+      kind: "purge";
+      mailboxEntryId: string;
+      subject: string;
+    }
+  | {
+      kind: "emptyTrash";
+      itemCount: number;
+    };
 
 interface MailFolderPageProps {
   folder: FolderKey;
@@ -26,6 +42,7 @@ function formatDateTime(value: string | null) {
   }
 
   return new Date(value).toLocaleString("zh-CN", {
+    year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
@@ -33,16 +50,36 @@ function formatDateTime(value: string | null) {
   });
 }
 
-function buildComposeHref(
-  mode: "reply" | "forward",
-  message: InternalMailMessageDetail,
-) {
+function buildMessageViewHref(folder: FolderKey, messageId: string) {
   const params = new URLSearchParams({
-    mode,
-    messageId: message.id,
+    folder,
+    messageId,
   });
 
-  return `/portal/mail/compose?${params.toString()}`;
+  return `/portal/mail/view?${params.toString()}`;
+}
+
+function buildRecipientSummary(item: InternalMailListItem, folder: FolderKey) {
+  if (folder === "sent" || folder === "drafts") {
+    const names = item.recipients.slice(0, 3).map((recipient) => recipient.user.realName);
+    const remaining = Math.max(item.recipientCount - names.length, 0);
+
+    if (names.length === 0) {
+      return "未填写收件人";
+    }
+
+    return `收件人：${names.join("、")}${remaining > 0 ? ` 等 ${item.recipientCount} 人` : ""}`;
+  }
+
+  return `发件人：${item.sender.realName}`;
+}
+
+function buildListPreview(preview: string) {
+  const renderedText = renderMarkdownToPlainText(preview || "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return renderedText || "（无正文）";
 }
 
 export function MailFolderPage({
@@ -52,24 +89,17 @@ export function MailFolderPage({
 }: MailFolderPageProps) {
   const { refreshSummary } = useMailContext();
   const [items, setItems] = useState<InternalMailListItem[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<InternalMailMessageDetail | null>(
-    null,
-  );
   const [loading, setLoading] = useState(true);
-  const [loadingDetail, setLoadingDetail] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyActionId, setBusyActionId] = useState<string | null>(null);
-  const [pendingDeleteMail, setPendingDeleteMail] = useState<{
-    mailboxEntryId: string;
-    subject: string;
-  } | null>(null);
+  const [pendingDangerAction, setPendingDangerAction] = useState<PendingDangerAction | null>(null);
   const [keyword, setKeyword] = useState("");
   const [readFilter, setReadFilter] = useState<"all" | "read" | "unread">("all");
   const [starredFilter, setStarredFilter] = useState<"all" | "starred" | "unstarred">(
     "all",
   );
+  const latestListRequestIdRef = useRef(0);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();
@@ -90,6 +120,7 @@ export function MailFolderPage({
   }, [keyword, readFilter, starredFilter]);
 
   async function loadList() {
+    const requestId = ++latestListRequestIdRef.current;
     setLoading(true);
     setError(null);
 
@@ -97,36 +128,22 @@ export function MailFolderPage({
       const data = await fetchApi<InternalMailListItem[]>(
         `/internal-mail/${folder}${queryString ? `?${queryString}` : ""}`,
       );
-      setItems(data);
 
-      if (!data.some((item) => item.id === selectedId)) {
-        const nextSelectedId = data[0]?.id ?? null;
-        setSelectedId(nextSelectedId);
-
-        if (!nextSelectedId) {
-          setSelectedMessage(null);
-        }
+      if (latestListRequestIdRef.current !== requestId) {
+        return;
       }
+
+      setItems(data);
     } catch (loadError) {
+      if (latestListRequestIdRef.current !== requestId) {
+        return;
+      }
+
       setError(loadError instanceof ApiError ? loadError.message : "无法获取邮件列表");
     } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadDetail(messageId: string) {
-    setLoadingDetail(true);
-
-    try {
-      const detail = await fetchApi<InternalMailMessageDetail>(
-        `/internal-mail/messages/${messageId}`,
-      );
-      setSelectedMessage(detail);
-      await refreshSummary();
-    } catch (loadError) {
-      setMessage(loadError instanceof ApiError ? loadError.message : "无法获取邮件详情");
-    } finally {
-      setLoadingDetail(false);
+      if (latestListRequestIdRef.current === requestId) {
+        setLoading(false);
+      }
     }
   }
 
@@ -138,35 +155,23 @@ export function MailFolderPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [folder, queryString]);
 
-  useEffect(() => {
-    if (!selectedId) {
-      return;
-    }
-
-    void (async () => {
-      await loadDetail(selectedId);
-    })();
-    // selectedId change is the intended fetch trigger
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId]);
-
   async function handleMailboxAction(
     mailboxEntryId: string,
     payload: UpdateInternalMailMailboxPayload,
   ) {
     setBusyActionId(mailboxEntryId);
     setMessage(null);
+    setError(null);
 
     try {
-      const detail = await sendJson<
-        InternalMailMessageDetail,
-        UpdateInternalMailMailboxPayload
-      >(`/internal-mail/mailbox/${mailboxEntryId}`, "PATCH", payload);
-
-      setSelectedMessage(detail);
+      await sendJson<unknown, UpdateInternalMailMailboxPayload>(
+        `/internal-mail/mailbox/${mailboxEntryId}`,
+        "PATCH",
+        payload,
+      );
       await Promise.all([loadList(), refreshSummary()]);
     } catch (actionError) {
-      setMessage(actionError instanceof ApiError ? actionError.message : "邮件操作失败");
+      setError(actionError instanceof ApiError ? actionError.message : "邮件操作失败");
     } finally {
       setBusyActionId(null);
     }
@@ -175,17 +180,17 @@ export function MailFolderPage({
   async function handleMarkRead(mailboxEntryId: string) {
     setBusyActionId(mailboxEntryId);
     setMessage(null);
+    setError(null);
 
     try {
-      const detail = await sendJson<InternalMailMessageDetail, Record<string, never>>(
+      await sendJson<unknown, Record<string, never>>(
         `/internal-mail/mailbox/${mailboxEntryId}/read`,
         "PATCH",
         {},
       );
-      setSelectedMessage(detail);
       await Promise.all([loadList(), refreshSummary()]);
     } catch (actionError) {
-      setMessage(
+      setError(
         actionError instanceof ApiError ? actionError.message : "标记已读失败",
       );
     } finally {
@@ -193,16 +198,83 @@ export function MailFolderPage({
     }
   }
 
-  async function handleConfirmDeleteMail() {
-    if (!pendingDeleteMail) {
+  async function handleEmptyTrash() {
+    setBusyActionId(EMPTY_TRASH_ACTION_ID);
+    setMessage(null);
+    setError(null);
+
+    try {
+      await fetchApi<{ deletedCount: number }>("/internal-mail/trash", {
+        method: "DELETE",
+      });
+      await Promise.all([loadList(), refreshSummary()]);
+      setMessage("回收站已清空。");
+    } catch (actionError) {
+      setError(actionError instanceof ApiError ? actionError.message : "清空回收站失败");
+    } finally {
+      setBusyActionId(null);
+    }
+  }
+
+  async function handleConfirmDangerAction() {
+    if (!pendingDangerAction) {
       return;
     }
 
-    await handleMailboxAction(pendingDeleteMail.mailboxEntryId, {
-      action: "DELETE",
-    });
-    setPendingDeleteMail(null);
+    if (pendingDangerAction.kind === "delete") {
+      await handleMailboxAction(pendingDangerAction.mailboxEntryId, {
+        action: "DELETE",
+      });
+    } else if (pendingDangerAction.kind === "purge") {
+      await handleMailboxAction(pendingDangerAction.mailboxEntryId, {
+        action: "PURGE",
+      });
+      setMessage("邮件已从回收站彻底删除。");
+    } else {
+      await handleEmptyTrash();
+    }
+
+    setPendingDangerAction(null);
   }
+
+  function getDangerDialogConfig() {
+    if (!pendingDangerAction) {
+      return null;
+    }
+
+    if (pendingDangerAction.kind === "delete") {
+      return {
+        title: "删除邮件",
+        description: `该操作会将“${pendingDangerAction.subject}”移入回收站。为防止误操作，请输入确认文案后继续。`,
+        confirmText: "确认删除该邮件",
+        confirmLabel: "请输入确认文案",
+        actionLabel: "确认删除",
+        busyId: pendingDangerAction.mailboxEntryId,
+      };
+    }
+
+    if (pendingDangerAction.kind === "purge") {
+      return {
+        title: "彻底删除邮件",
+        description: `该操作会立即从你的回收站中永久移除“${pendingDangerAction.subject}”，删除后无法恢复。为防止误操作，请输入确认文案后继续。`,
+        confirmText: "确认彻底删除该邮件",
+        confirmLabel: "请输入确认文案",
+        actionLabel: "彻底删除",
+        busyId: pendingDangerAction.mailboxEntryId,
+      };
+    }
+
+    return {
+      title: "清空回收站",
+      description: `该操作会立即彻底删除回收站中的 ${pendingDangerAction.itemCount} 封邮件，删除后无法恢复。为防止误操作，请输入确认文案后继续。`,
+      confirmText: "确认清空回收站",
+      confirmLabel: "请输入确认文案",
+      actionLabel: "确认清空",
+      busyId: EMPTY_TRASH_ACTION_ID,
+    };
+  }
+
+  const dangerDialogConfig = getDangerDialogConfig();
 
   function renderEmptyState() {
     const actionMap: Record<FolderKey, { title: string; actionLabel: string; href: string }> =
@@ -238,13 +310,9 @@ export function MailFolderPage({
 
     return (
       <div className="app-panel-muted flex min-h-[260px] flex-col items-center justify-center px-6 py-10 text-center">
-        <div className="app-eyebrow app-eyebrow-neutral">Mailbox Empty</div>
-        <h2 className="mt-5 text-2xl font-semibold text-balance text-slate-50">
+        <h2 className="text-2xl font-semibold text-balance text-foreground-strong">
           {current.title}
         </h2>
-        <p className="mt-3 max-w-[48ch] text-sm leading-7 text-slate-300 text-pretty">
-          你可以切换箱体继续处理邮件，或直接新建一封内部邮件开始新的沟通。
-        </p>
         <Link href={current.href} className="app-button-primary mt-6">
           {current.actionLabel}
         </Link>
@@ -254,37 +322,56 @@ export function MailFolderPage({
 
   return (
     <div className="space-y-6">
-      {pendingDeleteMail ? (
+      {dangerDialogConfig ? (
         <DangerConfirmDialog
           open
-          title="删除邮件"
-          description="该操作会将当前邮件移入回收站。为防止误操作，请输入确认文案后继续。"
-          confirmText="确认删除该邮件"
-          confirmLabel="请输入确认文案"
-          actionLabel="确认删除"
-          busy={busyActionId === pendingDeleteMail.mailboxEntryId}
+          title={dangerDialogConfig.title}
+          description={dangerDialogConfig.description}
+          confirmText={dangerDialogConfig.confirmText}
+          confirmLabel={dangerDialogConfig.confirmLabel}
+          actionLabel={dangerDialogConfig.actionLabel}
+          busy={busyActionId === dangerDialogConfig.busyId}
           onClose={() => {
-            if (busyActionId !== pendingDeleteMail.mailboxEntryId) {
-              setPendingDeleteMail(null);
+            if (busyActionId !== dangerDialogConfig.busyId) {
+              setPendingDangerAction(null);
             }
           }}
-          onConfirm={handleConfirmDeleteMail}
+          onConfirm={handleConfirmDangerAction}
         />
       ) : null}
       <section className="app-panel p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="app-eyebrow app-eyebrow-neutral">{title}</div>
-            <h2 className="mt-4 text-2xl font-semibold text-balance text-slate-50">
+            <h2 className="text-2xl font-semibold tracking-[-0.03em] text-balance text-foreground-strong">
               {title}
             </h2>
             <p className="mt-3 max-w-[62ch] text-sm leading-7 text-slate-300 text-pretty">
               {description}
             </p>
           </div>
-          <Link href="/portal/mail/compose" className="app-button-primary">
-            写邮件
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-slate-300">
+              共 {items.length} 封
+            </div>
+            {folder === "trash" ? (
+              <button
+                type="button"
+                disabled={items.length === 0 || busyActionId === EMPTY_TRASH_ACTION_ID}
+                className="app-button-secondary"
+                onClick={() => {
+                  setPendingDangerAction({
+                    kind: "emptyTrash",
+                    itemCount: items.length,
+                  });
+                }}
+              >
+                {busyActionId === EMPTY_TRASH_ACTION_ID ? "清空中..." : "一键清空"}
+              </button>
+            ) : null}
+            <Link href="/portal/mail/compose" className="app-button-secondary">
+              写邮件
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
@@ -294,7 +381,7 @@ export function MailFolderPage({
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}
               className="app-input"
-              placeholder="输入关键词搜索"
+              placeholder="搜索邮件"
             />
           </label>
           <label className="text-sm">
@@ -330,88 +417,95 @@ export function MailFolderPage({
         </div>
 
         {message ? (
-          <div className="mt-5 rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          <div className="mt-5 text-sm text-foreground-muted">
             {message}
           </div>
         ) : null}
         {error ? (
-          <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-red-100">
+          <div className="mt-5 rounded-2xl border border-red-400/25 bg-red-400/10 px-4 py-3 text-sm text-[var(--danger-strong)]">
             {error}
           </div>
         ) : null}
       </section>
 
       {loading ? (
-        <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-          <div className="app-panel p-4">
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="app-panel-muted h-24 animate-pulse" />
-              ))}
-            </div>
+        <section className="app-panel p-4">
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="app-panel-muted h-32 animate-pulse" />
+            ))}
           </div>
-          <div className="app-panel-muted min-h-[480px] animate-pulse" />
         </section>
       ) : items.length === 0 ? (
         renderEmptyState()
       ) : (
-        <section className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+        <section>
           <div className="app-panel p-4">
-            <div className="space-y-3">
+            <div className="flex items-center justify-between gap-3 border-b border-white/8 px-2 pb-4">
+              <div className="text-sm font-medium text-foreground-strong">邮件列表</div>
+              <div className="shrink-0 rounded-full border border-white/10 bg-white/[0.03] px-3 py-2 text-xs tabular-nums text-slate-300">
+                {items.length}
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
               {items.map((item) => {
-                const selected = item.id === selectedId;
                 const busy = item.mailboxEntry.id === busyActionId;
-                const recipientsText = item.recipients
-                  .slice(0, 3)
-                  .map((recipient) => recipient.user.realName)
-                  .join("、");
 
                 return (
-                  <button
+                  <article
                     key={item.mailboxEntry.id}
-                    type="button"
-                    onClick={() => setSelectedId(item.id)}
-                    className={cn(
-                      "block w-full rounded-[24px] border px-4 py-4 text-left transition-colors duration-200",
-                      selected
-                        ? "border-sky-400/25 bg-sky-400/10"
-                        : "border-white/8 bg-white/3 hover:bg-white/5",
-                    )}
+                    className="group relative isolate rounded-[26px] border border-white/8 bg-white/[0.03] px-4 py-4 transition-colors duration-200 hover:border-white/12 hover:bg-white/[0.05]"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          {item.mailboxEntry.readAt ? null : (
-                            <span className="app-eyebrow app-eyebrow-sky">未读</span>
-                          )}
-                          {item.mailboxEntry.starredAt ? (
-                            <span className="app-eyebrow app-eyebrow-amber">星标</span>
-                          ) : null}
-                          {item.isDraft ? (
-                            <span className="app-eyebrow app-eyebrow-neutral">草稿</span>
-                          ) : null}
+                    <Link
+                      href={buildMessageViewHref(folder, item.id)}
+                      aria-label={`查看邮件 ${item.subject}`}
+                      className="absolute inset-0 rounded-[26px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    />
+                    <div className="pointer-events-none">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {item.mailboxEntry.readAt ? null : (
+                              <span className="app-eyebrow app-eyebrow-sky">未读</span>
+                            )}
+                            {item.mailboxEntry.starredAt ? (
+                              <span className="app-eyebrow app-eyebrow-amber">星标</span>
+                            ) : null}
+                            {item.isDraft ? (
+                              <span className="app-eyebrow app-eyebrow-neutral">草稿</span>
+                            ) : null}
+                          </div>
+                          <div className="mt-3 line-clamp-1 text-xl font-semibold leading-7 text-foreground-strong">
+                            {item.subject}
+                          </div>
+                          <div className="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-500">
+                            {buildRecipientSummary(item, folder)}
+                          </div>
                         </div>
-                        <div className="mt-3 truncate text-base font-medium text-slate-100">
-                          {item.subject}
-                        </div>
-                        <div className="mt-1 truncate text-sm text-slate-400">
-                          {folder === "sent" || folder === "drafts"
-                            ? `收件人：${recipientsText || "尚未填写"}`
-                            : `发件人：${item.sender.realName}`}
+                        <div className="shrink-0 text-right text-xs text-slate-400 tabular-nums">
+                          <div>{formatDateTime(item.sentAt ?? item.updatedAt)}</div>
                         </div>
                       </div>
-                      <div className="shrink-0 text-xs text-slate-400 tabular-nums">
-                        {formatDateTime(item.sentAt ?? item.updatedAt)}
+                      <div className="mt-2.5 max-w-full xl:max-w-[75%]">
+                        <div className="line-clamp-2 text-sm leading-5 text-slate-400">
+                          {buildListPreview(item.preview)}
+                        </div>
                       </div>
                     </div>
-                    <div className="mt-3 line-clamp-2 text-sm leading-6 text-slate-300">
-                      {item.preview || "（无正文）"}
-                    </div>
-                    <div className="mt-4 flex flex-wrap gap-2 text-xs">
+
+                    <div className="pointer-events-auto relative z-10 mt-4 flex flex-wrap gap-2 border-t border-white/8 pt-4">
+                      <Link
+                        href={buildMessageViewHref(folder, item.id)}
+                        className="app-button-secondary text-xs sm:text-sm"
+                      >
+                        查看邮件
+                      </Link>
                       {!item.mailboxEntry.readAt &&
                       item.mailboxEntry.recipientType !== "SENDER" ? (
                         <button
                           type="button"
+                          disabled={busy}
                           className="app-button-ghost"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -423,6 +517,7 @@ export function MailFolderPage({
                       ) : null}
                       <button
                         type="button"
+                        disabled={busy}
                         className="app-button-ghost"
                         onClick={(event) => {
                           event.stopPropagation();
@@ -436,6 +531,7 @@ export function MailFolderPage({
                       {folder !== "archive" && folder !== "trash" ? (
                         <button
                           type="button"
+                          disabled={busy}
                           className="app-button-ghost"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -450,10 +546,12 @@ export function MailFolderPage({
                       {folder !== "trash" ? (
                         <button
                           type="button"
+                          disabled={busy}
                           className="app-button-ghost"
                           onClick={(event) => {
                             event.stopPropagation();
-                            setPendingDeleteMail({
+                            setPendingDangerAction({
+                              kind: "delete",
                               mailboxEntryId: item.mailboxEntry.id,
                               subject: item.subject,
                             });
@@ -464,6 +562,7 @@ export function MailFolderPage({
                       ) : (
                         <button
                           type="button"
+                          disabled={busy}
                           className="app-button-ghost"
                           onClick={(event) => {
                             event.stopPropagation();
@@ -475,123 +574,28 @@ export function MailFolderPage({
                           恢复
                         </button>
                       )}
+                      {folder === "trash" ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="app-button-ghost"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setPendingDangerAction({
+                              kind: "purge",
+                              mailboxEntryId: item.mailboxEntry.id,
+                              subject: item.subject,
+                            });
+                          }}
+                        >
+                          彻底删除
+                        </button>
+                      ) : null}
                     </div>
-                  </button>
+                  </article>
                 );
               })}
             </div>
-          </div>
-
-          <div className="app-panel p-6">
-            {selectedMessage && !loadingDetail ? (
-              <div className="space-y-6">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div>
-                    <div className="app-eyebrow app-eyebrow-neutral">
-                      {selectedMessage.isDraft ? "草稿" : "邮件详情"}
-                    </div>
-                    <h3 className="mt-4 text-2xl font-semibold text-balance text-slate-50">
-                      {selectedMessage.subject}
-                    </h3>
-                    <div className="mt-3 text-sm leading-7 text-slate-300 text-pretty">
-                      发件人：{selectedMessage.sender.realName}（{selectedMessage.sender.email}）
-                    </div>
-                    <div className="text-sm leading-7 text-slate-400 tabular-nums">
-                      时间：{formatDateTime(selectedMessage.sentAt ?? selectedMessage.updatedAt)}
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    {!selectedMessage.isDraft ? (
-                      <>
-                        <Link
-                          href={buildComposeHref("reply", selectedMessage)}
-                          className="app-button-secondary"
-                        >
-                          回复
-                        </Link>
-                        <Link
-                          href={buildComposeHref("forward", selectedMessage)}
-                          className="app-button-secondary"
-                        >
-                          转发
-                        </Link>
-                      </>
-                    ) : (
-                      <Link
-                        href={`/portal/mail/compose?draftId=${selectedMessage.id}`}
-                        className="app-button-secondary"
-                      >
-                        继续编辑
-                      </Link>
-                    )}
-                  </div>
-                </div>
-
-                {(selectedMessage.replyToMessage || selectedMessage.forwardOfMessage) ? (
-                  <div className="app-panel-muted p-4 text-sm text-slate-300">
-                    {selectedMessage.replyToMessage ? (
-                      <div>
-                        回复自：{selectedMessage.replyToMessage.sender.realName} /{" "}
-                        {selectedMessage.replyToMessage.subject}
-                      </div>
-                    ) : null}
-                    {selectedMessage.forwardOfMessage ? (
-                      <div className="mt-2">
-                        转发自：{selectedMessage.forwardOfMessage.sender.realName} /{" "}
-                        {selectedMessage.forwardOfMessage.subject}
-                      </div>
-                    ) : null}
-                  </div>
-                ) : null}
-
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="app-panel-muted p-4">
-                    <div className="text-sm font-medium text-slate-100">收件人</div>
-                    <div className="mt-3 text-sm leading-7 text-slate-300 text-pretty">
-                      {selectedMessage.recipients
-                        .filter((recipient) => recipient.recipientType === "TO")
-                        .map((recipient) => `${recipient.user.realName} <${recipient.user.email}>`)
-                        .join("；") || "未填写"}
-                    </div>
-                  </div>
-                  <div className="app-panel-muted p-4">
-                    <div className="text-sm font-medium text-slate-100">抄送</div>
-                    <div className="mt-3 text-sm leading-7 text-slate-300 text-pretty">
-                      {selectedMessage.recipients
-                        .filter((recipient) => recipient.recipientType === "CC")
-                        .map((recipient) => `${recipient.user.realName} <${recipient.user.email}>`)
-                        .join("；") || "未填写"}
-                    </div>
-                  </div>
-                </div>
-
-                <article className="app-panel-muted p-5">
-                  <div className="prose prose-invert max-w-none text-pretty">
-                    {selectedMessage.bodyMarkdown ? (
-                      <pre className="whitespace-pre-wrap font-sans text-sm leading-7 text-slate-200">
-                        {selectedMessage.bodyMarkdown}
-                      </pre>
-                    ) : (
-                      <div className="text-sm text-slate-400">（无正文）</div>
-                    )}
-                  </div>
-                </article>
-              </div>
-            ) : (
-              <div className="app-panel-muted flex min-h-[420px] items-center justify-center text-center">
-                <div>
-                  <div className="app-eyebrow app-eyebrow-neutral">
-                    {loadingDetail ? "Loading" : "Mail Viewer"}
-                  </div>
-                  <div className="mt-4 text-xl font-semibold text-slate-50">
-                    {loadingDetail ? "正在加载邮件内容..." : "选择左侧邮件查看详情"}
-                  </div>
-                  <p className="mt-3 max-w-[42ch] text-sm leading-7 text-slate-300 text-pretty">
-                    列表支持搜索、已读未读筛选、星标、归档和删除恢复，右侧阅读区会展示完整邮件内容。
-                  </p>
-                </div>
-              </div>
-            )}
           </div>
         </section>
       )}

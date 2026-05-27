@@ -8,6 +8,7 @@ import { ProxyAwareThrottlerGuard } from './auth/guards/proxy-aware-throttler.gu
 import { AuthModule } from './auth/auth.module';
 import { GroupModule } from './group/group.module';
 import { InternalMailModule } from './internal-mail/internal-mail.module';
+import { KnowledgePageAccessRequestModule } from './knowledge-page-access-request/knowledge-page-access-request.module';
 import { KnowledgePageModule } from './knowledge-page/knowledge-page.module';
 import { KnowledgeSpaceModule } from './knowledge-space/knowledge-space.module';
 import { MailcowModule } from './mailcow/mailcow.module';
@@ -38,6 +39,7 @@ import { UserModule } from './user/user.module';
     RoleModule,
     GroupModule,
     InternalMailModule,
+    KnowledgePageAccessRequestModule,
     KnowledgeSpaceModule,
     KnowledgePageModule,
     OrganizationModule,

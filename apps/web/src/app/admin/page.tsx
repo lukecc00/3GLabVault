@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminShell } from "./_components/admin-shell";
 import { ResourceState } from "./_components/resource-state";
+import { useAuth } from "@/components/auth/auth-provider";
 import { ApiError, fetchApi } from "@/lib/api";
 import type { OrganizationSummary } from "@/lib/contracts";
+import { hasGlobalAdminRole } from "@/lib/workspace";
 
 const summaryCards = [
   { key: "userCount", label: "成员总数" },
@@ -16,11 +19,18 @@ const summaryCards = [
 ] as const;
 
 export default function AdminHomePage() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [summary, setSummary] = useState<OrganizationSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user && !hasGlobalAdminRole(user.roleCodes)) {
+      router.replace("/admin/users");
+      return;
+    }
+
     async function load() {
       try {
         const data = await fetchApi<OrganizationSummary>("/organizations/summary");
@@ -35,7 +45,11 @@ export default function AdminHomePage() {
     }
 
     void load();
-  }, []);
+  }, [router, user]);
+
+  if (user && !hasGlobalAdminRole(user.roleCodes)) {
+    return null;
+  }
 
   return (
     <AdminShell

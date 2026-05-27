@@ -1,8 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { AuthShell } from "@/components/ui/auth-shell";
+import { Button, buttonClassName } from "@/components/ui/button";
+import { ChipButton } from "@/components/ui/chip";
+import { PasswordInput } from "@/components/ui/password-input";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type {
   CreateUserPayload,
@@ -38,6 +42,32 @@ const registerGroupTypeMap: Record<GroupType, string> = {
   SYSTEM: "系统组",
 };
 
+function toggleRegisterGroupSelection(
+  currentGroupIds: string[],
+  groupId: string,
+  groupType: GroupType,
+  availableGroups: Array<{ id: string; type: GroupType }>,
+) {
+  if (currentGroupIds.includes(groupId)) {
+    return currentGroupIds.filter((item) => item !== groupId);
+  }
+
+  if (groupType !== "GRADE") {
+    return [...currentGroupIds, groupId];
+  }
+
+  const gradeGroupIds = new Set(
+    availableGroups
+      .filter((group) => group.type === "GRADE")
+      .map((group) => group.id),
+  );
+
+  return [
+    ...currentGroupIds.filter((item) => !gradeGroupIds.has(item)),
+    groupId,
+  ];
+}
+
 export default function RegisterPage() {
   const [options, setOptions] = useState<RegisterOptions | null>(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +84,7 @@ export default function RegisterPage() {
     realName: "",
     namePinyin: "",
     password: "",
+    notificationEmail: "",
     bio: "",
     groupIds: [],
   });
@@ -166,12 +197,15 @@ export default function RegisterPage() {
     };
   }, [form.namePinyin, options]);
 
-  function toggleGroup(groupId: string) {
+  function toggleGroup(groupId: string, groupType: GroupType) {
     setForm((prev) => ({
       ...prev,
-      groupIds: prev.groupIds?.includes(groupId)
-        ? prev.groupIds.filter((item) => item !== groupId)
-        : [...(prev.groupIds ?? []), groupId],
+      groupIds: toggleRegisterGroupSelection(
+        prev.groupIds ?? [],
+        groupId,
+        groupType,
+        options?.groups ?? [],
+      ),
     }));
   }
 
@@ -198,7 +232,7 @@ export default function RegisterPage() {
     return sections;
   }, []);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (prefixCheck.status === "checking") {
@@ -223,6 +257,7 @@ export default function RegisterPage() {
           realName: form.realName.trim(),
           namePinyin: form.namePinyin.trim(),
           password: form.password,
+          notificationEmail: form.notificationEmail.trim(),
           bio: form.bio?.trim() || undefined,
           groupIds: form.groupIds,
         },
@@ -233,10 +268,11 @@ export default function RegisterPage() {
         realName: "",
         namePinyin: "",
         password: "",
+        notificationEmail: "",
         bio: "",
         groupIds: [],
       });
-      setMessage("注册成功，系统已自动分配账号和邮箱，等待管理员审核后即可登录。");
+      setMessage("注册成功，系统已自动分配账号和邮箱，并已记录你的外部提醒邮箱，等待管理员审核后即可登录。");
     } catch (error) {
       setMessage(error instanceof ApiError ? error.message : "注册失败，请稍后重试");
     } finally {
@@ -249,12 +285,17 @@ export default function RegisterPage() {
       eyebrow={<div className="app-eyebrow app-eyebrow-emerald">用户注册</div>}
       title="创建实验室账号"
       description="注册完成后，系统会按姓名拼音自动生成账号与实验室邮箱。账号审核通过后即可进入知识门户。"
+      descriptionClassName="max-w-none whitespace-nowrap"
       asideTitle="先完成注册，再进入协作。"
       asideDescription="注册时请填写真实姓名和姓名拼音，拼音会直接作为邮箱前缀。若前缀冲突，可自行增加字符后再提交。"
+      layout="stacked"
       highlights={[
         { label: "邮箱前缀", value: "姓名拼音直接作为邮箱前缀，并支持提前查重。" },
         { label: "审核节奏", value: "提交后等待管理员审核与角色分配。" },
-        { label: "群组预选", value: "可同时勾选多个不同类别群组，如 Android 与 22级。" },
+        {
+          label: "群组预选",
+          value: "可同时勾选多个不同类别群组，但年级组只能选择一个。",
+        },
       ]}
     >
       {loading ? (
@@ -296,8 +337,7 @@ export default function RegisterPage() {
           <div className="grid gap-4 md:grid-cols-2">
             <label className="text-sm">
               <div className="mb-2 text-slate-300">登录密码</div>
-              <input
-                type="password"
+              <PasswordInput
                 required
                 minLength={8}
                 value={form.password}
@@ -306,8 +346,28 @@ export default function RegisterPage() {
                 }
                 className="app-input"
                 placeholder="至少 8 位"
+                visibilityLabel="登录密码"
               />
             </label>
+            <label className="text-sm">
+              <div className="mb-2 text-slate-300">外部提醒邮箱</div>
+              <input
+                type="email"
+                required
+                value={form.notificationEmail}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    notificationEmail: event.target.value,
+                  }))
+                }
+                className="app-input"
+                placeholder="例如：1793026645@qq.com"
+              />
+            </label>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-white/10 bg-slate-950/50 px-4 py-3 text-sm">
               <div className="text-slate-300">邮箱预览</div>
               <div className="mt-2 font-mono text-sky-200">
@@ -325,6 +385,13 @@ export default function RegisterPage() {
                 {prefixCheck.message || "请输入姓名拼音，系统将检查邮箱前缀是否可用。"}
               </div>
             </div>
+            <div className="app-surface-soft px-4 py-3 text-sm text-slate-300">
+              <div>提醒策略</div>
+              <div className="mt-2 leading-7 text-slate-400">
+                当你收到新的站内内部邮件时，系统会向该外部邮箱发送一封提醒邮件。
+                提醒邮件不包含正文内容，且一分钟内最多发送一次。
+              </div>
+            </div>
           </div>
 
           <label className="block text-sm">
@@ -338,25 +405,24 @@ export default function RegisterPage() {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {section.groups.map((group) => (
-                        <button
+                        <ChipButton
                           key={group.id}
                           type="button"
-                          onClick={() => toggleGroup(group.id)}
-                          className={`rounded-full px-3 py-2 text-xs transition-colors duration-200 ${
-                            form.groupIds?.includes(group.id)
-                              ? "bg-sky-400 text-slate-950"
-                              : "border border-white/10 bg-slate-950/80 text-slate-200 hover:bg-white/5"
-                          }`}
+                          onClick={() => toggleGroup(group.id, group.type)}
+                          active={form.groupIds?.includes(group.id)}
                         >
                           {group.name}
-                        </button>
+                        </ChipButton>
                       ))}
                     </div>
                   </div>
                 ))}
+                <div className="text-xs leading-6 text-slate-400">
+                  年级组只能选择一个；选择新的年级组时会自动替换之前的年级组。
+                </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/50 px-4 py-3 text-sm text-slate-400">
+              <div className="rounded-2xl border border-dashed border-border-soft bg-surface px-4 py-3 text-sm text-slate-400">
                 当前还没有可选群组，请先让管理员在后台新增方向组、年级组或功能组。
               </div>
             )}
@@ -394,26 +460,25 @@ export default function RegisterPage() {
             </div>
           ) : null}
 
-          <button
+          <Button
             type="submit"
+            variant="success"
             disabled={
               submitting ||
-              loading ||
               prefixCheck.status === "checking" ||
               prefixCheck.status === "unavailable"
             }
-            className="app-button-primary-emerald"
           >
             {submitting ? "提交中..." : "提交注册"}
-          </button>
+          </Button>
         </form>
       )}
 
       <div className="mt-8 flex flex-wrap gap-3 text-sm">
-        <Link href="/login" className="app-button-secondary">
-          去登录
+        <Link href="/login" className={buttonClassName({ variant: "secondary" })}>
+          返回登录
         </Link>
-        <Link href="/" className="app-button-ghost">
+        <Link href="/" className={buttonClassName({ variant: "ghost" })}>
           返回首页
         </Link>
       </div>

@@ -66,6 +66,21 @@ pnpm dev:up
 - 启动后端 API：`http://localhost:3001/api`
 - 启动前端登录页：`http://localhost:3000/login`
 
+如需把本地默认地址从 `localhost` 改成服务器 IP 或局域网 IP，可在仓库根目录新增 `.env`，并至少配置以下变量：
+
+```bash
+WEB_HOST=localhost
+WEB_PORT=3000
+SERVER_HOST=localhost
+SERVER_PORT=3001
+NEXT_PUBLIC_API_BASE_URL=
+```
+
+- 不配置时默认使用 `localhost`
+- 配置 `WEB_HOST` / `SERVER_HOST` 后，`pnpm dev:up`、`pnpm dev:restart`、`pnpm dev:status` 会自动按新地址启动并展示访问链接
+- 如果前后端不是简单的 `主机 + 端口` 关系，可直接设置 `NEXT_PUBLIC_API_BASE_URL`
+- 服务器启动配置详见 `docs/服务器启动 IP 与 Host 配置说明.md`
+
 常用命令：
 
 ```bash

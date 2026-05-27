@@ -1,4 +1,11 @@
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 import { UserStatus } from '../../generated/prisma';
 
 export class ReviewUserDto {
@@ -14,4 +21,9 @@ export class ReviewUserDto {
   @IsArray()
   @IsString({ each: true })
   groupIds?: string[];
+
+  @IsOptional()
+  @IsEmail({}, { message: '请输入有效的外部通知邮箱' })
+  @MaxLength(255)
+  notificationEmail?: string;
 }

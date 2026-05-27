@@ -1,9 +1,10 @@
 import {
   ArrayMinSize,
   IsArray,
-  IsOptional,
+  IsEmail,
   IsString,
   MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -13,16 +14,21 @@ class BatchGenerateUserEntryDto {
   @MaxLength(50)
   realName: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(30)
-  studentId?: string;
+  @IsEmail({}, { message: '请输入有效的外部提醒邮箱' })
+  @MaxLength(255)
+  notificationEmail: string;
 }
 
 export class BatchGenerateUsersDto {
   @IsArray()
+  @ArrayMinSize(1)
   @IsString({ each: true })
   groupIds: string[];
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(64)
+  password: string;
 
   @IsArray()
   @ArrayMinSize(1)

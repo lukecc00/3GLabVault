@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChipButton } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 
 export interface EntitySelectorTag {
@@ -36,32 +38,32 @@ const toneStyles: Record<
   sky: {
     selectedCard: "border-sky-400/30 bg-sky-400/10",
     selectedIndicator: "border-sky-300 bg-sky-300",
-    selectedBadge: "border-sky-400/25 bg-sky-400/10 text-sky-100",
-    filterActive: "border-sky-400/30 bg-sky-400/10 text-sky-100",
-    summaryButton: "border-sky-400/25 bg-sky-400/10 text-sky-100",
+    selectedBadge: "border-sky-400/25 bg-sky-400/10 text-[var(--accent-strong)]",
+    filterActive: "border-sky-400/30 bg-sky-400/10 text-[var(--accent-strong)]",
+    summaryButton: "border-sky-400/25 bg-sky-400/10 text-[var(--accent-strong)]",
     triggerSurface:
       "border-sky-400/20 bg-sky-400/[0.07] hover:border-sky-300/30 hover:bg-sky-400/[0.11]",
-    triggerCount: "border-sky-400/25 bg-sky-400/10 text-sky-100",
+    triggerCount: "border-sky-400/25 bg-sky-400/10 text-[var(--accent-strong)]",
   },
   emerald: {
     selectedCard: "border-emerald-400/30 bg-emerald-400/10",
     selectedIndicator: "border-emerald-300 bg-emerald-300",
-    selectedBadge: "border-emerald-400/25 bg-emerald-400/10 text-emerald-100",
-    filterActive: "border-emerald-400/30 bg-emerald-400/10 text-emerald-100",
-    summaryButton: "border-emerald-400/25 bg-emerald-400/10 text-emerald-100",
+    selectedBadge: "border-emerald-400/25 bg-emerald-400/10 text-[var(--success-strong)]",
+    filterActive: "border-emerald-400/30 bg-emerald-400/10 text-[var(--success-strong)]",
+    summaryButton: "border-emerald-400/25 bg-emerald-400/10 text-[var(--success-strong)]",
     triggerSurface:
       "border-emerald-400/20 bg-emerald-400/[0.07] hover:border-emerald-300/30 hover:bg-emerald-400/[0.11]",
-    triggerCount: "border-emerald-400/25 bg-emerald-400/10 text-emerald-100",
+    triggerCount: "border-emerald-400/25 bg-emerald-400/10 text-[var(--success-strong)]",
   },
   amber: {
     selectedCard: "border-amber-400/35 bg-amber-400/10",
     selectedIndicator: "border-amber-300 bg-amber-300",
-    selectedBadge: "border-amber-400/25 bg-amber-400/10 text-amber-100",
-    filterActive: "border-amber-400/30 bg-amber-400/10 text-amber-100",
-    summaryButton: "border-amber-400/25 bg-amber-400/10 text-amber-100",
+    selectedBadge: "border-amber-400/25 bg-amber-400/10 text-[var(--warning-strong)]",
+    filterActive: "border-amber-400/30 bg-amber-400/10 text-[var(--warning-strong)]",
+    summaryButton: "border-amber-400/25 bg-amber-400/10 text-[var(--warning-strong)]",
     triggerSurface:
       "border-amber-400/20 bg-amber-400/[0.07] hover:border-amber-300/30 hover:bg-amber-400/[0.11]",
-    triggerCount: "border-amber-400/25 bg-amber-400/10 text-amber-100",
+    triggerCount: "border-amber-400/25 bg-amber-400/10 text-[var(--warning-strong)]",
   },
   neutral: {
     selectedCard: "border-white/20 bg-white/8",
@@ -89,7 +91,7 @@ interface EntitySelectorProps {
   selectedEmptyLabel?: string;
   tone?: EntitySelectorTone;
   variant?: EntitySelectorVariant;
-  floatingLayout?: "card" | "inline";
+  floatingLayout?: "card" | "inline" | "toolbar";
   floatingActionLabel?: string;
   floatingSummaryClassName?: string;
   floatingSummaryMaxItems?: number;
@@ -184,35 +186,25 @@ function EntitySelectorList({
 
       {filters.length > 0 ? (
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
+          <ChipButton
             type="button"
             onClick={() => setActiveFilter("all")}
             disabled={disabled}
-            className={cn(
-              "rounded-full border px-3 py-2 text-xs transition-colors duration-200",
-              resolvedFilter === "all"
-                ? styles.filterActive
-                : "border-white/10 bg-black/20 text-slate-300 hover:bg-white/5",
-            )}
+            className={resolvedFilter === "all" ? styles.filterActive : "text-slate-300"}
           >
             全部
-          </button>
+          </ChipButton>
           {filters.map((filter) => (
-            <button
+            <ChipButton
               key={filter.id}
               type="button"
               onClick={() => setActiveFilter(filter.id)}
               disabled={disabled}
-              className={cn(
-                "rounded-full border px-3 py-2 text-xs transition-colors duration-200",
-                resolvedFilter === filter.id
-                  ? styles.filterActive
-                  : "border-white/10 bg-black/20 text-slate-300 hover:bg-white/5",
-              )}
+              className={resolvedFilter === filter.id ? styles.filterActive : "text-slate-300"}
             >
               {filter.label}
               <span className="ml-2 tabular-nums text-slate-400">{filter.count}</span>
-            </button>
+            </ChipButton>
           ))}
         </div>
       ) : null}
@@ -245,7 +237,7 @@ function EntitySelectorList({
                         "flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition-colors duration-200",
                         checked
                           ? styles.selectedCard
-                          : "border-white/8 bg-white/3 hover:bg-white/5",
+                          : "border-border-soft bg-surface hover:bg-surface-soft",
                         disabled && "cursor-not-allowed opacity-60",
                       )}
                     >
@@ -528,43 +520,79 @@ export function EntitySelector({
             aria-expanded={open}
             aria-controls={open ? dialogId : undefined}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-3">
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className="text-sm font-medium text-slate-50">{title}</div>
                   <div className="text-xs tabular-nums text-slate-400">
                     {selectedItems.length}/{items.length}
                   </div>
                 </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  {selectedItems.length > 0 ? (
+                    <span
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                        styles.triggerCount,
+                      )}
+                    >
+                      {selectedItems.length} 项
+                    </span>
+                  ) : null}
+                  <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-200">
+                    {floatingActionLabel}
+                  </span>
+                </div>
+              </div>
+              <div className="min-w-0">
                 <div
                   className={cn(
-                    "mt-2 line-clamp-2 text-sm leading-6 text-slate-200",
+                    "line-clamp-3 min-h-[5.25rem] text-sm leading-7 text-slate-100",
                     floatingSummaryClassName,
                   )}
                 >
                   {floatingSummary}
                 </div>
                 {description ? (
-                  <div className="mt-2 line-clamp-2 text-xs leading-6 text-slate-400">
+                  <div className="mt-2 line-clamp-1 text-xs leading-5 text-slate-400">
                     {description}
                   </div>
                 ) : null}
               </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {selectedItems.length > 0 ? (
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                      styles.triggerCount,
-                    )}
-                  >
-                    {selectedItems.length} 项
-                  </span>
-                ) : null}
-                <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-200">
-                  {floatingActionLabel}
-                </span>
+            </div>
+          </button>
+        ) : floatingLayout === "toolbar" ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            disabled={disabled}
+            className={cn(
+              "flex h-11 w-full items-center justify-between gap-3 rounded-2xl border px-4 text-left transition-all duration-200",
+              styles.triggerSurface,
+              disabled && "cursor-not-allowed opacity-60",
+              className,
+            )}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            aria-controls={open ? dialogId : undefined}
+          >
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-slate-100">
+                {floatingSummary}
               </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {selectedItems.length > 0 ? (
+                <span
+                  className={cn(
+                    "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium",
+                    styles.triggerCount,
+                  )}
+                >
+                  {selectedItems.length}
+                </span>
+              ) : null}
+              <span className="text-xs text-slate-400">{floatingActionLabel}</span>
             </div>
           </button>
         ) : (
@@ -661,13 +689,13 @@ export function EntitySelector({
                       </p>
                     ) : null}
                   </div>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setOpen(false)}
-                    className="app-button-secondary"
+                    variant="secondary"
                   >
                     完成
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -688,37 +716,33 @@ export function EntitySelector({
 
                   {filters.length > 0 ? (
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <button
+                      <ChipButton
                         type="button"
                         onClick={() => setActiveFilter("all")}
                         disabled={disabled}
-                        className={cn(
-                          "rounded-full border px-3 py-2 text-xs transition-colors duration-200",
-                          resolvedFilter === "all"
-                            ? styles.filterActive
-                            : "border-white/10 bg-black/20 text-slate-300 hover:bg-white/5",
-                        )}
+                        className={
+                          resolvedFilter === "all" ? styles.filterActive : "text-slate-300"
+                        }
                       >
                         全部
-                      </button>
+                      </ChipButton>
                       {filters.map((filter) => (
-                        <button
+                        <ChipButton
                           key={filter.id}
                           type="button"
                           onClick={() => setActiveFilter(filter.id)}
                           disabled={disabled}
-                          className={cn(
-                            "rounded-full border px-3 py-2 text-xs transition-colors duration-200",
+                          className={
                             resolvedFilter === filter.id
                               ? styles.filterActive
-                              : "border-white/10 bg-black/20 text-slate-300 hover:bg-white/5",
-                          )}
+                              : "text-slate-300"
+                          }
                         >
                           {filter.label}
                           <span className="ml-2 tabular-nums text-slate-400">
                             {filter.count}
                           </span>
-                        </button>
+                        </ChipButton>
                       ))}
                     </div>
                   ) : null}
@@ -756,7 +780,7 @@ export function EntitySelector({
                                     "flex cursor-pointer gap-3 rounded-2xl border px-4 py-3 transition-colors duration-200",
                                     checked
                                       ? styles.selectedCard
-                                      : "border-white/8 bg-white/3 hover:bg-white/5",
+                                      : "border-border-soft bg-surface hover:bg-surface-soft",
                                     disabled && "cursor-not-allowed opacity-60",
                                   )}
                                 >
@@ -825,7 +849,7 @@ export function EntitySelector({
                 </div>
 
                 <aside className="flex min-h-0 flex-col px-5 py-5 lg:px-6">
-                  <div className="flex min-h-0 flex-1 flex-col rounded-[28px] border border-white/8 bg-white/[0.04] p-4">
+                  <div className="flex min-h-0 flex-1 flex-col rounded-[28px] border border-border-soft bg-surface p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
@@ -838,13 +862,13 @@ export function EntitySelector({
                         </div>
                       </div>
                       {selectedItems.length > 0 ? (
-                        <button
+                        <ChipButton
                           type="button"
                           onClick={() => onSelectionChange([])}
-                          className="rounded-full border border-white/10 px-3 py-2 text-xs text-slate-300 transition-colors duration-200 hover:bg-white/5"
+                          className="text-slate-300"
                         >
                           清空
-                        </button>
+                        </ChipButton>
                       ) : null}
                     </div>
 
@@ -926,20 +950,20 @@ export function EntitySelector({
         toggleSelection={toggleSelection}
       />
 
-      <div className="mt-4 rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
-        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+      <div className="mt-4 rounded-2xl border border-border-soft bg-surface px-4 py-3 shadow-[var(--shadow-panel-muted)]">
+        <div className="text-xs uppercase tracking-[0.18em] text-foreground-subtle">
           {selectedTitle}
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {selectedItems.length > 0 ? (
             selectedItems.map((item) => (
-              <button
+              <ChipButton
                 key={item.id}
                 type="button"
                 onClick={() => toggleSelection(item.id)}
                 disabled={disabled}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs transition-colors duration-200",
+                  "inline-flex items-center gap-2",
                   styles.summaryButton,
                 )}
                 aria-label={`移除 ${item.label}`}
@@ -951,10 +975,10 @@ export function EntitySelector({
                     styles.selectedIndicator,
                   )}
                 />
-              </button>
+              </ChipButton>
             ))
           ) : (
-            <span className="text-sm text-slate-400">{selectedEmptyLabel}</span>
+            <span className="text-sm text-foreground-soft">{selectedEmptyLabel}</span>
           )}
         </div>
       </div>

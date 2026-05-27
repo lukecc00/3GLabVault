@@ -3,9 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { AdminShell } from "../../_components/admin-shell";
 import { ResourceState } from "../../_components/resource-state";
+import { Button } from "@/components/ui/button";
 import { DangerConfirmDialog } from "@/components/ui/danger-confirm-dialog";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
-import type { UserSummary } from "@/lib/contracts";
+import type {
+  ArchivedContentRestoreTarget,
+  RestoreArchivedContentPayload,
+  UserSummary,
+} from "@/lib/contracts";
 
 function formatDateTime(value: string | null) {
   if (!value) {
@@ -17,21 +22,81 @@ function formatDateTime(value: string | null) {
   });
 }
 
+type PendingAction =
+  | {
+      type: "restore";
+      target: ArchivedContentRestoreTarget;
+      user: UserSummary;
+    }
+  | {
+      type: "reactivate";
+      user: UserSummary;
+    };
+
+function getDirectionNames(user: UserSummary) {
+  return user.memberships
+    .filter((membership) => membership.group.type === "DIRECTION")
+    .map((membership) => membership.group.name);
+}
+
+function getActionCopy(action: PendingAction) {
+  if (action.type === "reactivate") {
+    return {
+      title: `重新启用 ${action.user.realName}`,
+      description:
+        "重新启用后，该账号会恢复登录能力并退出归档列表；若该用户曾被转移内容，则不能再直接重新启用。",
+      confirmText: `确认重新启用 ${action.user.realName}`,
+      confirmLabel: "请输入确认文案",
+      actionLabel: "确认重新启用",
+      successMessage: `已重新启用 ${action.user.realName} 的账号。`,
+    };
+  }
+
+  if (action.target === "LAB_ADMIN") {
+    return {
+      title: `恢复 ${action.user.realName} 的内容到实验室管理员`,
+      description:
+        "恢复后，该用户名下尚未接管的可恢复内容会统一转移到实验室管理员名下。知识页也会一并改挂到该管理员名下。该操作不可撤销，请确认后继续。",
+      confirmText: `确认恢复 ${action.user.realName} 到实验室管理员`,
+      confirmLabel: "请输入确认文案",
+      actionLabel: "确认恢复到实验室管理员",
+      successMessage: `已将 ${action.user.realName} 的内容转移到实验室管理员名下。`,
+    };
+  }
+
+  return {
+    title: `恢复 ${action.user.realName} 的内容到方向管理员`,
+    description:
+      "恢复后，该用户名下尚未接管的可恢复内容会转移到对应方向管理员名下；例如 Android 组成员会优先转给 Android 方向管理员。若缺少方向归属或方向管理员，系统会给出错误提示。该操作不可撤销，请确认后继续。",
+    confirmText: `确认恢复 ${action.user.realName} 到方向管理员`,
+    confirmLabel: "请输入确认文案",
+    actionLabel: "确认恢复到方向管理员",
+    successMessage: `已将 ${action.user.realName} 的内容转移到对应方向管理员名下。`,
+  };
+}
+
 export default function ArchivedUsersPage() {
   const [users, setUsers] = useState<UserSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [pendingRestoreUser, setPendingRestoreUser] = useState<UserSummary | null>(
-    null,
+  const [actionMessageTone, setActionMessageTone] = useState<"default" | "error">(
+    "default",
   );
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [dialogErrorMessage, setDialogErrorMessage] = useState<string | null>(null);
 
   const selectedUser = useMemo(
     () => users.find((user) => user.id === selectedUserId) ?? null,
     [selectedUserId, users],
   );
+  const selectedUserDirectionNames = useMemo(
+    () => (selectedUser ? getDirectionNames(selectedUser) : []),
+    [selectedUser],
+  );
+  const pendingActionCopy = pendingAction ? getActionCopy(pendingAction) : null;
 
   async function fetchArchivedUsers() {
     return fetchApi<UserSummary[]>("/users/archived");
@@ -93,41 +158,93 @@ export default function ArchivedUsersPage() {
     };
   }, []);
 
-  function handleOpenRestoreDialog(user: UserSummary) {
+  function handleOpenRestoreDialog(
+    user: UserSummary,
+    target: ArchivedContentRestoreTarget,
+  ) {
     if (user.contentRestoredAt) {
-      setActionMessage("该用户内容已恢复到系统管理员名下。");
+      setActionMessage("该用户内容已恢复，不能重复转移。");
+      setActionMessageTone("error");
       return;
     }
 
-    setPendingRestoreUser(user);
+    setPendingAction({
+      type: "restore",
+      target,
+      user,
+    });
     setActionMessage(null);
+    setDialogErrorMessage(null);
   }
 
-  async function handleConfirmRestore() {
-    if (!pendingRestoreUser) {
+  function handleOpenReactivateDialog(user: UserSummary) {
+    if (user.contentRestoredAt) {
+      setActionMessage("该用户内容已恢复，无法直接重新启用账号。");
+      setActionMessageTone("error");
       return;
     }
 
+    setPendingAction({
+      type: "reactivate",
+      user,
+    });
+    setActionMessage(null);
+    setDialogErrorMessage(null);
+  }
+
+  async function handleConfirmAction() {
+    if (!pendingAction) {
+      return;
+    }
+
+    const currentAction = pendingAction;
+    const currentActionCopy = getActionCopy(currentAction);
     setSubmitting(true);
     setActionMessage(null);
+    setDialogErrorMessage(null);
 
     try {
-      await sendJson<UserSummary, Record<string, never>>(
-        `/users/${pendingRestoreUser.id}/restore-content`,
-        "POST",
-        {},
-      );
-      setPendingRestoreUser(null);
-      setActionMessage(
-        `已将 ${pendingRestoreUser.realName} 的内容转移到系统管理员名下。`,
-      );
-      await loadUsers();
-    } catch (restoreError) {
-      setActionMessage(
-        restoreError instanceof ApiError
-          ? restoreError.message
-          : "恢复归档内容失败",
-      );
+      if (currentAction.type === "restore") {
+        const updatedUser = await sendJson<UserSummary, RestoreArchivedContentPayload>(
+          `/users/${currentAction.user.id}/restore-content`,
+          "POST",
+          {
+            target: currentAction.target,
+          },
+        );
+
+        setUsers((currentUsers) =>
+          currentUsers.map((user) => (user.id === updatedUser.id ? updatedUser : user)),
+        );
+      } else {
+        const updatedUser = await sendJson<UserSummary, Record<string, never>>(
+          `/users/${currentAction.user.id}/reactivate`,
+          "POST",
+          {},
+        );
+
+        setUsers((currentUsers) =>
+          currentUsers.filter((user) => user.id !== updatedUser.id),
+        );
+        setSelectedUserId((currentSelectedUserId) =>
+          currentSelectedUserId === updatedUser.id ? "" : currentSelectedUserId,
+        );
+      }
+
+      setPendingAction(null);
+      setDialogErrorMessage(null);
+      setActionMessage(currentActionCopy.successMessage);
+      setActionMessageTone("default");
+    } catch (actionError) {
+      const message =
+        actionError instanceof ApiError
+          ? actionError.message
+          : currentAction.type === "restore"
+            ? "恢复归档内容失败"
+            : "重新启用账号失败";
+      setDialogErrorMessage(message);
+      setActionMessage(message);
+      setActionMessageTone("error");
     } finally {
       setSubmitting(false);
     }
@@ -136,23 +253,25 @@ export default function ArchivedUsersPage() {
   return (
     <AdminShell
       title="归档用户"
-      description="集中管理已归档成员，查看保留截止时间，并在 60 天窗口期内将其可恢复内容转移到系统管理员名下。"
+      description="查看已归档用户。归档后 60 天内若无进一步处理，系统会自动删除账号及对应邮件资源；你可以在保留期内恢复内容给实验室管理员或方向管理员，或直接重新启用账号。"
     >
-      {pendingRestoreUser ? (
+      {pendingAction && pendingActionCopy ? (
         <DangerConfirmDialog
           open
-          title={`恢复 ${pendingRestoreUser.realName} 的内容`}
-          description="恢复后，该用户名下可恢复的知识页与内部邮件内容会统一转移到系统管理员名下，该操作不可撤销。为防止误操作，请输入指定确认文案后继续。"
-          confirmText={`确认恢复 ${pendingRestoreUser.realName} 的内容`}
-          confirmLabel="请输入确认文案"
-          actionLabel="确认恢复内容"
+          title={pendingActionCopy.title}
+          description={pendingActionCopy.description}
+          confirmText={pendingActionCopy.confirmText}
+          confirmLabel={pendingActionCopy.confirmLabel}
+          actionLabel={pendingActionCopy.actionLabel}
           busy={submitting}
+          errorMessage={dialogErrorMessage}
           onClose={() => {
             if (!submitting) {
-              setPendingRestoreUser(null);
+              setPendingAction(null);
+              setDialogErrorMessage(null);
             }
           }}
-          onConfirm={handleConfirmRestore}
+          onConfirm={handleConfirmAction}
         />
       ) : null}
 
@@ -169,18 +288,15 @@ export default function ArchivedUsersPage() {
             <ResourceState
               title="操作反馈"
               description={actionMessage}
-              tone={actionMessage.includes("失败") ? "error" : "default"}
+              tone={actionMessageTone}
             />
           ) : null}
 
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
-              <div className="border-b border-white/10 px-5 py-3 text-xs text-zinc-400">
-                左右滑动可查看更多字段，点击整行即可选择归档用户。
-              </div>
+            <div className="app-table-shell">
               <div className="overflow-x-auto">
                 <table className="min-w-[920px] divide-y divide-white/10 text-left text-sm">
-                <thead className="bg-white/5 text-zinc-300">
+                <thead className="app-table-head">
                   <tr>
                     <th className="min-w-44 px-5 py-4 font-medium">姓名</th>
                     <th className="min-w-56 px-5 py-4 font-medium">邮箱</th>
@@ -195,11 +311,9 @@ export default function ArchivedUsersPage() {
                       key={user.id}
                       aria-selected={selectedUserId === user.id}
                       onClick={() => setSelectedUserId(user.id)}
-                      className={
-                        selectedUserId === user.id
-                          ? "cursor-pointer bg-white/5 transition-colors hover:bg-white/10"
-                          : "cursor-pointer transition-colors hover:bg-white/5"
-                      }
+                      className={`app-selectable-row ${
+                        selectedUserId === user.id ? "is-active" : ""
+                      }`}
                     >
                       <td className="px-5 py-4">
                         <button
@@ -235,51 +349,106 @@ export default function ArchivedUsersPage() {
             <section className="app-panel p-6">
               <h2 className="text-xl font-semibold">归档操作</h2>
               <p className="mt-2 text-sm leading-7 text-zinc-300">
-                选择归档用户后，可在保留窗口内把其内容转移到系统管理员名下。归档用户不会再出现在正常用户列表中。
+                归档后，知识页会先自动移交给对应的方向管理员、年级管理员或实验室管理员。保留期内你仍可继续把剩余内容转移给实验室管理员或对应方向管理员，也可以直接重新启用该账号。
               </p>
 
               {selectedUser ? (
-                <div className="mt-6 space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-zinc-300">
+                <div className="mt-6 space-y-4 app-surface-soft p-4 text-sm text-zinc-300">
                   <div>姓名：{selectedUser.realName}</div>
                   <div>邮箱：{selectedUser.email}</div>
+                  <div>
+                    所属方向：
+                    {selectedUserDirectionNames.length > 0
+                      ? selectedUserDirectionNames.join("、")
+                      : "暂无方向归属记录"}
+                  </div>
                   <div>归档时间：{formatDateTime(selectedUser.archivedAt)}</div>
                   <div>清理时间：{formatDateTime(selectedUser.archiveExpiresAt)}</div>
                   <div>
                     内容恢复：
                     {selectedUser.contentRestoredAt
-                      ? `已于 ${formatDateTime(selectedUser.contentRestoredAt)} 转移到系统管理员`
+                      ? `已于 ${formatDateTime(selectedUser.contentRestoredAt)} 完成内容恢复`
                       : "尚未恢复"}
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 rounded-2xl border border-dashed border-white/10 bg-black/20 p-4 text-sm text-zinc-400">
+                <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-zinc-400">
                   请先从左侧列表选择一个归档用户。
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedUser) {
-                    handleOpenRestoreDialog(selectedUser);
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (selectedUser) {
+                      handleOpenRestoreDialog(selectedUser, "LAB_ADMIN");
+                    }
+                  }}
+                  variant="softSuccess"
+                  disabled={
+                    submitting ||
+                    !selectedUser ||
+                    Boolean(selectedUser.contentRestoredAt)
                   }
-                }}
-                disabled={
-                  submitting ||
-                  !selectedUser ||
-                  Boolean(selectedUser.contentRestoredAt)
-                }
-                className="mt-6 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-5 py-3 text-sm font-medium text-emerald-100 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-60"
-                title={
-                  !selectedUser
-                    ? "请先选择一个归档用户"
-                    : selectedUser.contentRestoredAt
-                      ? "该用户内容已恢复"
-                      : `恢复 ${selectedUser.realName} 的内容`
-                }
-              >
-                恢复内容到系统管理员
-              </button>
+                  title={
+                    !selectedUser
+                      ? "请先选择一个归档用户"
+                      : selectedUser.contentRestoredAt
+                        ? "该用户内容已恢复"
+                        : `恢复 ${selectedUser.realName} 的邮件内容到实验室管理员`
+                  }
+                >
+                  恢复邮件内容到实验室管理员
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (selectedUser) {
+                      handleOpenRestoreDialog(selectedUser, "DIRECTION_ADMIN");
+                    }
+                  }}
+                  disabled={
+                    submitting ||
+                    !selectedUser ||
+                    Boolean(selectedUser.contentRestoredAt)
+                  }
+                  title={
+                    !selectedUser
+                      ? "请先选择一个归档用户"
+                      : selectedUser.contentRestoredAt
+                        ? "该用户内容已恢复"
+                        : `恢复 ${selectedUser.realName} 的邮件内容到方向管理员`
+                  }
+                >
+                  恢复邮件内容到方向管理员
+                </Button>
+
+                <Button
+                  type="button"
+                  onClick={() => {
+                    if (selectedUser) {
+                      handleOpenReactivateDialog(selectedUser);
+                    }
+                  }}
+                  variant="primary"
+                  disabled={
+                    submitting ||
+                    !selectedUser ||
+                    Boolean(selectedUser.contentRestoredAt)
+                  }
+                  title={
+                    !selectedUser
+                      ? "请先选择一个归档用户"
+                      : selectedUser.contentRestoredAt
+                        ? "内容已恢复的归档账号不能直接重新启用"
+                        : `重新启用 ${selectedUser.realName} 的账号`
+                  }
+                >
+                  重新启用账号
+                </Button>
+              </div>
             </section>
           </section>
         </div>
