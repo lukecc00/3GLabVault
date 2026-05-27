@@ -712,6 +712,7 @@ export default function UsersPage() {
                     selectedTitle="已选预绑定群组"
                     selectedEmptyLabel="暂未预绑定任何群组"
                     tone="sky"
+                    variant="floating"
                   />
                 </div>
                 <label className="text-sm md:col-span-2">
@@ -766,6 +767,7 @@ export default function UsersPage() {
                   selectedTitle="当前审核对象"
                   selectedEmptyLabel="暂未选择用户"
                   tone="sky"
+                  variant="floating"
                 />
                 <label className="block text-sm">
                   <div className="mb-2 text-zinc-300">审核状态</div>
@@ -814,6 +816,7 @@ export default function UsersPage() {
                     selectedTitle="已分配群组"
                     selectedEmptyLabel="暂未分配任何群组"
                     tone="sky"
+                    variant="floating"
                   />
                 </div>
               </div>
@@ -899,6 +902,7 @@ export default function UsersPage() {
                   selectedTitle="批量绑定群组"
                   selectedEmptyLabel="暂未绑定任何群组"
                   tone="emerald"
+                  variant="floating"
                 />
                 <button
                   type="submit"

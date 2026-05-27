@@ -18,6 +18,7 @@ import type {
 import { renderMarkdownToHtml } from "@/lib/markdown";
 
 type ComposeMode = "new" | "reply" | "forward" | "draft";
+type MailSelectableEntity = "user" | "group";
 
 const groupTypeMap = {
   DIRECTION: "方向组",
@@ -98,21 +99,50 @@ function filterSelectableIds(values: string[] | undefined, allowedIds: Set<strin
   return (values ?? []).filter((value) => allowedIds.has(value));
 }
 
+function buildSelectableEntityId(type: MailSelectableEntity, id: string) {
+  return `${type}:${id}`;
+}
+
+function parseSelectableEntityIds(selectedIds: string[]) {
+  return selectedIds.reduce(
+    (result, value) => {
+      const [type, id] = value.split(":", 2);
+
+      if (!id) {
+        return result;
+      }
+
+      if (type === "user") {
+        result.userIds.push(id);
+      } else if (type === "group") {
+        result.groupIds.push(id);
+      }
+
+      return result;
+    },
+    { userIds: [] as string[], groupIds: [] as string[] },
+  );
+}
+
 function buildUserSelectorOptions(
   users: InternalMailComposerUserOption[],
 ): EntitySelectorOption[] {
   return users.map((user) => ({
-    id: user.id,
+    id: buildSelectableEntityId("user", user.id),
     label: user.realName,
     description: [user.email, user.username ? `账号 ${user.username}` : null]
       .filter(Boolean)
       .join(" / "),
-    keywords: [user.email, user.username ?? ""],
-    badges: user.username ? [user.username] : undefined,
-    filterTags: user.memberships.map(({ group }) => ({
-      id: group.id,
-      label: group.name,
-    })),
+    keywords: [user.email, user.username ?? "", "成员", "用户"],
+    badges: ["成员", ...(user.username ? [user.username] : [])],
+    filterTags: [
+      { id: "entity:user", label: "成员" },
+      ...(user.memberships ?? []).map(({ group }) => ({
+        id: `membership:${group.id}`,
+        label: group.name,
+      })),
+    ],
+    section: "成员",
   }));
 }
 
@@ -120,17 +150,22 @@ function buildGroupSelectorOptions(
   groups: InternalMailGroupOption[],
 ): EntitySelectorOption[] {
   return groups.map((group) => ({
-    id: group.id,
+    id: buildSelectableEntityId("group", group.id),
     label: group.name,
-    description: group.code,
-    keywords: [group.code, groupTypeMap[group.type]],
+    description: `${group.code} / ${groupTypeMap[group.type]}`,
+    keywords: [group.code, groupTypeMap[group.type], "群组", "组"],
+    badges: ["群组"],
     filterTags: [
       {
-        id: group.type,
+        id: "entity:group",
+        label: "群组",
+      },
+      {
+        id: `group-type:${group.type}`,
         label: groupTypeMap[group.type],
       },
     ],
-    section: groupTypeMap[group.type],
+    section: `群组 / ${groupTypeMap[group.type]}`,
   }));
 }
 
@@ -145,11 +180,7 @@ export default function PortalMailComposePage() {
   const [error, setError] = useState<string | null>(null);
   const [composeMode, setComposeMode] = useState<ComposeMode>("new");
 
-  const selectedEntities = useMemo(() => {
-    if (!options) {
-      return [];
-    }
-
+  const selectedEntityCount = useMemo(() => {
     const allIds = [
       ...(form.toUserIds ?? []),
       ...(form.ccUserIds ?? []),
@@ -157,8 +188,8 @@ export default function PortalMailComposePage() {
       ...(form.ccGroupIds ?? []),
     ];
 
-    return allIds;
-  }, [form.ccGroupIds, form.ccUserIds, form.toGroupIds, form.toUserIds, options]);
+    return allIds.length;
+  }, [form.ccGroupIds, form.ccUserIds, form.toGroupIds, form.toUserIds]);
 
   const userSelectorOptions = useMemo(
     () => buildUserSelectorOptions(options?.users ?? []),
@@ -167,6 +198,24 @@ export default function PortalMailComposePage() {
   const groupSelectorOptions = useMemo(
     () => buildGroupSelectorOptions(options?.groups ?? []),
     [options?.groups],
+  );
+  const recipientSelectorOptions = useMemo(
+    () => [...userSelectorOptions, ...groupSelectorOptions],
+    [groupSelectorOptions, userSelectorOptions],
+  );
+  const toSelectedIds = useMemo(
+    () => [
+      ...(form.toUserIds ?? []).map((id) => buildSelectableEntityId("user", id)),
+      ...(form.toGroupIds ?? []).map((id) => buildSelectableEntityId("group", id)),
+    ],
+    [form.toGroupIds, form.toUserIds],
+  );
+  const ccSelectedIds = useMemo(
+    () => [
+      ...(form.ccUserIds ?? []).map((id) => buildSelectableEntityId("user", id)),
+      ...(form.ccGroupIds ?? []).map((id) => buildSelectableEntityId("group", id)),
+    ],
+    [form.ccGroupIds, form.ccUserIds],
   );
 
   useEffect(() => {
@@ -394,109 +443,70 @@ export default function PortalMailComposePage() {
               </label>
             </div>
           </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <EntitySelector
-              title="收件人（成员）"
-              description="支持按姓名、邮箱、账号搜索，并可按成员所属群组快速筛选。"
-              items={userSelectorOptions}
-              selectedIds={form.toUserIds ?? []}
-              onSelectionChange={(nextSelectedIds) =>
-                setForm((prev) => ({
-                  ...prev,
-                  toUserIds: nextSelectedIds,
-                }))
-              }
-              selectedTitle="已选收件成员"
-              selectedEmptyLabel="暂未选择成员收件人"
-              tone="sky"
-            />
-            <EntitySelector
-              title="抄送（成员）"
-              description="支持按姓名、邮箱、账号搜索，并可按成员所属群组快速筛选。"
-              items={userSelectorOptions}
-              selectedIds={form.ccUserIds ?? []}
-              onSelectionChange={(nextSelectedIds) =>
-                setForm((prev) => ({
-                  ...prev,
-                  ccUserIds: nextSelectedIds,
-                }))
-              }
-              selectedTitle="已选抄送成员"
-              selectedEmptyLabel="暂未选择成员抄送人"
-              tone="amber"
-            />
-            <EntitySelector
-              title="收件人（群组）"
-              description="支持按群组名称、编码搜索，并按方向组、年级组、功能组快速筛选。"
-              items={groupSelectorOptions}
-              selectedIds={form.toGroupIds ?? []}
-              onSelectionChange={(nextSelectedIds) =>
-                setForm((prev) => ({
-                  ...prev,
-                  toGroupIds: nextSelectedIds,
-                }))
-              }
-              selectedTitle="已选收件群组"
-              selectedEmptyLabel="暂未选择群组收件人"
-              tone="sky"
-            />
-            <EntitySelector
-              title="抄送（群组）"
-              description="支持按群组名称、编码搜索，并按方向组、年级组、功能组快速筛选。"
-              items={groupSelectorOptions}
-              selectedIds={form.ccGroupIds ?? []}
-              onSelectionChange={(nextSelectedIds) =>
-                setForm((prev) => ({
-                  ...prev,
-                  ccGroupIds: nextSelectedIds,
-                }))
-              }
-              selectedTitle="已选抄送群组"
-              selectedEmptyLabel="暂未选择群组抄送人"
-              tone="amber"
-            />
-          </div>
         </div>
 
         <div className="space-y-6">
           <section className="app-panel-muted p-5">
-            <div className="text-sm font-medium text-slate-100">当前选择</div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {selectedEntities.length > 0 ? (
-                [
-                  ...(form.toUserIds ?? []).map((id) => ({
-                    id,
-                    label:
-                      options?.users.find((user) => user.id === id)?.realName ?? id,
-                    type: "收件人",
-                  })),
-                  ...(form.ccUserIds ?? []).map((id) => ({
-                    id,
-                    label:
-                      options?.users.find((user) => user.id === id)?.realName ?? id,
-                    type: "抄送",
-                  })),
-                  ...(form.toGroupIds ?? []).map((id) => ({
-                    id,
-                    label:
-                      options?.groups.find((group) => group.id === id)?.name ?? id,
-                    type: "组收件",
-                  })),
-                  ...(form.ccGroupIds ?? []).map((id) => ({
-                    id,
-                    label:
-                      options?.groups.find((group) => group.id === id)?.name ?? id,
-                    type: "组抄送",
-                  })),
-                ].map((item) => (
-                  <span key={`${item.type}-${item.id}`} className="app-pill">
-                    {item.type}：{item.label}
-                  </span>
-                ))
-              ) : (
-                <span className="text-sm text-slate-400">尚未选择收件人或群组</span>
-              )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-slate-100">当前选择</div>
+                <p className="mt-2 max-w-[50ch] text-sm leading-6 text-slate-400">
+                  采用邮件式收件条布局。正文区域不再被长列表挤占，点击任一条目即可进入悬浮选择器。
+                </p>
+              </div>
+              <div className="rounded-full border border-white/10 bg-black/20 px-3 py-2 text-xs tabular-nums text-slate-300">
+                已选 {selectedEntityCount} 项
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              <EntitySelector
+                title="To"
+                description="收件人可同时选择具体成员和群组，适合精确投递与批量投递混合使用。"
+                items={recipientSelectorOptions}
+                selectedIds={toSelectedIds}
+                onSelectionChange={(nextSelectedIds) => {
+                  const nextSelection = parseSelectableEntityIds(nextSelectedIds);
+
+                  setForm((prev) => ({
+                    ...prev,
+                    toUserIds: nextSelection.userIds,
+                    toGroupIds: nextSelection.groupIds,
+                  }));
+                }}
+                selectedTitle="当前收件对象"
+                selectedEmptyLabel="尚未选择收件人或群组"
+                tone="sky"
+                variant="floating"
+                floatingLayout="inline"
+                floatingActionLabel="选择对象"
+                floatingSummaryMaxItems={3}
+                floatingSummaryClassName="text-xs leading-5 text-slate-300"
+                searchPlaceholder="搜索成员、群组、邮箱、账号或组类型"
+              />
+              <EntitySelector
+                title="Cc"
+                description="抄送对象可同时包含成员和群组，适合通知协作人、管理组或旁路团队。"
+                items={recipientSelectorOptions}
+                selectedIds={ccSelectedIds}
+                onSelectionChange={(nextSelectedIds) => {
+                  const nextSelection = parseSelectableEntityIds(nextSelectedIds);
+
+                  setForm((prev) => ({
+                    ...prev,
+                    ccUserIds: nextSelection.userIds,
+                    ccGroupIds: nextSelection.groupIds,
+                  }));
+                }}
+                selectedTitle="当前抄送对象"
+                selectedEmptyLabel="尚未选择抄送人或群组"
+                tone="amber"
+                variant="floating"
+                floatingLayout="inline"
+                floatingActionLabel="选择对象"
+                floatingSummaryMaxItems={3}
+                floatingSummaryClassName="text-xs leading-5 text-slate-300"
+                searchPlaceholder="搜索成员、群组、邮箱、账号或组类型"
+              />
             </div>
           </section>
 

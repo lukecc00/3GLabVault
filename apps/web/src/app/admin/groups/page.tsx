@@ -440,6 +440,7 @@ export default function GroupsPage() {
                     selectedTitle="当前父群组"
                     selectedEmptyLabel="当前为顶层群组"
                     tone="neutral"
+                    variant="floating"
                   />
                 </div>
                 <label className="text-sm md:col-span-2">
@@ -488,6 +489,7 @@ export default function GroupsPage() {
                   selectedTitle="当前绑定群组"
                   selectedEmptyLabel="暂未选择群组"
                   tone="sky"
+                  variant="floating"
                 />
                 <EntitySelector
                   title="选择用户"
@@ -505,6 +507,7 @@ export default function GroupsPage() {
                   selectedTitle="当前绑定用户"
                   selectedEmptyLabel="暂未选择用户"
                   tone="emerald"
+                  variant="floating"
                 />
                 <label className="text-sm">
                   <div className="mb-2 text-zinc-300">成员身份</div>
