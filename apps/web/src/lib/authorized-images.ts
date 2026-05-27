@@ -30,6 +30,7 @@ export function hydrateAuthorizedImages(container: HTMLElement) {
   let disposed = false;
   const controllers = new Map<HTMLImageElement, AbortController>();
   const objectUrls = new Map<HTMLImageElement, string>();
+  const trackedImages = new Set<HTMLImageElement>();
 
   function revokeObjectUrl(image: HTMLImageElement) {
     const currentObjectUrl = objectUrls.get(image);
@@ -54,6 +55,7 @@ export function hydrateAuthorizedImages(container: HTMLElement) {
     }
 
     image.setAttribute(AUTH_IMAGE_LOADING_ATTR, "true");
+    trackedImages.add(image);
     image.src = TRANSPARENT_IMAGE_DATA_URL;
     clearImageLoadFailure(image);
     revokeObjectUrl(image);
@@ -82,7 +84,7 @@ export function hydrateAuthorizedImages(container: HTMLElement) {
 
         markImageLoadFailure(image);
       } finally {
-        if (!disposed && image.isConnected) {
+        if (image.isConnected) {
           image.removeAttribute(AUTH_IMAGE_LOADING_ATTR);
         }
       }
@@ -100,6 +102,12 @@ export function hydrateAuthorizedImages(container: HTMLElement) {
 
     for (const controller of controllers.values()) {
       controller.abort();
+    }
+
+    for (const image of trackedImages.values()) {
+      if (image.isConnected) {
+        image.removeAttribute(AUTH_IMAGE_LOADING_ATTR);
+      }
     }
 
     for (const objectUrl of objectUrls.values()) {

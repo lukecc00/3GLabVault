@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import Color from "@tiptap/extension-color";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -19,10 +19,11 @@ import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 import { Button } from "@/components/ui/button";
 import { MarkdownContent } from "@/components/ui/markdown-content";
+import { type TooltipHintAlign, TooltipHint } from "@/components/ui/tooltip-hint";
 import { ApiError, requestApi } from "@/lib/api";
 import { hydrateAuthorizedImages } from "@/lib/authorized-images";
 import type { KnowledgeImageUploadResult } from "@/lib/contracts";
-import { renderMarkdownToHtml } from "@/lib/markdown";
+import { isKnowledgeAssetImageUrl, renderMarkdownToHtml } from "@/lib/markdown";
 import { cn } from "@/lib/utils";
 
 type EditorMode = "visual" | "split" | "preview";
@@ -76,6 +77,38 @@ const TOOLBAR_SHORTCUTS = {
   redo: "Shift + Cmd/Ctrl + Z",
   clear: "Cmd/Ctrl + \\",
 } as const;
+
+type ToolbarShortcutHintProps = {
+  label: string;
+  shortcut: string;
+  children: ReactNode;
+  disabled?: boolean;
+  align?: TooltipHintAlign;
+};
+
+function ToolbarShortcutHint({
+  label,
+  shortcut,
+  children,
+  disabled = false,
+  align = "center",
+}: ToolbarShortcutHintProps) {
+  return (
+    <TooltipHint
+      align={align}
+      focusable={disabled}
+      ariaLabel={disabled ? `${label}，快捷键 ${shortcut}` : undefined}
+      content={
+        <>
+          <span className="block font-medium text-white">{label}</span>
+          <span className="block text-slate-300">快捷键 {shortcut}</span>
+        </>
+      }
+    >
+      {children}
+    </TooltipHint>
+  );
+}
 
 const COLOR_OPTIONS: ColorOption[] = [
   { label: "默认", value: "", previewClassName: "bg-slate-400/70" },
@@ -151,10 +184,51 @@ const turndown = new TurndownService({
 
 turndown.use(gfm);
 
+function cleanMarkdownAttribute(attribute: string | null) {
+  return attribute ? attribute.replace(/(\n+\s*)+/g, "\n").trim() : "";
+}
+
+function escapeMarkdownImageAlt(value: string) {
+  return value.replace(/([\\[\]`*_])/g, "\\$1");
+}
+
+function escapeMarkdownLinkDestination(destination: string) {
+  const escaped = destination.replace(/([<>()])/g, "\\$1");
+  return escaped.includes(" ") ? `<${escaped}>` : escaped;
+}
+
+function escapeMarkdownLinkTitle(title: string) {
+  return title.replace(/"/g, '\\"');
+}
+
 turndown.addRule("underlineTag", {
   filter: ["u"],
   replacement(content) {
     return `<u>${content}</u>`;
+  },
+});
+
+turndown.addRule("knowledgeImage", {
+  filter: ["img"],
+  replacement(_content, node) {
+    const element = node as HTMLElement;
+    const canonicalSource = cleanMarkdownAttribute(element.getAttribute("data-auth-src"));
+    const renderedSource = cleanMarkdownAttribute(element.getAttribute("src"));
+    const source = canonicalSource || renderedSource;
+
+    if (!source) {
+      return "";
+    }
+
+    const resolvedSource =
+      canonicalSource && isKnowledgeAssetImageUrl(canonicalSource)
+        ? canonicalSource
+        : source;
+    const alt = escapeMarkdownImageAlt(cleanMarkdownAttribute(element.getAttribute("alt")));
+    const title = cleanMarkdownAttribute(element.getAttribute("title"));
+    const titlePart = title ? ` "${escapeMarkdownLinkTitle(title)}"` : "";
+
+    return `![${alt}](${escapeMarkdownLinkDestination(resolvedSource)}${titlePart})`;
   },
 });
 
@@ -1196,7 +1270,14 @@ export function KnowledgeEditor({
               </button>
             ))}
           </div>
-          <div className="group relative">
+          <TooltipHint
+            content={
+              <span className="block text-foreground-muted">
+              查看所有快捷键。点击按钮或按 `Cmd/Ctrl + /` 都可以打开说明。
+              </span>
+            }
+            tooltipClassName="z-20 w-56 min-w-0 border-border bg-surface leading-6 text-foreground-muted shadow-xl"
+          >
             <Button
               type="button"
               variant="toolbar"
@@ -1207,13 +1288,7 @@ export function KnowledgeEditor({
             >
               ?
             </Button>
-            <div
-              role="tooltip"
-              className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-2xl border border-border bg-surface px-3 py-2 text-left text-xs leading-6 text-foreground-muted opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-            >
-              查看所有快捷键。点击按钮或按 `Cmd/Ctrl + /` 都可以打开说明。
-            </div>
-          </div>
+          </TooltipHint>
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-muted">
@@ -1225,212 +1300,228 @@ export function KnowledgeEditor({
 
       <div className="knowledge-editor-toolbar">
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("bold") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleBold().run())}
-            title={TOOLBAR_SHORTCUTS.bold}
-          >
-            加粗
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("italic") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleItalic().run())}
-            title={TOOLBAR_SHORTCUTS.italic}
-          >
-            斜体
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("underline") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleUnderline().run())}
-            title={TOOLBAR_SHORTCUTS.underline}
-          >
-            下划线
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("heading", { level: 1 }) ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 1 }).run())}
-            title={TOOLBAR_SHORTCUTS.heading1}
-          >
-            H1
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("heading", { level: 2 }) ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 2 }).run())}
-            title={TOOLBAR_SHORTCUTS.heading2}
-          >
-            H2
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("heading", { level: 3 }) ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 3 }).run())}
-            title={TOOLBAR_SHORTCUTS.heading3}
-          >
-            H3
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("bulletList") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleBulletList().run())}
-            title={TOOLBAR_SHORTCUTS.bulletList}
-          >
-            无序列表
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("orderedList") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() => withEditor(() => editor?.chain().focus().toggleOrderedList().run())}
-            title={TOOLBAR_SHORTCUTS.orderedList}
-          >
-            有序列表
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("blockquote") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() =>
-              mode === "split"
-                ? prefixSourceLines("> ", "引用内容")
-                : withEditor(() => editor?.chain().focus().toggleBlockquote().run())
-            }
-            title={TOOLBAR_SHORTCUTS.blockquote}
-          >
-            引用
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("codeBlock") ? "bg-surface text-foreground-strong" : ""}
-            onClick={insertCodeBlock}
-            title={TOOLBAR_SHORTCUTS.codeBlock}
-          >
-            代码块
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("code") ? "bg-surface text-foreground-strong" : ""}
-            onClick={() =>
-              mode === "split"
-                ? wrapSource("`", "`", "inline code")
-                : withEditor(() => editor?.chain().focus().toggleCode().run())
-            }
-            title={TOOLBAR_SHORTCUTS.inlineCode}
-          >
-            行内代码
-          </Button>
-          <Button type="button" variant="toolbar" onClick={insertLink} title={TOOLBAR_SHORTCUTS.link}>
-            链接
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={insertImageByUrl}
-            title={TOOLBAR_SHORTCUTS.imageUrl}
-          >
-            图片链接
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={() => fileInputRef.current?.click()}
+          <ToolbarShortcutHint label="加粗" shortcut={TOOLBAR_SHORTCUTS.bold}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("bold") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleBold().run())}
+            >
+              加粗
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="斜体" shortcut={TOOLBAR_SHORTCUTS.italic}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("italic") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleItalic().run())}
+            >
+              斜体
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="下划线" shortcut={TOOLBAR_SHORTCUTS.underline}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("underline") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleUnderline().run())}
+            >
+              下划线
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="H1" shortcut={TOOLBAR_SHORTCUTS.heading1}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("heading", { level: 1 }) ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 1 }).run())}
+            >
+              H1
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="H2" shortcut={TOOLBAR_SHORTCUTS.heading2}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("heading", { level: 2 }) ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 2 }).run())}
+            >
+              H2
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="H3" shortcut={TOOLBAR_SHORTCUTS.heading3}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("heading", { level: 3 }) ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleHeading({ level: 3 }).run())}
+            >
+              H3
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="无序列表" shortcut={TOOLBAR_SHORTCUTS.bulletList}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("bulletList") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleBulletList().run())}
+            >
+              无序列表
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="有序列表" shortcut={TOOLBAR_SHORTCUTS.orderedList}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("orderedList") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() => withEditor(() => editor?.chain().focus().toggleOrderedList().run())}
+            >
+              有序列表
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="引用" shortcut={TOOLBAR_SHORTCUTS.blockquote}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("blockquote") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() =>
+                mode === "split"
+                  ? prefixSourceLines("> ", "引用内容")
+                  : withEditor(() => editor?.chain().focus().toggleBlockquote().run())
+              }
+            >
+              引用
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="代码块" shortcut={TOOLBAR_SHORTCUTS.codeBlock}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("codeBlock") ? "bg-surface text-foreground-strong" : ""}
+              onClick={insertCodeBlock}
+            >
+              代码块
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="行内代码" shortcut={TOOLBAR_SHORTCUTS.inlineCode}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("code") ? "bg-surface text-foreground-strong" : ""}
+              onClick={() =>
+                mode === "split"
+                  ? wrapSource("`", "`", "inline code")
+                  : withEditor(() => editor?.chain().focus().toggleCode().run())
+              }
+            >
+              行内代码
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="链接" shortcut={TOOLBAR_SHORTCUTS.link}>
+            <Button type="button" variant="toolbar" onClick={insertLink}>
+              链接
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="图片链接" shortcut={TOOLBAR_SHORTCUTS.imageUrl}>
+            <Button type="button" variant="toolbar" onClick={insertImageByUrl}>
+              图片链接
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint
+            label={isUploadingImage ? "本地图片（上传中）" : "本地图片"}
+            shortcut={TOOLBAR_SHORTCUTS.localImage}
             disabled={isUploadingImage}
-            title={TOOLBAR_SHORTCUTS.localImage}
           >
-            {isUploadingImage ? "上传中..." : "本地图片"}
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            className={editor?.isActive("taskList") ? "bg-surface text-foreground-strong" : ""}
-            onClick={insertTodoList}
-            title={TOOLBAR_SHORTCUTS.todoList}
-          >
-            待办清单
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={insertCompareTable}
-            title={TOOLBAR_SHORTCUTS.compareTable}
-          >
-            对比表格
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={insertHintBlock}
-            title={TOOLBAR_SHORTCUTS.hintBlock}
-          >
-            提示块
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={() =>
-              mode === "split"
-                ? insertSourceBlock("---")
-                : withEditor(() => editor?.chain().focus().setHorizontalRule().run())
-            }
-            title={TOOLBAR_SHORTCUTS.divider}
-          >
-            分隔线
-          </Button>
+            <Button
+              type="button"
+              variant="toolbar"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingImage}
+            >
+              {isUploadingImage ? "上传中..." : "本地图片"}
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="待办清单" shortcut={TOOLBAR_SHORTCUTS.todoList}>
+            <Button
+              type="button"
+              variant="toolbar"
+              className={editor?.isActive("taskList") ? "bg-surface text-foreground-strong" : ""}
+              onClick={insertTodoList}
+            >
+              待办清单
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="对比表格" shortcut={TOOLBAR_SHORTCUTS.compareTable}>
+            <Button type="button" variant="toolbar" onClick={insertCompareTable}>
+              对比表格
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="提示块" shortcut={TOOLBAR_SHORTCUTS.hintBlock}>
+            <Button type="button" variant="toolbar" onClick={insertHintBlock}>
+              提示块
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="分隔线" shortcut={TOOLBAR_SHORTCUTS.divider}>
+            <Button
+              type="button"
+              variant="toolbar"
+              onClick={() =>
+                mode === "split"
+                  ? insertSourceBlock("---")
+                  : withEditor(() => editor?.chain().focus().setHorizontalRule().run())
+              }
+            >
+              分隔线
+            </Button>
+          </ToolbarShortcutHint>
         </div>
 
         <div ref={colorMenuRef} className="relative flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="toolbar"
-            aria-haspopup="dialog"
-            aria-expanded={colorMenuOpen}
-            onClick={toggleColorMenu}
-            className="gap-2"
-            title={TOOLBAR_SHORTCUTS.color}
-          >
-            <span className={cn("knowledge-editor-color-dot", activeColorOption.previewClassName)} />
-            文字颜色
-          </Button>
+          <ToolbarShortcutHint label="文字颜色" shortcut={TOOLBAR_SHORTCUTS.color}>
+            <Button
+              type="button"
+              variant="toolbar"
+              aria-haspopup="dialog"
+              aria-expanded={colorMenuOpen}
+              onClick={toggleColorMenu}
+              className="gap-2"
+            >
+              <span className={cn("knowledge-editor-color-dot", activeColorOption.previewClassName)} />
+              文字颜色
+            </Button>
+          </ToolbarShortcutHint>
           <span className="text-xs text-foreground-muted">
             当前：{mode === "split" ? "源码模式" : activeColorOption.label}
           </span>
           <div className="flex flex-wrap items-center gap-2">
             {COLOR_OPTIONS.map((option, index) => (
-              <button
+              <ToolbarShortcutHint
                 key={`inline-${option.label}`}
-                type="button"
-                onClick={() =>
-                  mode === "split"
-                    ? applySourceColor(option.value)
-                    : applyEditorColor(option.value)
-                }
-                className={cn(
-                  "knowledge-editor-color-chip",
-                  option.value &&
-                    editor?.isActive("textStyle", { color: option.value })
-                    ? "bg-surface text-foreground-strong"
-                    : "",
-                  !option.value ? "is-default" : "",
-                )}
-                aria-label={`${option.label}，快捷键序号 ${index}`}
-                title={`${option.label}（${TOOLBAR_SHORTCUTS.color} 打开后按 ${index} 选择）`}
+                label={option.label}
+                shortcut={`${TOOLBAR_SHORTCUTS.color} 打开后按 ${index}`}
               >
-                <span className={cn("knowledge-editor-color-dot", option.previewClassName)} />
-                {option.label}
-              </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    mode === "split"
+                      ? applySourceColor(option.value)
+                      : applyEditorColor(option.value)
+                  }
+                  className={cn(
+                    "knowledge-editor-color-chip",
+                    option.value &&
+                      editor?.isActive("textStyle", { color: option.value })
+                      ? "bg-surface text-foreground-strong"
+                      : "",
+                    !option.value ? "is-default" : "",
+                  )}
+                  aria-label={`${option.label}，快捷键序号 ${index}`}
+                >
+                  <span className={cn("knowledge-editor-color-dot", option.previewClassName)} />
+                  {option.label}
+                </button>
+              </ToolbarShortcutHint>
             ))}
           </div>
           {colorMenuOpen ? (
@@ -1446,42 +1537,47 @@ export function KnowledgeEditor({
                     快捷键为 `{COLOR_SHORTCUT}`，打开颜色面板后也可按 0-5 快速选择。
                   </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="toolbar"
-                  className="size-8 rounded-full px-0"
-                  aria-label="关闭颜色面板"
-                  onClick={() => setColorMenuOpen(false)}
-                  title="Esc"
-                >
-                  ×
-                </Button>
+                <ToolbarShortcutHint label="关闭颜色面板" shortcut="Esc" align="end">
+                  <Button
+                    type="button"
+                    variant="toolbar"
+                    className="size-8 rounded-full px-0"
+                    aria-label="关闭颜色面板"
+                    onClick={() => setColorMenuOpen(false)}
+                  >
+                    ×
+                  </Button>
+                </ToolbarShortcutHint>
               </div>
               <div className="knowledge-editor-color-grid">
                 {COLOR_OPTIONS.map((option, index) => (
-                  <button
+                  <ToolbarShortcutHint
                     key={option.label}
-                    type="button"
-                    onClick={() =>
-                      mode === "split"
-                        ? applySourceColor(option.value)
-                        : applyEditorColor(option.value)
-                    }
-                    className={cn(
-                      "knowledge-editor-color-card",
-                      option.value &&
-                        editor?.isActive("textStyle", { color: option.value })
-                        ? "is-active"
-                        : "",
-                      !option.value ? "is-default" : "",
-                    )}
-                    aria-label={`${option.label}，快捷键序号 ${index}`}
-                    title={`${option.label}（${TOOLBAR_SHORTCUTS.color} 打开后按 ${index} 选择）`}
+                    label={option.label}
+                    shortcut={`${TOOLBAR_SHORTCUTS.color} 打开后按 ${index}`}
                   >
-                    <span className={cn("knowledge-editor-color-card-swatch", option.previewClassName)} />
-                    <span className="text-sm font-medium text-foreground-strong">{option.label}</span>
-                    <span className="text-[11px] text-foreground-muted">快捷键 {index}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        mode === "split"
+                          ? applySourceColor(option.value)
+                          : applyEditorColor(option.value)
+                      }
+                      className={cn(
+                        "knowledge-editor-color-card",
+                        option.value &&
+                          editor?.isActive("textStyle", { color: option.value })
+                          ? "is-active"
+                          : "",
+                        !option.value ? "is-default" : "",
+                      )}
+                      aria-label={`${option.label}，快捷键序号 ${index}`}
+                    >
+                      <span className={cn("knowledge-editor-color-card-swatch", option.previewClassName)} />
+                      <span className="text-sm font-medium text-foreground-strong">{option.label}</span>
+                      <span className="text-[11px] text-foreground-muted">快捷键 {index}</span>
+                    </button>
+                  </ToolbarShortcutHint>
                 ))}
               </div>
             </div>
@@ -1489,34 +1585,37 @@ export function KnowledgeEditor({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={() => withEditor(() => editor?.chain().focus().undo().run())}
-            title={TOOLBAR_SHORTCUTS.undo}
-          >
-            撤销
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={() => withEditor(() => editor?.chain().focus().redo().run())}
-            title={TOOLBAR_SHORTCUTS.redo}
-          >
-            重做
-          </Button>
-          <Button
-            type="button"
-            variant="toolbar"
-            onClick={() =>
-              withEditor(() =>
-                editor?.chain().focus().unsetLink().unsetAllMarks().clearNodes().run(),
-              )
-            }
-            title={TOOLBAR_SHORTCUTS.clear}
-          >
-            清除格式
-          </Button>
+          <ToolbarShortcutHint label="撤销" shortcut={TOOLBAR_SHORTCUTS.undo}>
+            <Button
+              type="button"
+              variant="toolbar"
+              onClick={() => withEditor(() => editor?.chain().focus().undo().run())}
+            >
+              撤销
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="重做" shortcut={TOOLBAR_SHORTCUTS.redo}>
+            <Button
+              type="button"
+              variant="toolbar"
+              onClick={() => withEditor(() => editor?.chain().focus().redo().run())}
+            >
+              重做
+            </Button>
+          </ToolbarShortcutHint>
+          <ToolbarShortcutHint label="清除格式" shortcut={TOOLBAR_SHORTCUTS.clear}>
+            <Button
+              type="button"
+              variant="toolbar"
+              onClick={() =>
+                withEditor(() =>
+                  editor?.chain().focus().unsetLink().unsetAllMarks().clearNodes().run(),
+                )
+              }
+            >
+              清除格式
+            </Button>
+          </ToolbarShortcutHint>
         </div>
       </div>
 
