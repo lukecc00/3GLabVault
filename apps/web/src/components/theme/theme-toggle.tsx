@@ -6,7 +6,7 @@ import { useTheme, type ThemeMode } from "./theme-provider";
 const themeOptions: Array<{
   value: ThemeMode;
   label: string;
-  icon: (className?: string) => React.JSX.Element;
+  icon: ({ className }: { className?: string }) => React.JSX.Element;
 }> = [
   { value: "system", label: "系统", icon: MonitorIcon },
   { value: "light", label: "日间", icon: SunIcon },

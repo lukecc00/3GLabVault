@@ -9,9 +9,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
+import { BulkUpdateInternalMailMailboxDto } from './dto/bulk-update-internal-mail-mailbox.dto';
 import { CreateInternalMailDto } from './dto/create-internal-mail.dto';
 import { QueryInternalMailListDto } from './dto/query-internal-mail-list.dto';
 import { UpdateInternalMailMailboxDto } from './dto/update-internal-mail-mailbox.dto';
@@ -83,6 +85,12 @@ export class InternalMailController {
   }
 
   @Post('messages')
+  @Throttle({
+    default: {
+      ttl: 10 * 60_000,
+      limit: 30,
+    },
+  })
   create(
     @Body() dto: CreateInternalMailDto,
     @CurrentUser() user: AuthenticatedUser,
@@ -102,5 +110,13 @@ export class InternalMailController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.internalMailService.updateMailboxEntry(id, dto, user);
+  }
+
+  @Post('mailbox/bulk')
+  bulkUpdateMailboxEntries(
+    @Body() dto: BulkUpdateInternalMailMailboxDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.internalMailService.bulkUpdateMailboxEntries(dto, user);
   }
 }

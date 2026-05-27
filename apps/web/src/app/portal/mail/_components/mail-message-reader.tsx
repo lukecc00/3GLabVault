@@ -45,6 +45,19 @@ function renderRecipientLines(
   return message.recipients.filter((recipient) => recipient.recipientType === recipientType);
 }
 
+function buildArchivedSourceNotice(message: InternalMailMessageDetail) {
+  const archivedSourceEntry = message.currentUserMailboxEntries.find((entry) =>
+    Boolean(entry.archivedSourceUserId),
+  );
+
+  if (!archivedSourceEntry) {
+    return null;
+  }
+
+  const name = archivedSourceEntry.archivedSourceUserName?.trim();
+  return name ? `来自 ${name} 用户归档内容` : "来自归档用户内容";
+}
+
 function RecipientChips({
   recipients,
 }: {
@@ -80,6 +93,7 @@ export function MailMessageReader({
 }: MailMessageReaderProps) {
   const toRecipients = renderRecipientLines(message, "TO");
   const ccRecipients = renderRecipientLines(message, "CC");
+  const archivedSourceNotice = buildArchivedSourceNotice(message);
 
   return (
     <div className="space-y-6">
@@ -167,6 +181,13 @@ export function MailMessageReader({
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {archivedSourceNotice ? (
+        <section className="rounded-2xl border border-amber-400/25 bg-amber-400/10 px-4 py-3 text-sm leading-6 text-amber-100">
+          <div className="font-medium text-amber-50">归档接管提醒</div>
+          <div className="mt-1">{archivedSourceNotice}，请按需筛选、清理或归档，避免管理员邮箱堆积过多历史邮件。</div>
+        </section>
       ) : null}
 
       <section className="app-panel-muted p-4">

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -15,6 +15,10 @@ import { MailcowModule } from './mailcow/mailcow.module';
 import { OrganizationModule } from './organization/organization.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RoleModule } from './role/role.module';
+import { GeoAccessMiddleware } from './security/geo-access.middleware';
+import { AuditLogModule } from './security/audit-log.module';
+import { RequestContextMiddleware } from './security/request-context.middleware';
+import { SecurityModule } from './security/security.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -32,6 +36,8 @@ import { UserModule } from './user/user.module';
         },
       ],
     }),
+    SecurityModule,
+    AuditLogModule,
     PrismaModule,
     MailcowModule,
     AuthModule,
@@ -53,4 +59,10 @@ import { UserModule } from './user/user.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(RequestContextMiddleware, GeoAccessMiddleware)
+      .forRoutes('*');
+  }
+}

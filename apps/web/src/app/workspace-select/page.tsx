@@ -1,13 +1,21 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { AuthShell } from "@/components/ui/auth-shell";
 import { cn } from "@/lib/utils";
 import { getPostLoginDestination, resolveWorkspaceHref } from "@/lib/workspace";
 
 export default function WorkspaceSelectPage() {
+  return (
+    <Suspense fallback={null}>
+      <WorkspaceSelectContent />
+    </Suspense>
+  );
+}
+
+function WorkspaceSelectContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status, user, workspaceOptions, activeWorkspace, selectWorkspace, logout } = useAuth();

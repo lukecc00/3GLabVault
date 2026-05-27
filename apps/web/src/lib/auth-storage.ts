@@ -1,12 +1,30 @@
 const AUTH_TOKEN_STORAGE_KEY = "labvault.accessToken";
 const ACTIVE_WORKSPACE_STORAGE_KEY = "labvault.activeWorkspace";
 
+function readFromLegacyTokenStorage() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const legacyToken = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  if (!legacyToken) {
+    return null;
+  }
+
+  window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, legacyToken);
+  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
+  return legacyToken;
+}
+
 export function getStoredAccessToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+  return (
+    window.sessionStorage.getItem(AUTH_TOKEN_STORAGE_KEY) ??
+    readFromLegacyTokenStorage()
+  );
 }
 
 export function setStoredAccessToken(token: string) {
@@ -14,7 +32,9 @@ export function setStoredAccessToken(token: string) {
     return;
   }
 
-  window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  // Sensitive access tokens stay in sessionStorage to reduce long-term persistence.
+  window.sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, token);
+  window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
 }
 
 export function clearStoredAccessToken() {
@@ -22,6 +42,7 @@ export function clearStoredAccessToken() {
     return;
   }
 
+  window.sessionStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(AUTH_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(ACTIVE_WORKSPACE_STORAGE_KEY);
 }

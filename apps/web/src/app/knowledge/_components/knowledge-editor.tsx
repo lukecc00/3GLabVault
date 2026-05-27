@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
 import Color from "@tiptap/extension-color";
+import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -15,6 +16,7 @@ import { TextStyle } from "@tiptap/extension-text-style";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { all, createLowlight } from "lowlight";
 import TurndownService from "turndown";
 import { gfm } from "turndown-plugin-gfm";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,7 @@ type SourceInsertOptions = {
 };
 
 const COLOR_SHORTCUT = "Cmd/Ctrl + Shift + E";
+const lowlight = createLowlight(all);
 
 const TOOLBAR_SHORTCUTS = {
   bold: "Cmd/Ctrl + B",
@@ -565,6 +568,7 @@ export function KnowledgeEditor({
         },
         link: false,
         underline: false,
+        codeBlock: false,
         blockquote: {
           HTMLAttributes: {
             class: "md-blockquote",
@@ -580,10 +584,11 @@ export function KnowledgeEditor({
             class: "md-list-decimal",
           },
         },
-        codeBlock: {
-          HTMLAttributes: {
-            class: "language-plaintext",
-          },
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+        HTMLAttributes: {
+          class: "language-plaintext",
         },
       }),
       TaskList,
@@ -935,12 +940,18 @@ export function KnowledgeEditor({
     editor
       .chain()
       .focus()
-      .insertContent(
-        `<pre><code class="language-${language || "plaintext"}">${code
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")}</code></pre>`,
-      )
+      .insertContent({
+        type: "codeBlock",
+        attrs: {
+          language: language || "plaintext",
+        },
+        content: [
+          {
+            type: "text",
+            text: code,
+          },
+        ],
+      })
       .run();
     setFeedback(`已插入 ${language || "plaintext"} 代码块。`);
   }
@@ -1253,7 +1264,7 @@ export function KnowledgeEditor({
           <div className="app-segmented-tabs knowledge-editor-mode-tabs">
             {[
               { key: "visual", label: "可视化编辑" },
-              { key: "split", label: "分栏预览" },
+              { key: "split", label: "分栏编辑" },
               { key: "preview", label: "阅读预览" },
             ].map((item) => (
               <button

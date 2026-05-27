@@ -1,3 +1,8 @@
+map $http_cf_ipcountry $allowed_country {
+    default 0;
+    CN 1;
+}
+
 server {
     listen 80;
     server_name lab.example.com;
@@ -13,6 +18,12 @@ server {
 
     client_max_body_size 50m;
 
+    # 推荐在 CDN / WAF 层先限制仅中国地区访问；这里提供 Nginx 兜底示例。
+    # 该示例依赖上游网关传入 CF-IPCountry；若使用 GeoIP2 模块，可替换为本地国家码变量。
+    if ($allowed_country = 0) {
+        return 403;
+    }
+
     location /api/ {
         proxy_pass http://server:3001;
         proxy_http_version 1.1;
@@ -20,6 +31,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header CF-IPCountry $http_cf_ipcountry;
     }
 
     location / {
@@ -29,5 +41,6 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header CF-IPCountry $http_cf_ipcountry;
     }
 }

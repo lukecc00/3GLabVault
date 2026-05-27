@@ -242,7 +242,7 @@ export default function PortalKnowledgeNewPage() {
               <div className="mb-3">
                 <h2 className="text-lg font-semibold">正文编辑器</h2>
                 <p className="mt-2 text-sm text-zinc-400">
-                  直接以阅读样式编写知识内容，必要时切换到分栏预览核对效果。
+                  直接以阅读样式编写知识内容，必要时切换到分栏编辑核对效果。
                 </p>
               </div>
               <KnowledgeEditor

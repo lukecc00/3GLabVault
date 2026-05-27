@@ -6,6 +6,7 @@ import { useMailContext } from "./mail-context";
 import { DangerConfirmDialog } from "@/components/ui/danger-confirm-dialog";
 import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type {
+  BulkUpdateInternalMailMailboxPayload,
   InternalMailListItem,
   UpdateInternalMailMailboxPayload,
 } from "@/lib/contracts";
@@ -27,6 +28,10 @@ type PendingDangerAction =
     }
   | {
       kind: "emptyTrash";
+      itemCount: number;
+    }
+  | {
+      kind: "bulkDeleteArchived";
       itemCount: number;
     };
 
@@ -82,6 +87,11 @@ function buildListPreview(preview: string) {
   return renderedText || "（无正文）";
 }
 
+function buildArchivedSourceLabel(item: InternalMailListItem) {
+  const name = item.mailboxEntry.archivedSourceUserName?.trim();
+  return name ? `来自 ${name} 用户归档内容` : "来自归档用户内容";
+}
+
 export function MailFolderPage({
   folder,
   title,
@@ -95,6 +105,9 @@ export function MailFolderPage({
   const [busyActionId, setBusyActionId] = useState<string | null>(null);
   const [pendingDangerAction, setPendingDangerAction] = useState<PendingDangerAction | null>(null);
   const [keyword, setKeyword] = useState("");
+  const [archivedSourceFilter, setArchivedSourceFilter] = useState<
+    "all" | "archived" | "direct"
+  >("all");
   const [readFilter, setReadFilter] = useState<"all" | "read" | "unread">("all");
   const [starredFilter, setStarredFilter] = useState<"all" | "starred" | "unstarred">(
     "all",
@@ -108,6 +121,10 @@ export function MailFolderPage({
       params.set("keyword", keyword.trim());
     }
 
+    if (archivedSourceFilter !== "all") {
+      params.set("archivedSource", archivedSourceFilter);
+    }
+
     if (readFilter !== "all") {
       params.set("read", readFilter);
     }
@@ -117,7 +134,7 @@ export function MailFolderPage({
     }
 
     return params.toString();
-  }, [keyword, readFilter, starredFilter]);
+  }, [archivedSourceFilter, keyword, readFilter, starredFilter]);
 
   async function loadList() {
     const requestId = ++latestListRequestIdRef.current;
@@ -216,6 +233,41 @@ export function MailFolderPage({
     }
   }
 
+  async function handleBulkDeleteArchived() {
+    if (folder === "trash") {
+      return;
+    }
+
+    setBusyActionId(EMPTY_TRASH_ACTION_ID);
+    setMessage(null);
+    setError(null);
+
+    try {
+      await sendJson<
+        { updatedCount: number },
+        BulkUpdateInternalMailMailboxPayload
+      >("/internal-mail/mailbox/bulk", "POST", {
+        folder,
+        action: "DELETE",
+        keyword: keyword.trim() || undefined,
+        archivedSource: "archived",
+        read: readFilter === "all" ? undefined : readFilter,
+        starred:
+          starredFilter === "all"
+            ? undefined
+            : starredFilter === "starred"
+              ? "true"
+              : "false",
+      });
+      await Promise.all([loadList(), refreshSummary()]);
+      setMessage("归档接管邮件已批量移入回收站。");
+    } catch (actionError) {
+      setError(actionError instanceof ApiError ? actionError.message : "批量删除失败");
+    } finally {
+      setBusyActionId(null);
+    }
+  }
+
   async function handleConfirmDangerAction() {
     if (!pendingDangerAction) {
       return;
@@ -230,6 +282,8 @@ export function MailFolderPage({
         action: "PURGE",
       });
       setMessage("邮件已从回收站彻底删除。");
+    } else if (pendingDangerAction.kind === "bulkDeleteArchived") {
+      await handleBulkDeleteArchived();
     } else {
       await handleEmptyTrash();
     }
@@ -264,6 +318,17 @@ export function MailFolderPage({
       };
     }
 
+    if (pendingDangerAction.kind === "bulkDeleteArchived") {
+      return {
+        title: "批量删除归档接管邮件",
+        description: `该操作会将当前列表中筛选出的 ${pendingDangerAction.itemCount} 封归档接管邮件移入回收站，便于快速清理归档迁移带来的堆积内容。为防止误操作，请输入确认文案后继续。`,
+        confirmText: "确认批量删除归档接管邮件",
+        confirmLabel: "请输入确认文案",
+        actionLabel: "确认批量删除",
+        busyId: EMPTY_TRASH_ACTION_ID,
+      };
+    }
+
     return {
       title: "清空回收站",
       description: `该操作会立即彻底删除回收站中的 ${pendingDangerAction.itemCount} 封邮件，删除后无法恢复。为防止误操作，请输入确认文案后继续。`,
@@ -275,6 +340,12 @@ export function MailFolderPage({
   }
 
   const dangerDialogConfig = getDangerDialogConfig();
+  const archivedImportedItems = useMemo(
+    () => items.filter((item) => Boolean(item.mailboxEntry.archivedSourceUserId)),
+    [items],
+  );
+  const canBulkDeleteArchived =
+    folder !== "trash" && archivedImportedItems.length > 0;
 
   function renderEmptyState() {
     const actionMap: Record<FolderKey, { title: string; actionLabel: string; href: string }> =
@@ -374,7 +445,7 @@ export function MailFolderPage({
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_180px_180px]">
+        <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_180px_180px_180px]">
           <label className="text-sm">
             <div className="mb-2 text-slate-300">搜索主题 / 内容 / 人员</div>
             <input
@@ -383,6 +454,22 @@ export function MailFolderPage({
               className="app-input"
               placeholder="搜索邮件"
             />
+          </label>
+          <label className="text-sm">
+            <div className="mb-2 text-slate-300">归档来源</div>
+            <select
+              value={archivedSourceFilter}
+              onChange={(event) =>
+                setArchivedSourceFilter(
+                  event.target.value as "all" | "archived" | "direct",
+                )
+              }
+              className="app-select"
+            >
+              <option value="all">全部</option>
+              <option value="archived">仅归档接管</option>
+              <option value="direct">仅普通邮件</option>
+            </select>
           </label>
           <label className="text-sm">
             <div className="mb-2 text-slate-300">已读状态</div>
@@ -398,7 +485,7 @@ export function MailFolderPage({
               <option value="unread">未读</option>
             </select>
           </label>
-          <label className="text-sm">
+          <label className="text-sm xl:col-start-4">
             <div className="mb-2 text-slate-300">星标状态</div>
             <select
               value={starredFilter}
@@ -415,6 +502,27 @@ export function MailFolderPage({
             </select>
           </label>
         </div>
+
+        {canBulkDeleteArchived ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+            <div>
+              当前列表包含 {archivedImportedItems.length} 封来自其他用户归档接管的邮件，可快速清理。
+            </div>
+            <button
+              type="button"
+              disabled={busyActionId === EMPTY_TRASH_ACTION_ID}
+              className="app-button-secondary"
+              onClick={() => {
+                setPendingDangerAction({
+                  kind: "bulkDeleteArchived",
+                  itemCount: archivedImportedItems.length,
+                });
+              }}
+            >
+              {busyActionId === EMPTY_TRASH_ACTION_ID ? "处理中..." : "一键删除归档接管邮件"}
+            </button>
+          </div>
+        ) : null}
 
         {message ? (
           <div className="mt-5 text-sm text-foreground-muted">
@@ -475,6 +583,11 @@ export function MailFolderPage({
                             {item.isDraft ? (
                               <span className="app-eyebrow app-eyebrow-neutral">草稿</span>
                             ) : null}
+                            {item.mailboxEntry.archivedSourceUserId ? (
+                              <span className="app-eyebrow bg-amber-400/15 text-amber-200 ring-1 ring-inset ring-amber-400/25">
+                                归档接管
+                              </span>
+                            ) : null}
                           </div>
                           <div className="mt-3 line-clamp-1 text-xl font-semibold leading-7 text-foreground-strong">
                             {item.subject}
@@ -482,6 +595,11 @@ export function MailFolderPage({
                           <div className="mt-1.5 line-clamp-2 text-sm leading-5 text-slate-500">
                             {buildRecipientSummary(item, folder)}
                           </div>
+                          {item.mailboxEntry.archivedSourceUserId ? (
+                            <div className="mt-3 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-3 py-2 text-xs leading-5 text-amber-100">
+                              {buildArchivedSourceLabel(item)}
+                            </div>
+                          ) : null}
                         </div>
                         <div className="shrink-0 text-right text-xs text-slate-400 tabular-nums">
                           <div>{formatDateTime(item.sentAt ?? item.updatedAt)}</div>

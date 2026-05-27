@@ -14,6 +14,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -92,6 +93,12 @@ export class KnowledgePageController {
   }
 
   @Post('images')
+  @Throttle({
+    default: {
+      ttl: 10 * 60_000,
+      limit: 20,
+    },
+  })
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {

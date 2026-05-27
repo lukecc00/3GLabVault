@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { assertSecureRuntimeConfig } from './security/runtime-security';
 
 function getConfiguredEnvValue(value: string | undefined, fallback: string) {
   const normalizedValue = value?.trim();
@@ -16,9 +17,12 @@ function buildBaseUrl(protocol: string, host: string, port?: string) {
 }
 
 async function bootstrap() {
+  assertSecureRuntimeConfig();
+
   const app = await NestFactory.create(AppModule);
   const httpAdapter = app.getHttpAdapter();
   const httpServer = httpAdapter.getInstance();
+  const isProduction = process.env.NODE_ENV?.trim().toLowerCase() === 'production';
   const defaultCorsOrigin = buildBaseUrl(
     getConfiguredEnvValue(process.env.WEB_PROTOCOL, 'http'),
     getConfiguredEnvValue(process.env.WEB_HOST, 'localhost'),
@@ -35,8 +39,28 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   app.use(
     helmet({
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          baseUri: ["'none'"],
+          frameAncestors: ["'none'"],
+          formAction: ["'self'"],
+        },
+      },
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: {
+        policy: 'same-site',
+      },
+      referrerPolicy: {
+        policy: 'strict-origin',
+      },
+      hsts: isProduction
+        ? {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
     }),
   );
   app.useGlobalPipes(

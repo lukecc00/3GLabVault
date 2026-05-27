@@ -3,11 +3,18 @@ import {
   IsArray,
   IsEmail,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  PASSWORD_COMPLEXITY_MESSAGE,
+  PASSWORD_COMPLEXITY_REGEX,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+} from '../../auth/password.util';
 
 class BatchGenerateUserEntryDto {
   @IsString()
@@ -26,8 +33,11 @@ export class BatchGenerateUsersDto {
   groupIds: string[];
 
   @IsString()
-  @MinLength(8)
-  @MaxLength(64)
+  @MinLength(PASSWORD_MIN_LENGTH)
+  @MaxLength(PASSWORD_MAX_LENGTH)
+  @Matches(PASSWORD_COMPLEXITY_REGEX, {
+    message: PASSWORD_COMPLEXITY_MESSAGE,
+  })
   password: string;
 
   @IsArray()

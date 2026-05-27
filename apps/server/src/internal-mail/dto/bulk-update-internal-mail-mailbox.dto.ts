@@ -1,6 +1,12 @@
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
-export class QueryInternalMailListDto {
+export class BulkUpdateInternalMailMailboxDto {
+  @IsIn(['inbox', 'sent', 'drafts', 'archive'])
+  folder!: 'inbox' | 'sent' | 'drafts' | 'archive';
+
+  @IsIn(['DELETE'])
+  action!: 'DELETE';
+
   @IsOptional()
   @IsString()
   keyword?: string;

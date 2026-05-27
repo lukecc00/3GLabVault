@@ -24,6 +24,7 @@ import { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interfa
 import { InternalMailService } from '../internal-mail/internal-mail.service';
 import { KnowledgeSpaceService } from '../knowledge-space/knowledge-space.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../security/audit-log.service';
 import { MinioService } from '../storage/minio.service';
 import { CreateKnowledgePageDto } from './dto/create-knowledge-page.dto';
 import { UpdateKnowledgePageDto } from './dto/update-knowledge-page.dto';
@@ -90,6 +91,7 @@ export class KnowledgePageService {
     private readonly internalMailService: InternalMailService,
     private readonly minioService: MinioService,
     private readonly knowledgeSpaceService: KnowledgeSpaceService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async findAll(
@@ -194,6 +196,21 @@ export class KnowledgePageService {
       'Cache-Control': 'private, max-age=31536000, immutable',
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_UPLOAD_IMAGE',
+      targetType: 'KNOWLEDGE_SPACE',
+      targetId: normalizedSpaceId,
+      summary: '上传知识库图片',
+      metadata: {
+        objectKey,
+        contentType: optimizedImage.contentType,
+        size: optimizedImage.buffer.length,
+        width: optimizedImage.width,
+        height: optimizedImage.height,
+      },
+    });
+
     return {
       url: this.buildKnowledgeImageUrl(normalizedSpaceId, objectKey),
       key: objectKey,
@@ -220,6 +237,17 @@ export class KnowledgePageService {
       this.minioService.getObject(normalizedKey),
       this.minioService.statObject(normalizedKey),
     ]);
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_VIEW_ASSET',
+      targetType: 'KNOWLEDGE_ASSET',
+      targetId: normalizedKey,
+      summary: '访问知识库图片资源',
+      metadata: {
+        spaceId: normalizedSpaceId,
+      },
+    });
 
     return {
       stream,
@@ -346,7 +374,7 @@ export class KnowledgePageService {
       dto.slug ?? dto.title,
     );
 
-    return this.prisma.knowledgePage.create({
+    const createdPage = await this.prisma.knowledgePage.create({
       data: {
         spaceId: dto.spaceId,
         parentId: dto.parentId,
@@ -364,6 +392,21 @@ export class KnowledgePageService {
       },
       include: knowledgePageInclude,
     });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_CREATE_PAGE',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: createdPage.id,
+      summary: '创建知识库页面',
+      metadata: {
+        spaceId: createdPage.spaceId,
+        status: createdPage.status,
+        title: createdPage.title,
+      },
+    });
+
+    return createdPage;
   }
 
   async update(
@@ -443,6 +486,19 @@ export class KnowledgePageService {
             : null,
       },
       include: knowledgePageInclude,
+    });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_UPDATE_PAGE',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: updatedPage.id,
+      summary: '更新知识库页面',
+      metadata: {
+        spaceId: updatedPage.spaceId,
+        status: updatedPage.status,
+        title: updatedPage.title,
+      },
     });
 
     return {
@@ -549,6 +605,18 @@ export class KnowledgePageService {
         '',
         '你现在可以进入知识页进行编辑，但不会获得页面或知识库所有权。',
       ].join('\n'),
+    });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_GRANT_PERMISSION',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: page.id,
+      summary: '授予知识页编辑权限',
+      metadata: {
+        targetUserId,
+        comment,
+      },
     });
 
     return createdGrant;
@@ -673,7 +741,7 @@ export class KnowledgePageService {
     const now = new Date();
     const deleteExpiresAt = new Date(now.getTime() + KNOWLEDGE_DELETE_RETENTION_MS);
 
-    return this.prisma.knowledgePage.update({
+    const deletedPage = await this.prisma.knowledgePage.update({
       where: { id },
       data: {
         deletedAt: now,
@@ -681,6 +749,20 @@ export class KnowledgePageService {
       },
       include: knowledgePageInclude,
     });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_DELETE_PAGE',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: deletedPage.id,
+      summary: '删除知识库页面',
+      metadata: {
+        deleteExpiresAt: deleteExpiresAt.toISOString(),
+        title: deletedPage.title,
+      },
+    });
+
+    return deletedPage;
   }
 
   async findArchived() {
@@ -718,7 +800,7 @@ export class KnowledgePageService {
       throw new BadRequestException('当前页面所在知识库空间已删除，请先恢复知识库空间');
     }
 
-    return this.prisma.knowledgePage.update({
+    const restoredPage = await this.prisma.knowledgePage.update({
       where: { id },
       data: {
         deletedAt: null,
@@ -726,6 +808,18 @@ export class KnowledgePageService {
       },
       include: knowledgePageInclude,
     });
+
+    await this.auditLogService.record({
+      action: 'KNOWLEDGE_RESTORE_PAGE',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: restoredPage.id,
+      summary: '恢复知识库页面',
+      metadata: {
+        title: restoredPage.title,
+      },
+    });
+
+    return restoredPage;
   }
 
   async revokePermission(
@@ -813,6 +907,17 @@ export class KnowledgePageService {
         '',
         '如需继续编辑，请重新发起审批申请或联系页面权限管理人。',
       ].join('\n'),
+    });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'KNOWLEDGE_REVOKE_PERMISSION',
+      targetType: 'KNOWLEDGE_PAGE',
+      targetId: page.id,
+      summary: '移除知识页编辑权限',
+      metadata: {
+        targetUserId: deletedGrant.userId,
+      },
     });
 
     return deletedGrant;

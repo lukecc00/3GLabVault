@@ -5,6 +5,7 @@ export type MailboxProvisioningStatus = "PENDING" | "PROVISIONED" | "FAILED";
 export type ArchivedContentRestoreTarget = "LAB_ADMIN" | "DIRECTION_ADMIN";
 export type InternalMailRecipientType = "SENDER" | "TO" | "CC";
 export type InternalMailDeliverySourceType = "USER" | "GROUP";
+export type AuditLogStatus = "SUCCESS" | "FAILURE" | "DENIED";
 
 export interface RoleSummary {
   id: string;
@@ -226,6 +227,38 @@ export interface ResetUserPasswordResult {
 
 export interface RestoreArchivedContentPayload {
   target: ArchivedContentRestoreTarget;
+}
+
+export interface AuditLogItem {
+  id: string;
+  actorId: string | null;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  status: AuditLogStatus;
+  summary: string;
+  metadata: unknown;
+  ipAddress: string | null;
+  countryCode: string | null;
+  userAgent: string | null;
+  workspaceId: string | null;
+  createdAt: string;
+  actor: {
+    id: string;
+    realName: string;
+    email: string;
+    username: string | null;
+  } | null;
+}
+
+export interface AuditLogResult {
+  items: AuditLogItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
 }
 
 export interface CreateRolePayload {
@@ -612,6 +645,10 @@ export interface InternalMailSummary {
 export interface InternalMailMailboxEntry {
   id: string;
   recipientType: InternalMailRecipientType;
+  archivedSourceUserId: string | null;
+  archivedSourceUserName: string | null;
+  archivedSourceUserEmail: string | null;
+  archivedSourceAt: string | null;
   readAt: string | null;
   starredAt: string | null;
   archivedAt: string | null;
@@ -624,6 +661,10 @@ export interface InternalMailRecipientDetail {
   recipientType: InternalMailRecipientType;
   deliverySourceType: InternalMailDeliverySourceType;
   deliverySourceId: string | null;
+  archivedSourceUserId: string | null;
+  archivedSourceUserName: string | null;
+  archivedSourceUserEmail: string | null;
+  archivedSourceAt: string | null;
   readAt: string | null;
   starredAt: string | null;
   archivedAt: string | null;
@@ -703,4 +744,13 @@ export interface CreateInternalMailPayload {
 
 export interface UpdateInternalMailMailboxPayload {
   action: "STAR" | "UNSTAR" | "ARCHIVE" | "DELETE" | "RESTORE" | "PURGE";
+}
+
+export interface BulkUpdateInternalMailMailboxPayload {
+  folder: "inbox" | "sent" | "drafts" | "archive";
+  action: "DELETE";
+  keyword?: string;
+  archivedSource?: "archived" | "direct";
+  read?: "read" | "unread";
+  starred?: "true" | "false";
 }

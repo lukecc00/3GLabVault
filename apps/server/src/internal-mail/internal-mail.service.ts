@@ -14,6 +14,8 @@ import {
 } from '../generated/prisma';
 import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../security/audit-log.service';
+import { BulkUpdateInternalMailMailboxDto } from './dto/bulk-update-internal-mail-mailbox.dto';
 import { CreateInternalMailDto } from './dto/create-internal-mail.dto';
 import { QueryInternalMailListDto } from './dto/query-internal-mail-list.dto';
 import { ExternalMailReminderService } from './external-mail-reminder.service';
@@ -51,6 +53,10 @@ const internalMailRecipientDetailSelect = {
   recipientType: true,
   deliverySourceType: true,
   deliverySourceId: true,
+  archivedSourceUserId: true,
+  archivedSourceUserName: true,
+  archivedSourceUserEmail: true,
+  archivedSourceAt: true,
   readAt: true,
   starredAt: true,
   archivedAt: true,
@@ -114,6 +120,7 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly externalMailReminderService: ExternalMailReminderService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   onModuleInit() {
@@ -237,7 +244,7 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
 
   async findOne(id: string, currentUser: AuthenticatedUser) {
     await this.runExpiredTrashCleanup();
-    return this.findAccessibleMessage(id, currentUser, true);
+    return this.findAccessibleMessage(id, currentUser, true, true);
   }
 
   async emptyTrash(currentUser: AuthenticatedUser) {
@@ -246,6 +253,17 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       undefined,
       currentUser.id,
     );
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'INTERNAL_MAIL_EMPTY_TRASH',
+      targetType: 'INTERNAL_MAIL_MAILBOX',
+      targetId: currentUser.id,
+      summary: '清空内部邮件回收站',
+      metadata: {
+        deletedCount,
+      },
+    });
 
     return {
       deletedCount,
@@ -289,6 +307,7 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       mailboxEntry.messageId,
       currentUser,
       false,
+      false,
     );
   }
 
@@ -321,6 +340,18 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
         [mailboxEntryId],
         currentUser.id,
       );
+
+      await this.auditLogService.record({
+        actorId: currentUser.id,
+        action: 'INTERNAL_MAIL_PURGE',
+        targetType: 'INTERNAL_MAIL_MESSAGE',
+        targetId: mailboxEntry.messageId,
+        summary: '彻底删除内部邮件',
+        metadata: {
+          mailboxEntryId,
+          deletedCount,
+        },
+      });
 
       return {
         deletedCount,
@@ -355,11 +386,59 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       data,
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'INTERNAL_MAIL_UPDATE_MAILBOX',
+      targetType: 'INTERNAL_MAIL_MESSAGE',
+      targetId: mailboxEntry.messageId,
+      summary: '更新内部邮件邮箱状态',
+      metadata: {
+        mailboxEntryId,
+        action: dto.action,
+      },
+    });
+
     return this.findAccessibleMessage(
       mailboxEntry.messageId,
       currentUser,
       false,
+      false,
     );
+  }
+
+  async bulkUpdateMailboxEntries(
+    dto: BulkUpdateInternalMailMailboxDto,
+    currentUser: AuthenticatedUser,
+  ) {
+    await this.runExpiredTrashCleanup();
+
+    if (dto.action !== 'DELETE') {
+      throw new BadRequestException('当前仅支持批量删除邮件');
+    }
+
+    const where = this.buildMailboxWhere(dto.folder, currentUser.id, dto);
+    const result = await this.prisma.internalMailRecipient.updateMany({
+      where,
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'INTERNAL_MAIL_BULK_DELETE',
+      targetType: 'INTERNAL_MAIL_MAILBOX',
+      targetId: currentUser.id,
+      summary: '批量删除内部邮件',
+      metadata: {
+        folder: dto.folder,
+        updatedCount: result.count,
+      },
+    });
+
+    return {
+      updatedCount: result.count,
+    };
   }
 
   async create(dto: CreateInternalMailDto, currentUser: AuthenticatedUser) {
@@ -540,7 +619,24 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
 
       this.triggerExternalReminder(recipientUserIds, currentUser.id, subject, saveAsDraft);
 
-      return this.findAccessibleMessage(existingDraft.id, currentUser, false);
+      await this.auditLogService.record({
+        actorId: currentUser.id,
+        action: saveAsDraft
+          ? 'INTERNAL_MAIL_SAVE_DRAFT'
+          : 'INTERNAL_MAIL_SEND',
+        targetType: 'INTERNAL_MAIL_MESSAGE',
+        targetId: existingDraft.id,
+        summary: saveAsDraft ? '保存内部邮件草稿' : '发送内部邮件',
+        metadata: {
+          toRecipientCount: recipientUserIds.length,
+          ccUserCount: ccUserIds.length,
+          toGroupCount: toGroupIds.length,
+          ccGroupCount: ccGroupIds.length,
+          subject,
+        },
+      });
+
+      return this.findAccessibleMessage(existingDraft.id, currentUser, false, false);
     }
 
     const createdMessage = await this.prisma.$transaction(async (tx) => {
@@ -595,7 +691,22 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
 
     this.triggerExternalReminder(recipientUserIds, currentUser.id, subject, saveAsDraft);
 
-    return this.findAccessibleMessage(createdMessage.id, currentUser, false);
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: saveAsDraft ? 'INTERNAL_MAIL_SAVE_DRAFT' : 'INTERNAL_MAIL_SEND',
+      targetType: 'INTERNAL_MAIL_MESSAGE',
+      targetId: createdMessage.id,
+      summary: saveAsDraft ? '保存内部邮件草稿' : '发送内部邮件',
+      metadata: {
+        toRecipientCount: recipientUserIds.length,
+        ccUserCount: ccUserIds.length,
+        toGroupCount: toGroupIds.length,
+        ccGroupCount: ccGroupIds.length,
+        subject,
+      },
+    });
+
+    return this.findAccessibleMessage(createdMessage.id, currentUser, false, false);
   }
 
   async sendNotification(input: {
@@ -745,6 +856,10 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       mailboxEntry: {
         id: entry.id,
         recipientType: entry.recipientType,
+        archivedSourceUserId: entry.archivedSourceUserId,
+        archivedSourceUserName: entry.archivedSourceUserName,
+        archivedSourceUserEmail: entry.archivedSourceUserEmail,
+        archivedSourceAt: entry.archivedSourceAt,
         readAt: entry.readAt,
         starredAt: entry.starredAt,
         archivedAt: entry.archivedAt,
@@ -831,6 +946,14 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       where.readAt = null;
     }
 
+    if (query.archivedSource === 'archived') {
+      where.archivedSourceUserId = {
+        not: null,
+      };
+    } else if (query.archivedSource === 'direct') {
+      where.archivedSourceUserId = null;
+    }
+
     const keyword = query.keyword?.trim();
 
     if (keyword) {
@@ -893,6 +1016,12 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
                 },
               },
             },
+            {
+              archivedSourceUserName: contains,
+            },
+            {
+              archivedSourceUserEmail: contains,
+            },
           ],
         },
       ];
@@ -905,6 +1034,7 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
     id: string,
     currentUser: AuthenticatedUser,
     markRead: boolean,
+    logView: boolean,
   ) {
     const message = await this.prisma.internalMailMessage.findUnique({
       where: { id },
@@ -940,6 +1070,19 @@ export class InternalMailService implements OnModuleInit, OnModuleDestroy {
       });
 
       readTarget.readAt = readAt;
+    }
+
+    if (logView) {
+      await this.auditLogService.record({
+        actorId: currentUser.id,
+        action: 'INTERNAL_MAIL_VIEW_MESSAGE',
+        targetType: 'INTERNAL_MAIL_MESSAGE',
+        targetId: message.id,
+        summary: '查看内部邮件详情',
+        metadata: {
+          markedRead: Boolean(readTarget && markRead),
+        },
+      });
     }
 
     const currentUserMailboxEntry =

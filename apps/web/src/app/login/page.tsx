@@ -85,7 +85,7 @@ export default function LoginPage() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block text-sm">
-          <div className="mb-2 text-slate-300">账号或内部邮件地址</div>
+          <div className="mb-2 text-foreground-muted">账号或内部邮件地址</div>
           <input
             required
             value={identifier}
@@ -96,7 +96,7 @@ export default function LoginPage() {
         </label>
 
         <label className="block text-sm">
-          <div className="mb-2 text-slate-300">密码</div>
+          <div className="mb-2 text-foreground-muted">密码</div>
           <PasswordInput
             required
             value={password}
@@ -111,8 +111,8 @@ export default function LoginPage() {
           <div
             className={`rounded-2xl px-4 py-3 text-sm ${
               message.includes("重新登录")
-                ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-100"
-                : "border border-red-400/20 bg-red-400/10 text-red-100"
+                ? "border-[var(--success-border)] bg-[var(--success-soft)] text-[var(--success-strong)]"
+                : "border-[var(--danger-border)] bg-[var(--danger-soft)] text-[var(--danger-strong)]"
             }`}
           >
             {message}
@@ -128,8 +128,20 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="app-panel-muted mt-6 p-4 text-sm leading-7 text-slate-300">
-        <div className="font-medium text-slate-100">管理员初始化说明</div>
+      <section
+        className="mt-6 rounded-2xl border border-[var(--warning-border)] bg-[var(--warning-soft)] px-4 py-4 text-sm text-foreground-muted"
+        aria-label="信息安全与保密提醒"
+      >
+        <div className="font-medium text-[var(--warning-strong)]">信息安全与保密提醒</div>
+        <ul className="mt-3 list-disc space-y-2 pl-5 leading-7 text-pretty">
+          <li>仅在本人使用且可信的设备上登录，不向任何人透露账号、密码或验证码。</li>
+          <li>系统内的成员、知识库和内部邮件等内容均属于内部信息，严禁截图、复制或转发到外部平台。</li>
+          <li>离开设备前请及时锁屏或退出登录；如发现异常登录、疑似泄密或账号风险，请立即联系管理员处理。</li>
+        </ul>
+      </section>
+
+      <div className="app-panel-muted mt-6 p-4 text-sm leading-7 text-foreground-muted">
+        <div className="font-medium text-foreground-strong">管理员初始化说明</div>
         <div className="mt-2">
           当前默认种子管理员账号为 `xiyou3g`。如需调整初始密码，可通过
           `ADMIN_INITIAL_PASSWORD` 环境变量覆盖。

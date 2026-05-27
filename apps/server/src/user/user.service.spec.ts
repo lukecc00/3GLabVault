@@ -25,6 +25,7 @@ describe('UserService', () => {
       },
       group: {
         findMany: jest.fn(),
+        count: jest.fn(),
       },
       userRole: {
         deleteMany: jest.fn(),
@@ -205,6 +206,7 @@ describe('UserService', () => {
       mustChangePassword: false,
       roleCodes: ['GRADE_ADMIN'],
       groupIds: ['grade-23', 'direction-web'],
+      memberships: [],
     };
 
     jest
@@ -242,6 +244,7 @@ describe('UserService', () => {
       mustChangePassword: false,
       roleCodes: ['GRADE_ADMIN'],
       groupIds: ['grade-23'],
+      memberships: [],
     };
 
     prisma.group.findMany.mockResolvedValue([{ id: 'grade-23' }]);
@@ -278,6 +281,7 @@ describe('UserService', () => {
       { id: 'grade-22' },
       { id: 'grade-23' },
     ]);
+    prisma.group.count.mockResolvedValue(2);
 
     await expect(
       service.register({
@@ -312,6 +316,7 @@ describe('UserService', () => {
       { id: 'grade-22' },
       { id: 'grade-23' },
     ]);
+    prisma.group.count.mockResolvedValue(2);
 
     await expect(
       service.review('user-1', {
@@ -401,6 +406,7 @@ describe('UserService', () => {
       mustChangePassword: false,
       roleCodes: ['SUPER_ADMIN'],
       groupIds: [],
+      memberships: [],
     });
 
     expect(prisma.knowledgePage.update).toHaveBeenCalledWith({
@@ -420,11 +426,13 @@ describe('UserService', () => {
     });
   });
 
-  it('恢复归档内容到方向管理员时会转移邮件与知识页', async () => {
+  it('恢复归档内容到方向管理员时会优先转移给同年级方向管理员', async () => {
     const { service, prisma } = createService();
     const archivedUserId = 'user-archived';
     const directionGroupId = 'group-android';
+    const gradeGroupId = 'group-grade-23';
     const directionAdminId = 'user-direction-admin';
+    const previousGradeAdminId = 'user-direction-admin-22';
 
     jest
       .spyOn(service as any, 'runExpiredArchiveCleanup')
@@ -447,7 +455,19 @@ describe('UserService', () => {
           membershipRole: MembershipRole.MEMBER,
           group: {
             id: directionGroupId,
+            code: 'ANDROID',
+            name: 'Android组',
             type: GroupType.DIRECTION,
+          },
+        },
+        {
+          groupId: gradeGroupId,
+          membershipRole: MembershipRole.MEMBER,
+          group: {
+            id: gradeGroupId,
+            code: 'GRADE_23',
+            name: '23级',
+            type: GroupType.GRADE,
           },
         },
       ],
@@ -467,18 +487,75 @@ describe('UserService', () => {
     ]);
     prisma.user.findMany.mockResolvedValue([
       {
+        id: previousGradeAdminId,
+        createdAt: new Date('2023-01-01T00:00:00.000Z'),
+        memberships: [
+          {
+            groupId: directionGroupId,
+            membershipRole: MembershipRole.MANAGER,
+            group: {
+              id: directionGroupId,
+              code: 'ANDROID',
+              name: 'Android组',
+              type: GroupType.DIRECTION,
+            },
+          },
+          {
+            groupId: 'group-grade-22',
+            membershipRole: MembershipRole.MEMBER,
+            group: {
+              id: 'group-grade-22',
+              code: 'GRADE_22',
+              name: '22级',
+              type: GroupType.GRADE,
+            },
+          },
+        ],
+      },
+      {
         id: directionAdminId,
         createdAt: new Date('2024-01-01T00:00:00.000Z'),
         memberships: [
           {
             groupId: directionGroupId,
             membershipRole: MembershipRole.MANAGER,
+            group: {
+              id: directionGroupId,
+              code: 'ANDROID',
+              name: 'Android组',
+              type: GroupType.DIRECTION,
+            },
+          },
+          {
+            groupId: gradeGroupId,
+            membershipRole: MembershipRole.MEMBER,
+            group: {
+              id: gradeGroupId,
+              code: 'GRADE_23',
+              name: '23级',
+              type: GroupType.GRADE,
+            },
           },
         ],
       },
     ]);
     prisma.internalMailMessage.findMany.mockResolvedValue([]);
-    prisma.internalMailRecipient.findMany.mockResolvedValue([]);
+    prisma.internalMailRecipient.findMany.mockResolvedValue([
+      {
+        id: 'recipient-1',
+        messageId: 'message-1',
+        recipientType: 'TO',
+        archivedSourceUserId: null,
+        archivedSourceUserName: null,
+        archivedSourceUserEmail: null,
+        archivedSourceAt: null,
+        readAt: null,
+        starredAt: null,
+        archivedAt: null,
+        deletedAt: null,
+      },
+    ]);
+    prisma.internalMailRecipient.findUnique.mockResolvedValue(null);
 
     await service.restoreArchivedContent(archivedUserId, {
       target: RestoreArchivedContentTarget.DIRECTION_ADMIN,
@@ -499,6 +576,16 @@ describe('UserService', () => {
       where: { senderId: archivedUserId },
       data: { senderId: directionAdminId },
     });
+    expect(prisma.internalMailRecipient.update).toHaveBeenCalledWith({
+      where: { id: 'recipient-1' },
+      data: expect.objectContaining({
+        userId: directionAdminId,
+        archivedSourceUserId: archivedUserId,
+        archivedSourceUserName: '归档成员',
+        archivedSourceUserEmail: null,
+        archivedSourceAt: expect.any(Date),
+      }),
+    });
     expect(prisma.user.update).toHaveBeenCalledWith({
       where: { id: archivedUserId },
       data: expect.objectContaining({
@@ -508,7 +595,127 @@ describe('UserService', () => {
     });
   });
 
-  it('重新启用归档账号时会恢复为可登录状态并补齐成员角色', async () => {
+  it('恢复归档内容到方向管理员时会在缺少同年级管理员时回退到上一个年级', async () => {
+    const { service, prisma } = createService();
+    const archivedUserId = 'user-archived';
+    const directionGroupId = 'group-android';
+    const previousGradeAdminId = 'user-direction-admin-22';
+
+    jest
+      .spyOn(service as any, 'runExpiredArchiveCleanup')
+      .mockImplementation(async () => undefined);
+    jest.spyOn(service, 'findOne').mockResolvedValue({
+      id: archivedUserId,
+    } as never);
+    prisma.$transaction.mockImplementation(async (callback) =>
+      callback(prisma),
+    );
+    prisma.user.findUnique.mockResolvedValue({
+      id: archivedUserId,
+      realName: '归档成员',
+      archivedAt: new Date('2027-01-01T00:00:00.000Z'),
+      archiveExpiresAt: new Date('2027-03-02T00:00:00.000Z'),
+      contentRestoredAt: null,
+      memberships: [
+        {
+          groupId: directionGroupId,
+          membershipRole: MembershipRole.MEMBER,
+          group: {
+            id: directionGroupId,
+            code: 'ANDROID',
+            name: 'Android组',
+            type: GroupType.DIRECTION,
+          },
+        },
+        {
+          groupId: 'group-grade-23',
+          membershipRole: MembershipRole.MEMBER,
+          group: {
+            id: 'group-grade-23',
+            code: 'GRADE_23',
+            name: '23级',
+            type: GroupType.GRADE,
+          },
+        },
+      ],
+    });
+    prisma.knowledgePage.findMany.mockResolvedValue([
+      {
+        id: 'page-1',
+        authorId: archivedUserId,
+        editorId: archivedUserId,
+        space: {
+          ownerGroup: {
+            id: directionGroupId,
+            type: GroupType.DIRECTION,
+          },
+        },
+      },
+    ]);
+    prisma.user.findMany.mockResolvedValue([
+      {
+        id: previousGradeAdminId,
+        createdAt: new Date('2024-01-01T00:00:00.000Z'),
+        memberships: [
+          {
+            groupId: directionGroupId,
+            membershipRole: MembershipRole.MANAGER,
+            group: {
+              id: directionGroupId,
+              code: 'ANDROID',
+              name: 'Android组',
+              type: GroupType.DIRECTION,
+            },
+          },
+          {
+            groupId: 'group-grade-22',
+            membershipRole: MembershipRole.MEMBER,
+            group: {
+              id: 'group-grade-22',
+              code: 'GRADE_22',
+              name: '22级',
+              type: GroupType.GRADE,
+            },
+          },
+        ],
+      },
+    ]);
+    prisma.internalMailMessage.findMany.mockResolvedValue([]);
+    prisma.internalMailRecipient.findMany.mockResolvedValue([
+      {
+        id: 'recipient-1',
+        messageId: 'message-1',
+        recipientType: 'TO',
+        archivedSourceUserId: null,
+        archivedSourceUserName: null,
+        archivedSourceUserEmail: null,
+        archivedSourceAt: null,
+        readAt: null,
+        starredAt: null,
+        archivedAt: null,
+        deletedAt: null,
+      },
+    ]);
+    prisma.internalMailRecipient.findUnique.mockResolvedValue(null);
+
+    await service.restoreArchivedContent(archivedUserId, {
+      target: RestoreArchivedContentTarget.DIRECTION_ADMIN,
+    });
+
+    expect(prisma.knowledgePage.update).toHaveBeenCalledWith({
+      where: { id: 'page-1' },
+      data: {
+        authorId: previousGradeAdminId,
+        editorId: previousGradeAdminId,
+      },
+    });
+    expect(prisma.internalMailThread.updateMany).toHaveBeenCalledWith({
+      where: { createdById: archivedUserId },
+      data: { createdById: previousGradeAdminId },
+    });
+  });
+
+  it('重新启用归档账号时即使内容已转移也会恢复为可登录状态并补齐成员角色', async () => {
     const { service, prisma } = createService();
     const archivedUserId = 'user-archived';
 
@@ -531,7 +738,7 @@ describe('UserService', () => {
       status: UserStatus.DISABLED,
       archivedAt: new Date('2027-01-01T00:00:00.000Z'),
       archiveExpiresAt: new Date('2027-03-02T00:00:00.000Z'),
-      contentRestoredAt: null,
+      contentRestoredAt: new Date('2027-01-05T00:00:00.000Z'),
       mustChangePassword: false,
       mailboxProvisioningStatus: 'PENDING',
       mailboxLastError: null,

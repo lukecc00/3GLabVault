@@ -474,7 +474,7 @@ export default function PortalKnowledgePageEditPage() {
                   <div>
                     <h2 className="text-xl font-semibold">正文编辑器</h2>
                     <p className="mt-2 text-sm text-zinc-400">
-                      直接按阅读样式写作，支持撤销快捷键和分栏预览。
+                      直接按阅读样式写作，支持撤销快捷键和分栏编辑。
                     </p>
                   </div>
                 </div>

@@ -24,6 +24,7 @@ import type { AuthenticatedUser } from '../auth/interfaces/authenticated-user.in
 import { GroupService } from '../group/group.service';
 import { MailcowService } from '../mailcow/mailcow.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../security/audit-log.service';
 import { BatchGenerateUsersDto } from './dto/batch-generate-users.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { FindUsersDirectoryDto } from './dto/find-users-directory.dto';
@@ -86,7 +87,16 @@ type ArchivedKnowledgeMembership = {
   group: {
     id: string;
     type: GroupType;
+    code?: string;
+    name?: string;
   };
+};
+
+type ArchivedMailSourceSnapshot = {
+  userId: string;
+  realName: string;
+  email?: string | null;
+  restoredAt: Date;
 };
 
 const USER_ARCHIVE_RETENTION_MS = 60 * 24 * 60 * 60 * 1000;
@@ -106,6 +116,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     private readonly prisma: PrismaService,
     private readonly groupService: GroupService,
     private readonly mailcowService: MailcowService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   onModuleInit() {
@@ -430,6 +441,19 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_BATCH_GENERATE',
+      targetType: 'USER_BATCH',
+      summary: '批量生成账号',
+      metadata: {
+        requestedCount: dto.users.length,
+        createdCount: createdUsers.length,
+        failedCount: failedUsers.length,
+        groupIds,
+      },
+    });
+
     return {
       createdUsers,
       failedUsers,
@@ -528,6 +552,20 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_REVIEW',
+      targetType: 'USER',
+      targetId: id,
+      summary: '审核用户账号',
+      metadata: {
+        status: dto.status,
+        roleIds: normalizedRoleIds,
+        groupIds: normalizedGroupIds,
+        notificationEmail: dto.notificationEmail?.trim().toLowerCase(),
+      },
+    });
+
     return this.findOne(id, currentUser);
   }
 
@@ -572,6 +610,19 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       },
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_RESET_PASSWORD',
+      targetType: 'USER',
+      targetId: id,
+      summary: '管理员重置用户密码',
+      metadata: {
+        userEmail: user.email,
+        mustChangePassword: true,
+        customPasswordProvided: Boolean(dto.password?.trim()),
+      },
+    });
+
     return {
       temporaryPassword,
       user: await this.findOne(id, currentUser),
@@ -605,6 +656,17 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_UPDATE_ROLES',
+      targetType: 'USER',
+      targetId: id,
+      summary: '更新用户角色分配',
+      metadata: {
+        roleIds: normalizedRoleIds,
+      },
+    });
+
     return this.findOne(id, currentUser);
   }
 
@@ -636,6 +698,17 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       }
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_UPDATE_GROUPS',
+      targetType: 'USER',
+      targetId: id,
+      summary: '更新用户群组分配',
+      metadata: {
+        groupIds,
+      },
+    });
+
     return this.findOne(id, currentUser);
   }
 
@@ -659,6 +732,8 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
               select: {
                 id: true,
                 type: true,
+                code: true,
+                name: true,
               },
             },
           },
@@ -746,6 +821,18 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       });
     });
 
+    await this.auditLogService.record({
+      actorId: currentUser.id,
+      action: 'USER_ARCHIVE',
+      targetType: 'USER',
+      targetId: user.id,
+      summary: '归档用户账号',
+      metadata: {
+        archiveExpiresAt: archiveExpiresAt.toISOString(),
+        userEmail: user.email,
+      },
+    });
+
     return this.findOne(user.id, currentUser);
   }
 
@@ -760,6 +847,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       where: { id },
       select: {
         id: true,
+        email: true,
         realName: true,
         archivedAt: true,
         archiveExpiresAt: true,
@@ -795,8 +883,10 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (user.contentRestoredAt) {
-      throw new ConflictException('该用户内容已恢复，无需重复操作');
+      throw new ConflictException('该用户邮件内容已转移，无需重复操作');
     }
+
+    const restoredAt = new Date();
 
     await this.prisma.$transaction(async (tx) => {
       const recipientId = await this.findRestoreContentRecipientId(tx, {
@@ -822,15 +912,31 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       });
 
       await this.transferDraftUserReferences(tx, user.id, recipientId);
-      await this.transferMailboxEntries(tx, user.id, recipientId);
+      await this.transferMailboxEntries(tx, user.id, recipientId, {
+        userId: user.id,
+        realName: user.realName,
+        email: user.email,
+        restoredAt,
+      });
 
       await tx.user.update({
         where: { id: user.id },
         data: {
-          contentRestoredAt: new Date(),
+          contentRestoredAt: restoredAt,
           archiveExpiresAt: new Date(Date.now() + USER_ARCHIVE_RETENTION_MS),
         },
       });
+    });
+
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_RESTORE_CONTENT',
+      targetType: 'USER',
+      targetId: user.id,
+      summary: '恢复归档用户内容',
+      metadata: {
+        target: dto.target,
+      },
     });
 
     return this.findOne(user.id, currentUser);
@@ -850,10 +956,6 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       user.archiveExpiresAt.getTime() <= Date.now()
     ) {
       throw new ConflictException('当前用户归档已到期，无法重新启用账号');
-    }
-
-    if (user.contentRestoredAt) {
-      throw new ConflictException('该用户内容已恢复，无法重新启用账号');
     }
 
     await this.prisma.$transaction(async (tx) => {
@@ -881,6 +983,17 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     if (this.mailcowService.isEnabled()) {
       await this.syncMailboxActivation(user, true);
     }
+
+    await this.auditLogService.record({
+      actorId: currentUser?.id,
+      action: 'USER_REACTIVATE',
+      targetType: 'USER',
+      targetId: user.id,
+      summary: '重新启用归档用户',
+      metadata: {
+        userEmail: user.email,
+      },
+    });
 
     return this.findOne(user.id, currentUser);
   }
@@ -1811,22 +1924,34 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
       );
     }
 
-    const directionAdminsByGroupId = await this.findScopedArchiveAdminsByGroup(
-      tx,
-      {
-        excludeUserId: input.userId,
-        roleCode: 'DIRECTION_ADMIN',
-        groupIds: directionGroupIds,
-      },
+    const archivedGradeMembership = this.pickArchivedGradeMembership(
+      input.memberships,
     );
 
-    const directionAdminId = this.pickFirstArchiveAdmin(
-      directionGroupIds,
-      directionAdminsByGroupId,
+    if (!archivedGradeMembership) {
+      throw new BadRequestException(
+        '该用户未归属任何年级，无法按年级恢复到方向管理员名下',
+      );
+    }
+
+    const archivedGradeValue = this.extractGradeValueFromGroup(
+      archivedGradeMembership.group,
     );
+
+    if (archivedGradeValue === null) {
+      throw new ConflictException('无法识别该用户所属年级，无法恢复到方向管理员名下');
+    }
+
+    const directionAdminId = await this.findDirectionAdminRecipientByGrade(tx, {
+      excludeUserId: input.userId,
+      directionGroupIds,
+      targetGradeValue: archivedGradeValue,
+    });
 
     if (!directionAdminId) {
-      throw new ConflictException('未找到可接收内容的方向管理员账号');
+      throw new ConflictException(
+        '未找到同年级或上一个年级的方向管理员账号',
+      );
     }
 
     return directionAdminId;
@@ -2174,6 +2299,213 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     return null;
   }
 
+  private pickArchivedGradeMembership(
+    memberships?: ArchivedKnowledgeMembership[],
+  ) {
+    const gradeMemberships = (memberships ?? []).filter(
+      (membership) => membership.group.type === GroupType.GRADE,
+    );
+
+    if (gradeMemberships.length === 0) {
+      return null;
+    }
+
+    return [...gradeMemberships].sort((left, right) => {
+      const leftGradeValue = this.extractGradeValueFromGroup(left.group);
+      const rightGradeValue = this.extractGradeValueFromGroup(right.group);
+
+      if (leftGradeValue !== null && rightGradeValue !== null) {
+        return rightGradeValue - leftGradeValue;
+      }
+
+      if (leftGradeValue !== null) {
+        return -1;
+      }
+
+      if (rightGradeValue !== null) {
+        return 1;
+      }
+
+      return left.group.id.localeCompare(right.group.id);
+    })[0];
+  }
+
+  private extractGradeValueFromGroup(input: {
+    id: string;
+    code?: string | null;
+    name?: string | null;
+  }) {
+    const patterns = [
+      /(?:^|[^0-9])GRADE[_-]?(\d{2,4})(?:[^0-9]|$)/i,
+      /(?:^|[^0-9])(\d{2,4})级(?:[^0-9]|$)/,
+      /(?:^|[^0-9])grade[-_](\d{2,4})(?:[^0-9]|$)/i,
+    ];
+
+    for (const value of [input.code, input.name, input.id]) {
+      if (!value) {
+        continue;
+      }
+
+      for (const pattern of patterns) {
+        const match = value.match(pattern);
+
+        if (match) {
+          return Number.parseInt(match[1], 10);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private async findDirectionAdminRecipientByGrade(
+    tx: Prisma.TransactionClient,
+    input: {
+      excludeUserId: string;
+      directionGroupIds: string[];
+      targetGradeValue: number;
+    },
+  ) {
+    const recipientsByGroupId = new Map<string, string>();
+
+    if (input.directionGroupIds.length === 0) {
+      return null;
+    }
+
+    const candidates = await tx.user.findMany({
+      where: {
+        id: {
+          not: input.excludeUserId,
+        },
+        status: UserStatus.ACTIVE,
+        archivedAt: null,
+        roles: {
+          some: {
+            role: {
+              code: 'DIRECTION_ADMIN',
+            },
+          },
+        },
+        memberships: {
+          some: {
+            groupId: {
+              in: input.directionGroupIds,
+            },
+          },
+        },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        memberships: {
+          select: {
+            groupId: true,
+            membershipRole: true,
+            group: {
+              select: {
+                id: true,
+                code: true,
+                name: true,
+                type: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
+    });
+
+    const candidateByGroupId = new Map<
+      string,
+      {
+        id: string;
+        createdAt: Date;
+        isManager: boolean;
+        gradePriority: number;
+      }
+    >();
+
+    for (const candidate of candidates) {
+      const gradePriority = this.resolveDirectionAdminGradePriority(
+        candidate.memberships,
+        input.targetGradeValue,
+      );
+
+      if (gradePriority === null) {
+        continue;
+      }
+
+      for (const membership of candidate.memberships) {
+        if (
+          membership.group.type !== GroupType.DIRECTION ||
+          !input.directionGroupIds.includes(membership.groupId)
+        ) {
+          continue;
+        }
+
+        const existing = candidateByGroupId.get(membership.groupId);
+        const next = {
+          id: candidate.id,
+          createdAt: candidate.createdAt,
+          isManager: membership.membershipRole === MembershipRole.MANAGER,
+          gradePriority,
+        };
+
+        if (!existing) {
+          candidateByGroupId.set(membership.groupId, next);
+          continue;
+        }
+
+        if (next.gradePriority !== existing.gradePriority) {
+          if (next.gradePriority < existing.gradePriority) {
+            candidateByGroupId.set(membership.groupId, next);
+          }
+          continue;
+        }
+
+        if (next.isManager && !existing.isManager) {
+          candidateByGroupId.set(membership.groupId, next);
+          continue;
+        }
+
+        if (
+          next.isManager === existing.isManager &&
+          next.createdAt.getTime() < existing.createdAt.getTime()
+        ) {
+          candidateByGroupId.set(membership.groupId, next);
+        }
+      }
+    }
+
+    for (const [groupId, candidate] of candidateByGroupId.entries()) {
+      recipientsByGroupId.set(groupId, candidate.id);
+    }
+
+    return this.pickFirstArchiveAdmin(input.directionGroupIds, recipientsByGroupId);
+  }
+
+  private resolveDirectionAdminGradePriority(
+    memberships: ArchivedKnowledgeMembership[],
+    targetGradeValue: number,
+  ) {
+    const gradeValues = memberships
+      .filter((membership) => membership.group.type === GroupType.GRADE)
+      .map((membership) => this.extractGradeValueFromGroup(membership.group))
+      .filter((value): value is number => value !== null);
+
+    if (gradeValues.includes(targetGradeValue)) {
+      return 0;
+    }
+
+    if (gradeValues.includes(targetGradeValue - 1)) {
+      return 1;
+    }
+
+    return null;
+  }
+
   private resolveArchivedKnowledgeRecipientId(input: {
     page: {
       space: {
@@ -2266,6 +2598,7 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
     tx: Prisma.TransactionClient,
     fromUserId: string,
     toUserId: string,
+    archivedSource: ArchivedMailSourceSnapshot,
   ) {
     const recipients = await tx.internalMailRecipient.findMany({
       where: {
@@ -2275,6 +2608,10 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         id: true,
         messageId: true,
         recipientType: true,
+        archivedSourceUserId: true,
+        archivedSourceUserName: true,
+        archivedSourceUserEmail: true,
+        archivedSourceAt: true,
         readAt: true,
         starredAt: true,
         archivedAt: true,
@@ -2293,6 +2630,10 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         },
         select: {
           id: true,
+          archivedSourceUserId: true,
+          archivedSourceUserName: true,
+          archivedSourceUserEmail: true,
+          archivedSourceAt: true,
           readAt: true,
           starredAt: true,
           archivedAt: true,
@@ -2304,6 +2645,14 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         await tx.internalMailRecipient.update({
           where: { id: existing.id },
           data: {
+            archivedSourceUserId:
+              existing.archivedSourceUserId ?? archivedSource.userId,
+            archivedSourceUserName:
+              existing.archivedSourceUserName ?? archivedSource.realName,
+            archivedSourceUserEmail:
+              existing.archivedSourceUserEmail ?? archivedSource.email ?? null,
+            archivedSourceAt:
+              existing.archivedSourceAt ?? archivedSource.restoredAt,
             readAt: this.mergeOptionalDate(existing.readAt, recipient.readAt),
             starredAt: this.mergeOptionalDate(
               existing.starredAt,
@@ -2330,6 +2679,10 @@ export class UserService implements OnModuleInit, OnModuleDestroy {
         where: { id: recipient.id },
         data: {
           userId: toUserId,
+          archivedSourceUserId: archivedSource.userId,
+          archivedSourceUserName: archivedSource.realName,
+          archivedSourceUserEmail: archivedSource.email ?? null,
+          archivedSourceAt: archivedSource.restoredAt,
         },
       });
     }

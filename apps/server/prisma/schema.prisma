@@ -69,6 +69,12 @@ enum InternalMailDeliverySourceType {
   GROUP
 }
 
+enum AuditLogStatus {
+  SUCCESS
+  FAILURE
+  DENIED
+}
+
 model User {
   id                        String                    @id @default(cuid())
   username                  String?                   @unique
@@ -102,6 +108,7 @@ model User {
   createdMailThreads        InternalMailThread[]      @relation("InternalMailThreadCreator")
   sentInternalMailMessages  InternalMailMessage[]     @relation("InternalMailMessageSender")
   internalMailRecipients    InternalMailRecipient[]   @relation("InternalMailRecipientUser")
+  auditLogs                 AuditLog[]
   createdAt                 DateTime                  @default(now())
   updatedAt                 DateTime                  @updatedAt
 
@@ -336,6 +343,10 @@ model InternalMailRecipient {
   recipientType      InternalMailRecipientType
   deliverySourceType InternalMailDeliverySourceType
   deliverySourceId   String?
+  archivedSourceUserId    String?
+  archivedSourceUserName  String?
+  archivedSourceUserEmail String?
+  archivedSourceAt        DateTime?
   readAt             DateTime?
   starredAt          DateTime?
   archivedAt         DateTime?
@@ -349,8 +360,33 @@ model InternalMailRecipient {
   @@index([userId])
   @@index([recipientType])
   @@index([deliverySourceType, deliverySourceId])
+  @@index([archivedSourceUserId])
+  @@index([archivedSourceUserName])
+  @@index([archivedSourceAt])
   @@index([readAt])
   @@index([starredAt])
   @@index([archivedAt])
   @@index([deletedAt])
+}
+
+model AuditLog {
+  id             String         @id @default(cuid())
+  actorId        String?
+  action         String
+  targetType     String?
+  targetId       String?
+  status         AuditLogStatus @default(SUCCESS)
+  summary        String
+  metadata       Json?
+  ipAddress      String?
+  countryCode    String?
+  userAgent      String?
+  workspaceId    String?
+  actor          User?          @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  createdAt      DateTime       @default(now())
+
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId, createdAt])
+  @@index([status, createdAt])
 }

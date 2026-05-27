@@ -1,8 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
-import { GroupType, UserStatus } from '../generated/prisma';
+import { AuditLogStatus, GroupType, UserStatus } from '../generated/prisma';
 import { MailcowService } from '../mailcow/mailcow.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogService } from '../security/audit-log.service';
 import {
   AUTH_TOKEN_TTL_SECONDS,
   DIRECTION_ADMIN_ROLE_CODE,
@@ -58,6 +59,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailcowService: MailcowService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -75,8 +77,27 @@ export class AuthService {
       !user.passwordHash ||
       !(await verifyPassword(dto.password, user.passwordHash))
     ) {
+      await this.auditLogService.record({
+        action: 'AUTH_LOGIN',
+        status: AuditLogStatus.FAILURE,
+        summary: '账号登录失败',
+        metadata: {
+          identifier,
+        },
+      });
       throw new UnauthorizedException('账号或密码错误');
     }
+
+    await this.auditLogService.record({
+      actorId: user.id,
+      action: 'AUTH_LOGIN',
+      targetType: 'USER',
+      targetId: user.id,
+      summary: '账号登录成功',
+      metadata: {
+        identifier,
+      },
+    });
 
     return {
       accessToken: this.signToken(user.id),
@@ -104,6 +125,14 @@ export class AuthService {
       !user.passwordHash ||
       !(await verifyPassword(dto.currentPassword, user.passwordHash))
     ) {
+      await this.auditLogService.record({
+        actorId: user?.id ?? userId,
+        action: 'AUTH_CHANGE_PASSWORD',
+        status: AuditLogStatus.FAILURE,
+        targetType: 'USER',
+        targetId: user?.id ?? userId,
+        summary: '修改密码失败',
+      });
       throw new UnauthorizedException('当前密码错误');
     }
 
@@ -124,6 +153,14 @@ export class AuthService {
         mustChangePassword: false,
         passwordUpdatedAt: new Date(),
       },
+    });
+
+    await this.auditLogService.record({
+      actorId: user.id,
+      action: 'AUTH_CHANGE_PASSWORD',
+      targetType: 'USER',
+      targetId: user.id,
+      summary: '修改密码成功',
     });
 
     return this.getCurrentUser(userId);

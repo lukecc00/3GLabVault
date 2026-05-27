@@ -13,6 +13,7 @@ const navigationItems = [
   { href: "/admin/users/archived", label: "归档用户" },
   { href: "/admin/roles", label: "角色" },
   { href: "/admin/groups", label: "群组" },
+  { href: "/admin/audit-logs", label: "审计" },
 ];
 
 const superAdminNavigationItems = [

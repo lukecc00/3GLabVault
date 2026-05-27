@@ -44,7 +44,7 @@ function getActionCopy(action: PendingAction) {
     return {
       title: `重新启用 ${action.user.realName}`,
       description:
-        "重新启用后，该账号会恢复登录能力并退出归档列表；若该用户曾被转移内容，则不能再直接重新启用。",
+        "重新启用后，该账号会恢复登录能力并退出归档列表；若该用户的内容此前已转移给管理员，重新启用不会自动回收这些已转移内容。",
       confirmText: `确认重新启用 ${action.user.realName}`,
       confirmLabel: "请输入确认文案",
       actionLabel: "确认重新启用",
@@ -54,23 +54,23 @@ function getActionCopy(action: PendingAction) {
 
   if (action.target === "LAB_ADMIN") {
     return {
-      title: `恢复 ${action.user.realName} 的内容到实验室管理员`,
+      title: `转移 ${action.user.realName} 的内容到实验室管理员`,
       description:
-        "恢复后，该用户名下尚未接管的可恢复内容会统一转移到实验室管理员名下。知识页也会一并改挂到该管理员名下。该操作不可撤销，请确认后继续。",
-      confirmText: `确认恢复 ${action.user.realName} 到实验室管理员`,
+        "转移后，该用户名下尚未接管的内容会统一转移到实验室管理员名下。知识页也会一并改挂到该管理员名下。该操作不可撤销，请确认后继续。",
+      confirmText: `确认转移 ${action.user.realName} 到实验室管理员`,
       confirmLabel: "请输入确认文案",
-      actionLabel: "确认恢复到实验室管理员",
+      actionLabel: "确认转移到实验室管理员",
       successMessage: `已将 ${action.user.realName} 的内容转移到实验室管理员名下。`,
     };
   }
 
   return {
-    title: `恢复 ${action.user.realName} 的内容到方向管理员`,
+    title: `转移 ${action.user.realName} 的内容到方向管理员`,
     description:
-      "恢复后，该用户名下尚未接管的可恢复内容会转移到对应方向管理员名下；例如 Android 组成员会优先转给 Android 方向管理员。若缺少方向归属或方向管理员，系统会给出错误提示。该操作不可撤销，请确认后继续。",
-    confirmText: `确认恢复 ${action.user.realName} 到方向管理员`,
+      "转移后，该用户名下尚未接管的内容会转移到对应方向管理员名下；系统会优先选择同方向且同年级的方向管理员，若不存在则回退到上一个年级的方向管理员。若缺少方向归属、年级归属或可用管理员，系统会给出错误提示。该操作不可撤销，请确认后继续。",
+    confirmText: `确认转移 ${action.user.realName} 到方向管理员`,
     confirmLabel: "请输入确认文案",
-    actionLabel: "确认恢复到方向管理员",
+    actionLabel: "确认转移到方向管理员",
     successMessage: `已将 ${action.user.realName} 的内容转移到对应方向管理员名下。`,
   };
 }
@@ -163,7 +163,7 @@ export default function ArchivedUsersPage() {
     target: ArchivedContentRestoreTarget,
   ) {
     if (user.contentRestoredAt) {
-      setActionMessage("该用户内容已恢复，不能重复转移。");
+      setActionMessage("该用户邮件内容已转移，不能重复转移。");
       setActionMessageTone("error");
       return;
     }
@@ -178,12 +178,6 @@ export default function ArchivedUsersPage() {
   }
 
   function handleOpenReactivateDialog(user: UserSummary) {
-    if (user.contentRestoredAt) {
-      setActionMessage("该用户内容已恢复，无法直接重新启用账号。");
-      setActionMessageTone("error");
-      return;
-    }
-
     setPendingAction({
       type: "reactivate",
       user,
@@ -253,7 +247,7 @@ export default function ArchivedUsersPage() {
   return (
     <AdminShell
       title="归档用户"
-      description="查看已归档用户。归档后 60 天内若无进一步处理，系统会自动删除账号及对应邮件资源；你可以在保留期内恢复内容给实验室管理员或方向管理员，或直接重新启用账号。"
+      description="查看已归档用户。归档后 60 天内若无进一步处理，系统会自动删除账号及对应邮件资源；你可以在保留期内恢复内容给实验室管理员或方向管理员，也可以重新启用账号。若内容已转移，重新启用不会自动回收已转移内容。"
     >
       {pendingAction && pendingActionCopy ? (
         <DangerConfirmDialog
@@ -302,7 +296,7 @@ export default function ArchivedUsersPage() {
                     <th className="min-w-56 px-5 py-4 font-medium">邮箱</th>
                     <th className="min-w-44 px-5 py-4 font-medium">归档时间</th>
                     <th className="min-w-44 px-5 py-4 font-medium">清理时间</th>
-                    <th className="min-w-56 px-5 py-4 font-medium">内容恢复</th>
+                    <th className="min-w-56 px-5 py-4 font-medium">内容转移</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
@@ -336,8 +330,8 @@ export default function ArchivedUsersPage() {
                       </td>
                       <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
                         {user.contentRestoredAt
-                          ? `已于 ${formatDateTime(user.contentRestoredAt)} 恢复`
-                          : "尚未恢复"}
+                          ? `已于 ${formatDateTime(user.contentRestoredAt)} 转移`
+                          : "尚未转移"}
                       </td>
                     </tr>
                   ))}
@@ -349,7 +343,7 @@ export default function ArchivedUsersPage() {
             <section className="app-panel p-6">
               <h2 className="text-xl font-semibold">归档操作</h2>
               <p className="mt-2 text-sm leading-7 text-zinc-300">
-                归档后，知识页会先自动移交给对应的方向管理员、年级管理员或实验室管理员。保留期内你仍可继续把剩余内容转移给实验室管理员或对应方向管理员，也可以直接重新启用该账号。
+                归档后，知识页会先自动移交给对应的方向管理员、年级管理员或实验室管理员。保留期内你仍可继续把剩余内容转移给实验室管理员或对应方向管理员；恢复到方向管理员时会优先选择同年级方向管理员，不存在时回退到上一个年级。即使内容已转移，你也仍可重新启用该账号。
               </p>
 
               {selectedUser ? (
@@ -365,10 +359,10 @@ export default function ArchivedUsersPage() {
                   <div>归档时间：{formatDateTime(selectedUser.archivedAt)}</div>
                   <div>清理时间：{formatDateTime(selectedUser.archiveExpiresAt)}</div>
                   <div>
-                    内容恢复：
+                    内容转移：
                     {selectedUser.contentRestoredAt
-                      ? `已于 ${formatDateTime(selectedUser.contentRestoredAt)} 完成内容恢复`
-                      : "尚未恢复"}
+                      ? `已于 ${formatDateTime(selectedUser.contentRestoredAt)} 完成内容转移`
+                      : "尚未转移"}
                   </div>
                 </div>
               ) : (
@@ -395,11 +389,11 @@ export default function ArchivedUsersPage() {
                     !selectedUser
                       ? "请先选择一个归档用户"
                       : selectedUser.contentRestoredAt
-                        ? "该用户内容已恢复"
-                        : `恢复 ${selectedUser.realName} 的邮件内容到实验室管理员`
+                        ? "该用户内容已转移"
+                        : `转移 ${selectedUser.realName} 的内容到实验室管理员`
                   }
                 >
-                  恢复邮件内容到实验室管理员
+                  转移内容到实验室管理员
                 </Button>
 
                 <Button
@@ -418,11 +412,11 @@ export default function ArchivedUsersPage() {
                     !selectedUser
                       ? "请先选择一个归档用户"
                       : selectedUser.contentRestoredAt
-                        ? "该用户内容已恢复"
-                        : `恢复 ${selectedUser.realName} 的邮件内容到方向管理员`
+                        ? "该用户内容已转移"
+                        : `转移 ${selectedUser.realName} 的内容到方向管理员`
                   }
                 >
-                  恢复邮件内容到方向管理员
+                  转移内容到方向管理员
                 </Button>
 
                 <Button
@@ -433,17 +427,11 @@ export default function ArchivedUsersPage() {
                     }
                   }}
                   variant="primary"
-                  disabled={
-                    submitting ||
-                    !selectedUser ||
-                    Boolean(selectedUser.contentRestoredAt)
-                  }
+                  disabled={submitting || !selectedUser}
                   title={
                     !selectedUser
                       ? "请先选择一个归档用户"
-                      : selectedUser.contentRestoredAt
-                        ? "内容已恢复的归档账号不能直接重新启用"
-                        : `重新启用 ${selectedUser.realName} 的账号`
+                      : `重新启用 ${selectedUser.realName} 的账号`
                   }
                 >
                   重新启用账号
