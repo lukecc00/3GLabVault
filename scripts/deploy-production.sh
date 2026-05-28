@@ -167,6 +167,14 @@ write_env_file() {
   local mailcow_api_base_url="${20}"
   local mailcow_api_key="${21}"
   local mailcow_default_mailbox_quota="${22}"
+  local external_mail_reminder_enabled="${23}"
+  local smtp_host="${24}"
+  local smtp_port="${25}"
+  local smtp_secure="${26}"
+  local smtp_user="${27}"
+  local smtp_pass="${28}"
+  local smtp_from="${29}"
+  local app_base_url="${30}"
   local database_url="postgresql://${postgres_app_user}:${postgres_app_password}@postgres:5432/${postgres_app_db}?schema=public"
 
   umask 077
@@ -196,6 +204,15 @@ MAIL_DOMAIN=$mail_domain
 MAILCOW_API_BASE_URL=$mailcow_api_base_url
 MAILCOW_API_KEY=$mailcow_api_key
 MAILCOW_DEFAULT_MAILBOX_QUOTA=$mailcow_default_mailbox_quota
+
+EXTERNAL_MAIL_REMINDER_ENABLED=$external_mail_reminder_enabled
+SMTP_HOST=$smtp_host
+SMTP_PORT=$smtp_port
+SMTP_SECURE=$smtp_secure
+SMTP_USER=$smtp_user
+SMTP_PASS=$smtp_pass
+SMTP_FROM=$smtp_from
+APP_BASE_URL=$app_base_url
 
 ADMIN_INITIAL_EMAIL=$admin_initial_email
 ADMIN_INITIAL_USERNAME=$admin_initial_username
@@ -228,6 +245,13 @@ configure_env() {
   local default_mailcow_api_base_url="${MAILCOW_API_BASE_URL:-}"
   local default_mailcow_api_key="${MAILCOW_API_KEY:-}"
   local default_mailcow_default_mailbox_quota="${MAILCOW_DEFAULT_MAILBOX_QUOTA:-1024}"
+  local default_external_mail_reminder_enabled="${EXTERNAL_MAIL_REMINDER_ENABLED:-true}"
+  local default_smtp_host="${SMTP_HOST:-smtp.qq.com}"
+  local default_smtp_port="${SMTP_PORT:-465}"
+  local default_smtp_secure="${SMTP_SECURE:-true}"
+  local default_smtp_user="${SMTP_USER:-}"
+  local default_smtp_pass="${SMTP_PASS:-}"
+  local default_smtp_from="${SMTP_FROM:-$default_smtp_user}"
 
   local domain
   local letsencrypt_email
@@ -251,6 +275,14 @@ configure_env() {
   local mailcow_api_base_url
   local mailcow_api_key
   local mailcow_default_mailbox_quota
+  local external_mail_reminder_enabled
+  local smtp_host
+  local smtp_port
+  local smtp_secure
+  local smtp_user
+  local smtp_pass
+  local smtp_from
+  local app_base_url
 
   domain="$(prompt_value '请输入部署域名（例如 lab.example.com）' "$default_domain")"
   letsencrypt_email="$(prompt_value '请输入 LetsEncrypt 通知邮箱' "$default_email")"
@@ -274,6 +306,14 @@ configure_env() {
   mailcow_api_base_url="$(prompt_value 'Mailcow API 地址（可留空）' "$default_mailcow_api_base_url" true)"
   mailcow_api_key="$(prompt_secret 'Mailcow API Key（可留空）' "$default_mailcow_api_key" true)"
   mailcow_default_mailbox_quota="$(prompt_value 'Mailcow 默认邮箱配额（MB）' "$default_mailcow_default_mailbox_quota")"
+  external_mail_reminder_enabled="$(prompt_value '是否启用外部邮箱提醒（true/false）' "$default_external_mail_reminder_enabled")"
+  smtp_host="$(prompt_value '中转 SMTP 服务器地址（可留空）' "$default_smtp_host" true)"
+  smtp_port="$(prompt_value '中转 SMTP 端口（可留空）' "$default_smtp_port" true)"
+  smtp_secure="$(prompt_value '中转 SMTP 是否使用 SSL/TLS（true/false，可留空）' "$default_smtp_secure" true)"
+  smtp_user="$(prompt_value '中转 SMTP 登录邮箱（可留空，不启用外部提醒）' "$default_smtp_user" true)"
+  smtp_pass="$(prompt_secret '中转 SMTP 授权码/密码（可留空，不启用外部提醒）' "$default_smtp_pass" true)"
+  smtp_from="$(prompt_value '中转提醒发件人地址（可留空，默认使用登录邮箱）' "${default_smtp_from:-$smtp_user}" true)"
+  app_base_url="https://$domain"
 
   write_env_file \
     "$domain" \
@@ -297,7 +337,15 @@ configure_env() {
     "$admin_initial_password" \
     "$mailcow_api_base_url" \
     "$mailcow_api_key" \
-    "$mailcow_default_mailbox_quota"
+    "$mailcow_default_mailbox_quota" \
+    "$external_mail_reminder_enabled" \
+    "$smtp_host" \
+    "$smtp_port" \
+    "$smtp_secure" \
+    "$smtp_user" \
+    "$smtp_pass" \
+    "$smtp_from" \
+    "$app_base_url"
 
   print_header "已生成 $ENV_FILE"
   echo "请妥善保管该文件，脚本已按仅当前用户可读写方式写入。"
