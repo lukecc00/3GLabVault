@@ -33,7 +33,7 @@ __pycache__/
 
 # Docker / local data
 data/
-storage/
+/storage/
 uploads/
 minio/
 postgres/

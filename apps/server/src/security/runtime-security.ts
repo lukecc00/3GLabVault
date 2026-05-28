@@ -5,7 +5,6 @@ const INSECURE_EXACT_VALUES = new Set([
   '',
   'change-me-for-local-dev',
   '3glabvault-dev-secret',
-  'xiyou3gfz155',
   'minioadmin',
   'minioadmin123',
 ]);

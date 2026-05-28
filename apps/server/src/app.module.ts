@@ -19,6 +19,7 @@ import { GeoAccessMiddleware } from './security/geo-access.middleware';
 import { AuditLogModule } from './security/audit-log.module';
 import { RequestContextMiddleware } from './security/request-context.middleware';
 import { SecurityModule } from './security/security.module';
+import { StorageModule } from './storage/storage.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { UserModule } from './user/user.module';
     SecurityModule,
     AuditLogModule,
     PrismaModule,
+    StorageModule,
     MailcowModule,
     AuthModule,
     UserModule,
