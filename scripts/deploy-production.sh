@@ -510,7 +510,6 @@ deploy_up() {
   print_header "检查系统依赖"
   require_command docker
   require_docker_compose
-  require_command pnpm
   
   check_firewall
 
@@ -527,14 +526,6 @@ deploy_up() {
 
   print_header "校验配置"
   validate_compose
-
-  print_header "安装项目依赖"
-  if [[ ! -d "node_modules" ]]; then
-    print_header "安装项目依赖..."
-    pnpm install --frozen-lockfile
-  else
-    print_success "项目依赖已安装"
-  fi
 
   print_header "启动基础设施服务"
   compose up -d postgres redis minio
