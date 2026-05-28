@@ -11,7 +11,7 @@ function getConfiguredEnvValue(value: string | undefined, fallback: string) {
   return normalizedValue ? normalizedValue : fallback;
 }
 
-function buildApiBaseUrl(hostnameFallback = "localhost") {
+function buildApiBaseUrl(hostnameFallback = "localhost", portFallback = "3001") {
   const protocol = getConfiguredEnvValue(
     process.env.NEXT_PUBLIC_API_PROTOCOL,
     "http",
@@ -21,11 +21,7 @@ function buildApiBaseUrl(hostnameFallback = "localhost") {
     hostnameFallback,
   );
   const configuredPort = process.env.NEXT_PUBLIC_API_PORT?.trim();
-  const port =
-    configuredPort ||
-    (hostnameFallback === "localhost" || hostnameFallback === "127.0.0.1"
-      ? "3001"
-      : "");
+  const port = configuredPort || portFallback;
 
   return `${protocol}://${host}${port ? `:${port}` : ""}/api`;
 }
@@ -38,18 +34,14 @@ function getApiBaseUrl() {
   }
 
   if (typeof window === "undefined") {
-    return buildApiBaseUrl();
+    // 服务器端，直接连接内部网络
+    return "http://server:3001/api";
   }
 
-  const { hostname, origin, port } = window.location;
-  const webPort = getConfiguredEnvValue(process.env.NEXT_PUBLIC_WEB_PORT, "3000");
-  const isStandaloneWebDev = port === webPort;
-
-  if (isStandaloneWebDev) {
-    return buildApiBaseUrl(hostname);
-  }
-
-  return `${origin}/api`;
+  const { hostname } = window.location;
+  
+  // 浏览器端，连接到暴露的端口
+  return `http://${hostname}:30881/api`;
 }
 
 function normalizeApiPath(pathOrUrl: string) {

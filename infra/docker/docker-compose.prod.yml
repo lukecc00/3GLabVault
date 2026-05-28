@@ -1,29 +1,4 @@
 services:
-  traefik:
-    image: traefik:v3.1
-    restart: unless-stopped
-    command:
-      - --providers.docker=true
-      - --providers.docker.exposedbydefault=false
-      - --entrypoints.web.address=:80
-      - --entrypoints.web.http.redirections.entrypoint.to=websecure
-      - --entrypoints.web.http.redirections.entrypoint.scheme=https
-      - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}
-      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
-      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
-      - --api.dashboard=false
-      - --ping=true
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik_letsencrypt:/letsencrypt
-    networks:
-      - edge
-
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -78,6 +53,8 @@ services:
       context: ../..
       dockerfile: apps/server/Dockerfile
     restart: unless-stopped
+    ports:
+      - "${LABVAULT_SERVER_PORT:-30881}:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,7 +63,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3001
-      CORS_ORIGIN: https://${LABVAULT_DOMAIN}
+      HOST: 0.0.0.0
+      CORS_ORIGIN: ${APP_BASE_URL}
       AUTH_TOKEN_SECRET: ${AUTH_TOKEN_SECRET}
       ACCESS_ALLOWED_COUNTRIES: ${ACCESS_ALLOWED_COUNTRIES:-CN}
       ACCESS_COUNTRY_HEADER: ${ACCESS_COUNTRY_HEADER:-cf-ipcountry}
@@ -114,19 +92,6 @@ services:
       ADMIN_INITIAL_EMAIL: ${ADMIN_INITIAL_EMAIL}
       ADMIN_INITIAL_USERNAME: ${ADMIN_INITIAL_USERNAME}
       ADMIN_INITIAL_PASSWORD: ${ADMIN_INITIAL_PASSWORD}
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.labvault-api.rule=Host(`${LABVAULT_DOMAIN}`) && PathPrefix(`/api`)
-      - traefik.http.routers.labvault-api.entrypoints=websecure
-      - traefik.http.routers.labvault-api.tls.certresolver=letsencrypt
-      - traefik.http.routers.labvault-api.priority=100
-      - traefik.http.routers.labvault-api.middlewares=labvault-security
-      - traefik.http.services.labvault-api.loadbalancer.server.port=3001
-      - traefik.http.middlewares.labvault-security.headers.stsSeconds=31536000
-      - traefik.http.middlewares.labvault-security.headers.stsIncludeSubdomains=true
-      - traefik.http.middlewares.labvault-security.headers.browserXssFilter=true
-      - traefik.http.middlewares.labvault-security.headers.contentTypeNosniff=true
-      - traefik.http.middlewares.labvault-security.headers.referrerPolicy=no-referrer-when-downgrade
     healthcheck:
       test: ["CMD", "node", "-e", "require('node:http').get('http://127.0.0.1:3001/api', (response) => process.exit(response.statusCode && response.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
       interval: 30s
@@ -134,7 +99,6 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - edge
       - internal
 
   server-init:
@@ -164,8 +128,10 @@ services:
       context: ../..
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_API_BASE_URL: https://${LABVAULT_DOMAIN}/api
+        NEXT_PUBLIC_API_BASE_URL: ${APP_BASE_URL}/api
     restart: unless-stopped
+    ports:
+      - "${LABVAULT_WEB_PORT:-30888}:3000"
     depends_on:
       server:
         condition: service_healthy
@@ -173,24 +139,14 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOSTNAME: 0.0.0.0
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.labvault-web.rule=Host(`${LABVAULT_DOMAIN}`)
-      - traefik.http.routers.labvault-web.entrypoints=websecure
-      - traefik.http.routers.labvault-web.tls.certresolver=letsencrypt
-      - traefik.http.routers.labvault-web.middlewares=labvault-security
-      - traefik.http.services.labvault-web.loadbalancer.server.port=3000
     networks:
-      - edge
+      - internal
 
 volumes:
   postgres_data:
   redis_data:
   minio_data:
-  traefik_letsencrypt:
 
 networks:
-  edge:
-    driver: bridge
   internal:
     driver: bridge

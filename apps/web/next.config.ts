@@ -67,6 +67,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://server:3001/api/:path*",
+      },
+    ];
+  },
   turbopack: {
     root: path.resolve(__dirname, "../.."),
   },

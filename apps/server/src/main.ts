@@ -77,7 +77,7 @@ async function bootstrap() {
 
   await app.listen(
     getConfiguredEnvValue(process.env.PORT, '3001'),
-    getConfiguredEnvValue(process.env.HOST, 'localhost'),
+    getConfiguredEnvValue(process.env.HOST, '0.0.0.0'),
   );
 }
 void bootstrap();
