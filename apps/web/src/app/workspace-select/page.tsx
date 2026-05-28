@@ -86,14 +86,14 @@ function WorkspaceSelectContent() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="app-pill">{workspace.badge}</div>
-                  <div className="mt-4 text-xl font-semibold text-slate-50 text-balance">
+                  <div className="mt-4 text-xl font-semibold text-foreground-strong text-balance">
                     {workspace.title}
                   </div>
-                  <p className="mt-2 text-sm leading-7 text-slate-300 text-pretty">
+                  <p className="mt-2 text-sm leading-7 text-foreground-muted text-pretty">
                     {workspace.description}
                   </p>
                 </div>
-                <div className="text-sm text-slate-400">
+                <div className="text-sm text-foreground-soft">
                   {isSubmitting ? "进入中..." : isCurrent ? "当前默认" : "点击进入"}
                 </div>
               </div>

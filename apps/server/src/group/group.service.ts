@@ -149,7 +149,33 @@ export class GroupService {
     });
   }
 
+  async getDirectionBootstrapStatus() {
+    const [groupCount, knowledgeSpaceCount] = await this.prisma.$transaction([
+      this.prisma.group.count(),
+      this.prisma.knowledgeSpace.count(),
+    ]);
+    const available = groupCount === 0 && knowledgeSpaceCount === 0;
+
+    return {
+      available,
+      groupCount,
+      knowledgeSpaceCount,
+      reason: available
+        ? null
+        : '默认方向组初始化仅限全新部署时使用。当前系统已存在群组或知识空间，请通过群组管理与知识库管理手动维护。',
+    };
+  }
+
   async bootstrapDirections() {
+    const status = await this.getDirectionBootstrapStatus();
+
+    if (!status.available) {
+      throw new ConflictException(
+        status.reason ??
+          '默认方向组初始化仅限全新部署时使用，当前系统已无法再次初始化。',
+      );
+    }
+
     const createdGroups = [];
     const updatedGroups = [];
 

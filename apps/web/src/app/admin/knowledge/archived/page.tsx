@@ -198,7 +198,7 @@ export default function ArchivedKnowledgePage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">已删除空间</h2>
-                <p className="mt-2 text-sm leading-7 text-zinc-300">
+                <p className="mt-2 text-sm leading-7 text-foreground-muted">
                   仅展示已进入删除保留期的空知识库空间。到期后系统会自动真实删除。
                 </p>
               </div>
@@ -206,7 +206,7 @@ export default function ArchivedKnowledgePage() {
             </div>
             {spaces.length > 0 ? (
               <div className="mt-6 overflow-x-auto">
-                <table className="min-w-[960px] divide-y divide-white/10 text-left text-sm">
+                <table className="min-w-[960px] divide-y divide-border text-left text-sm">
                   <thead className="app-table-head">
                     <tr>
                       <th className="px-5 py-4 font-medium">空间</th>
@@ -216,20 +216,20 @@ export default function ArchivedKnowledgePage() {
                       <th className="px-5 py-4 font-medium">操作</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/10">
+                  <tbody className="divide-y divide-border">
                     {spaces.map((space) => (
                       <tr key={space.id}>
                         <td className="px-5 py-4">
                           <div className="font-medium">{space.name}</div>
-                          <div className="mt-1 text-xs text-zinc-400">{space.code}</div>
+                          <div className="mt-1 text-xs text-foreground-soft">{space.code}</div>
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">
                           {space.ownerGroup?.name || "未绑定群组"}
                         </td>
-                        <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                        <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                           {formatDateTime(space.deletedAt)}
                         </td>
-                        <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                        <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                           {formatDateTime(space.deleteExpiresAt)}
                         </td>
                         <td className="px-5 py-4">
@@ -254,7 +254,7 @@ export default function ArchivedKnowledgePage() {
                 </table>
               </div>
             ) : (
-              <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-zinc-400">
+              <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-foreground-soft">
                 当前没有处于删除保留期的知识库空间。
               </div>
             )}
@@ -264,7 +264,7 @@ export default function ArchivedKnowledgePage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold">已删除页面</h2>
-                <p className="mt-2 text-sm leading-7 text-zinc-300">
+                <p className="mt-2 text-sm leading-7 text-foreground-muted">
                   页面删除后普通成员不可见；若仍在 14 天保留期内，可由系统管理员直接恢复。
                 </p>
               </div>
@@ -272,7 +272,7 @@ export default function ArchivedKnowledgePage() {
             </div>
             {pages.length > 0 ? (
               <div className="mt-6 overflow-x-auto">
-                <table className="min-w-[1120px] divide-y divide-white/10 text-left text-sm">
+                <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
                   <thead className="app-table-head">
                     <tr>
                       <th className="px-5 py-4 font-medium">页面</th>
@@ -283,21 +283,21 @@ export default function ArchivedKnowledgePage() {
                       <th className="px-5 py-4 font-medium">操作</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/10">
+                  <tbody className="divide-y divide-border">
                     {pages.map((page) => (
                       <tr key={page.id}>
                         <td className="px-5 py-4">
                           <div className="font-medium">{page.title}</div>
-                          <div className="mt-1 text-xs text-zinc-400">{page.slug}</div>
+                          <div className="mt-1 text-xs text-foreground-soft">{page.slug}</div>
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">{page.space.name}</td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">{page.space.name}</td>
+                        <td className="px-5 py-4 text-foreground-muted">
                           {page.author?.realName || page.editor?.realName || "未知"}
                         </td>
-                        <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                        <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                           {formatDateTime(page.deletedAt)}
                         </td>
-                        <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                        <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                           {formatDateTime(page.deleteExpiresAt)}
                         </td>
                         <td className="px-5 py-4">
@@ -322,7 +322,7 @@ export default function ArchivedKnowledgePage() {
                 </table>
               </div>
             ) : (
-              <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-zinc-400">
+              <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-foreground-soft">
                 当前没有处于删除保留期的知识页面。
               </div>
             )}

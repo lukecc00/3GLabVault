@@ -14,6 +14,7 @@ import { ApiError, fetchApi, sendJson } from "@/lib/api";
 import type {
   AddGroupMemberPayload,
   BootstrapDirectionGroupsResult,
+  BootstrapDirectionGroupsStatus,
   CreateGroupPayload,
   GroupSummary,
   MembershipRole,
@@ -108,6 +109,8 @@ export default function GroupsPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [bootstrapStatus, setBootstrapStatus] =
+    useState<BootstrapDirectionGroupsStatus | null>(null);
   const [pendingDangerAction, setPendingDangerAction] =
     useState<PendingDangerAction | null>(null);
   const [groupForm, setGroupForm] = useState<CreateGroupPayload>({
@@ -128,12 +131,13 @@ export default function GroupsPage() {
   });
 
   async function fetchGroupAdminData() {
-    const [groupsData, usersData] = await Promise.all([
+    const [groupsData, usersData, bootstrapStatusData] = await Promise.all([
       fetchApi<GroupSummary[]>("/groups"),
       fetchApi<UserSummary[]>("/users"),
+      fetchApi<BootstrapDirectionGroupsStatus>("/groups/bootstrap-directions/status"),
     ]);
 
-    return { groupsData, usersData };
+    return { groupsData, usersData, bootstrapStatusData };
   }
 
   async function loadData() {
@@ -141,9 +145,11 @@ export default function GroupsPage() {
     setError(null);
 
     try {
-      const { groupsData, usersData } = await fetchGroupAdminData();
+      const { groupsData, usersData, bootstrapStatusData } =
+        await fetchGroupAdminData();
       setGroups(groupsData);
       setUsers(usersData);
+      setBootstrapStatus(bootstrapStatusData);
     } catch (error) {
       setError(
         error instanceof ApiError ? error.message : "无法获取群组列表数据",
@@ -158,7 +164,8 @@ export default function GroupsPage() {
 
     void (async () => {
       try {
-        const { groupsData, usersData } = await fetchGroupAdminData();
+        const { groupsData, usersData, bootstrapStatusData } =
+          await fetchGroupAdminData();
 
         if (!active) {
           return;
@@ -166,6 +173,7 @@ export default function GroupsPage() {
 
         setGroups(groupsData);
         setUsers(usersData);
+        setBootstrapStatus(bootstrapStatusData);
       } catch (error) {
         if (!active) {
           return;
@@ -257,8 +265,14 @@ export default function GroupsPage() {
     >("/groups/bootstrap-directions", "POST", {});
 
     setGroups(result.groups);
+    setBootstrapStatus({
+      available: false,
+      groupCount: result.groups.length,
+      knowledgeSpaceCount: result.spaces.length,
+      reason: "默认方向组初始化已完成。",
+    });
     setActionMessage(
-      `默认方向资源已同步：群组新增 ${result.createdGroupCount} 个、更新 ${result.updatedGroupCount} 个；空间新增 ${result.createdSpaceCount} 个、更新 ${result.updatedSpaceCount} 个。当前方向模板为 Android / Web / iOS / HarmonyOS / Server。`,
+      `默认方向资源已初始化：群组新增 ${result.createdGroupCount} 个；空间新增 ${result.createdSpaceCount} 个。`,
     );
   }
 
@@ -363,27 +377,29 @@ export default function GroupsPage() {
         <ResourceState title="群组列表加载失败" description={error} tone="error" />
       ) : (
         <div className="space-y-6">
-          <section className="app-panel p-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold">默认方向组模板</h2>
-                <p className="mt-2 text-sm leading-7 text-zinc-300">
-                  一键生成实验室常用方向组及其知识空间，并兼容历史方向与空间数据。
-                </p>
-                <div className="mt-3 text-sm text-zinc-400">
-                  Android / Web / iOS / HarmonyOS / Server
+          {bootstrapStatus?.available ? (
+            <section className="app-panel p-6">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold">默认方向组模板</h2>
+                  <p className="mt-2 text-sm leading-7 text-foreground-muted">
+                    仅在全新部署、尚未创建任何群组或知识空间时使用。
+                  </p>
+                  <div className="mt-3 text-sm text-foreground-soft">
+                    Android / Web / iOS / HarmonyOS / Server
+                  </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleBootstrapDirections}
+                  disabled={submitting}
+                  className="app-button-primary"
+                >
+                  初始化方向组与空间
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleBootstrapDirections}
-                disabled={submitting}
-                className="app-button-primary"
-              >
-                初始化方向组与空间
-              </button>
-            </div>
-          </section>
+            </section>
+          ) : null}
 
           <section className="grid gap-6 xl:grid-cols-2">
             <form
@@ -393,7 +409,7 @@ export default function GroupsPage() {
               <h2 className="text-xl font-semibold">新增群组</h2>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">群组名称</div>
+                  <div className="mb-2 text-foreground-muted">群组名称</div>
                   <input
                     required
                     value={groupForm.name}
@@ -405,7 +421,7 @@ export default function GroupsPage() {
                   />
                 </label>
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">群组编码</div>
+                  <div className="mb-2 text-foreground-muted">群组编码</div>
                   <input
                     required
                     value={groupForm.code}
@@ -417,7 +433,7 @@ export default function GroupsPage() {
                   />
                 </label>
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">群组类型</div>
+                  <div className="mb-2 text-foreground-muted">群组类型</div>
                   <select
                     value={groupForm.type}
                     onChange={(event) =>
@@ -435,7 +451,7 @@ export default function GroupsPage() {
                   </select>
                 </label>
                 <div className="text-sm">
-                  <div className="mb-2 text-zinc-300">父群组</div>
+                  <div className="mb-2 text-foreground-muted">父群组</div>
                   <EntitySelector
                     title="父群组"
                     description="支持按群组名称、编码搜索，并按群组类型筛选。"
@@ -456,7 +472,7 @@ export default function GroupsPage() {
                   />
                 </div>
                 <label className="text-sm md:col-span-2">
-                  <div className="mb-2 text-zinc-300">描述</div>
+                  <div className="mb-2 text-foreground-muted">描述</div>
                   <textarea
                     value={groupForm.description ?? ""}
                     onChange={(event) =>
@@ -522,7 +538,7 @@ export default function GroupsPage() {
                   variant="floating"
                 />
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">成员身份</div>
+                  <div className="mb-2 text-foreground-muted">成员身份</div>
                   <select
                     value={memberForm.membershipRole}
                     onChange={(event) =>
@@ -559,7 +575,7 @@ export default function GroupsPage() {
 
           <div className="app-table-shell">
             <div className="overflow-x-auto">
-              <table className="min-w-[920px] divide-y divide-white/10 text-left text-sm">
+              <table className="min-w-[920px] divide-y divide-border text-left text-sm">
                 <thead className="app-table-head">
                   <tr>
                     <th className="min-w-52 px-5 py-4 font-medium">群组名称</th>
@@ -572,7 +588,7 @@ export default function GroupsPage() {
                     <th className="min-w-28 px-5 py-4 font-medium">操作</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className="divide-y divide-border">
                   {groups.map((group) => {
                     const deleteBlockedReason = getDeleteGroupBlockedReason(group);
 
@@ -580,24 +596,24 @@ export default function GroupsPage() {
                       <tr key={group.id}>
                         <td className="px-5 py-4">
                           <div className="font-medium">{group.name}</div>
-                          <div className="mt-1 text-xs text-zinc-400">
+                          <div className="mt-1 text-xs text-foreground-soft">
                             {group.description || "暂无描述"}
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">
                           {groupTypeMap[group.type]}
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">{group.code}</td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">{group.code}</td>
+                        <td className="px-5 py-4 text-foreground-muted">
                           {group.parent?.name || "无"}
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">
                           {group._count.memberships}
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">
                           {group._count.children}
                         </td>
-                        <td className="px-5 py-4 text-zinc-300">
+                        <td className="px-5 py-4 text-foreground-muted">
                           {group._count.knowledgeSpaces}
                         </td>
                         <td className="min-w-28 px-5 py-4">

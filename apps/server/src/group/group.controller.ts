@@ -44,6 +44,12 @@ export class GroupController {
   }
 
   @Roles(...GLOBAL_ADMIN_ROLE_CODES)
+  @Get('bootstrap-directions/status')
+  getDirectionBootstrapStatus() {
+    return this.groupService.getDirectionBootstrapStatus();
+  }
+
+  @Roles(...GLOBAL_ADMIN_ROLE_CODES)
   @Post('bootstrap-directions')
   async bootstrapDirections() {
     const groupResult = await this.groupService.bootstrapDirections();

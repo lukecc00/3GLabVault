@@ -314,7 +314,7 @@ export default function RegisterPage() {
                   setForm((prev) => ({ ...prev, realName: event.target.value }))
                 }
                 className="app-input"
-                placeholder="例如：张三"
+                placeholder="孙文宇"
               />
             </label>
             <label className="text-sm">
@@ -329,7 +329,7 @@ export default function RegisterPage() {
                   }))
                 }
                 className="app-input"
-                placeholder="例如：zhangsan"
+                placeholder="sunwenyu"
               />
             </label>
           </div>
@@ -418,7 +418,7 @@ export default function RegisterPage() {
                   </div>
                 ))}
                 <div className="text-xs leading-6 text-slate-400">
-                  年级组只能选择一个；选择新的年级组时会自动替换之前的年级组。
+                  年级组只能选择一个。
                 </div>
               </div>
             ) : (

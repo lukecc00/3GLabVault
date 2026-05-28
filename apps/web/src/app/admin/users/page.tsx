@@ -926,12 +926,12 @@ export default function UsersPage() {
               className="app-panel p-6"
             >
               <h2 className="text-xl font-semibold">新成员注册</h2>
-              <p className="mt-2 text-sm leading-7 text-zinc-300">
+              <p className="mt-2 text-sm leading-7 text-foreground-muted">
                 录入成员姓名、姓名拼音和初始密码。一个成员可同时预绑定多个不同类别群组，但年级组只能选择一个。
               </p>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">姓名</div>
+                  <div className="mb-2 text-foreground-muted">姓名</div>
                   <input
                     required
                     value={registerForm.realName ?? ""}
@@ -946,7 +946,7 @@ export default function UsersPage() {
                   />
                 </label>
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">姓名拼音</div>
+                  <div className="mb-2 text-foreground-muted">姓名拼音</div>
                   <input
                     required
                     value={registerForm.namePinyin ?? ""}
@@ -961,7 +961,7 @@ export default function UsersPage() {
                   />
                 </label>
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">初始密码</div>
+                  <div className="mb-2 text-foreground-muted">初始密码</div>
                   <PasswordInput
                     required
                     minLength={8}
@@ -978,7 +978,7 @@ export default function UsersPage() {
                   />
                 </label>
                 <label className="text-sm">
-                  <div className="mb-2 text-zinc-300">外部提醒邮箱</div>
+                  <div className="mb-2 text-foreground-muted">外部提醒邮箱</div>
                   <input
                     type="email"
                     required
@@ -994,18 +994,18 @@ export default function UsersPage() {
                   />
                 </label>
                 <div className="app-surface-soft px-4 py-3 text-sm">
-                  <div className="text-zinc-300">邮箱预览</div>
-                  <div className="mt-2 font-mono text-sky-200">
+                  <div className="text-foreground-muted">邮箱预览</div>
+                  <div className="mt-2 font-mono text-[var(--accent-strong)]">
                     {registerPrefixCheck.email ||
                       (mailDomain ? `name@${mailDomain}` : "name@example.com")}
                   </div>
                   <div
                     className={`mt-2 ${
                       registerPrefixCheck.status === "available"
-                        ? "text-emerald-300"
+                        ? "text-[var(--success-strong)]"
                         : registerPrefixCheck.status === "unavailable"
-                          ? "text-red-300"
-                          : "text-zinc-400"
+                          ? "text-[var(--danger-strong)]"
+                          : "text-foreground-soft"
                     }`}
                   >
                     {registerPrefixCheck.message ||
@@ -1013,7 +1013,7 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div className="text-sm md:col-span-2">
-                  <div className="mb-2 text-zinc-300">预绑定群组</div>
+                  <div className="mb-2 text-foreground-muted">预绑定群组</div>
                   <EntitySelector
                     title="预绑定群组"
                     description="搜索并选择要预绑定的群组；年级组仅能保留一个。"
@@ -1036,7 +1036,7 @@ export default function UsersPage() {
                   />
                 </div>
                 <label className="text-sm md:col-span-2">
-                  <div className="mb-2 text-zinc-300">个人简介</div>
+                  <div className="mb-2 text-foreground-muted">个人简介</div>
                   <textarea
                     value={registerForm.bio ?? ""}
                     onChange={(event) =>
@@ -1079,7 +1079,7 @@ export default function UsersPage() {
               className="app-panel p-6"
             >
               <h2 className="text-xl font-semibold">审核与分配</h2>
-              <p className="mt-2 text-sm leading-7 text-zinc-300">
+              <p className="mt-2 text-sm leading-7 text-foreground-muted">
                 选择用户后可调整状态、角色和群组，用于管理员审核与成员归类。
               </p>
               <div className="mt-6 space-y-4">
@@ -1101,7 +1101,7 @@ export default function UsersPage() {
                   variant="floating"
                 />
                 <label className="block text-sm">
-                  <div className="mb-2 text-zinc-300">审核状态</div>
+                  <div className="mb-2 text-foreground-muted">审核状态</div>
                   <select
                     value={reviewStatus}
                     onChange={(event) =>
@@ -1115,7 +1115,7 @@ export default function UsersPage() {
                   </select>
                 </label>
                 <label className="block text-sm">
-                  <div className="mb-2 text-zinc-300">外部提醒邮箱</div>
+                  <div className="mb-2 text-foreground-muted">外部提醒邮箱</div>
                   <input
                     type="email"
                     value={reviewNotificationEmail}
@@ -1125,7 +1125,7 @@ export default function UsersPage() {
                   />
                 </label>
                 <div>
-                  <div className="mb-2 text-sm text-zinc-300">角色分配</div>
+                  <div className="mb-2 text-sm text-foreground-muted">角色分配</div>
                   <div className="flex flex-wrap gap-2">
                     {roles.map((role) => (
                       <ChipButton
@@ -1143,7 +1143,7 @@ export default function UsersPage() {
                   </div>
                 </div>
                 <div>
-                  <div className="mb-2 text-sm text-zinc-300">群组分配</div>
+                  <div className="mb-2 text-sm text-foreground-muted">群组分配</div>
                   <EntitySelector
                     title="群组分配"
                     description="支持按群组名称、编码搜索，并按方向组、年级组、功能组快速筛选；年级组仅能保留一个。"
@@ -1217,12 +1217,12 @@ export default function UsersPage() {
             className="app-panel-muted p-6"
           >
             <h2 className="text-xl font-semibold">批量生成账号</h2>
-            <p className="mt-2 text-sm leading-7 text-zinc-300">
+            <p className="mt-2 text-sm leading-7 text-foreground-muted">
               每行输入一位成员，格式为“姓名,外部提醒邮箱”。必须设置统一初始密码并至少绑定一个群组；系统会自动生成拼音账号、实验室邮箱。若绑定年级组，只能选择一个。
             </p>
             <div className="mt-6 grid gap-4 xl:grid-cols-[1fr_0.9fr]">
               <label className="text-sm">
-                <div className="mb-2 text-zinc-300">成员名单</div>
+                <div className="mb-2 text-foreground-muted">成员名单</div>
                 <textarea
                   required
                   value={batchForm.rows}
@@ -1238,7 +1238,7 @@ export default function UsersPage() {
               </label>
               <div>
                 <label className="block text-sm">
-                  <div className="mb-2 text-zinc-300">统一初始密码</div>
+                  <div className="mb-2 text-foreground-muted">统一初始密码</div>
                   <PasswordInput
                     required
                     aria-describedby="batch-password-hint"
@@ -1256,12 +1256,12 @@ export default function UsersPage() {
                   />
                   <div
                     id="batch-password-hint"
-                    className="mt-2 text-xs leading-6 text-zinc-400"
+                    className="mt-2 text-xs leading-6 text-foreground-soft"
                   >
                     成员首次使用该初始密码登录后，必须先修改密码；修改完成后需使用新密码重新登录。
                   </div>
                 </label>
-                <div className="mb-2 mt-4 text-sm text-zinc-300">绑定群组</div>
+                <div className="mb-2 mt-4 text-sm text-foreground-muted">绑定群组</div>
                 <EntitySelector
                   title="绑定群组"
                   description="至少选择一个批量绑定的群组；年级组仅能保留一个。"
@@ -1301,59 +1301,63 @@ export default function UsersPage() {
 
           {batchResults.length > 0 ? (
             <div className="app-table-shell">
-              <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-                <thead className="app-table-head">
-                  <tr>
-                    <th className="px-5 py-4 font-medium">姓名</th>
-                    <th className="px-5 py-4 font-medium">账号</th>
-                    <th className="px-5 py-4 font-medium">邮箱</th>
-                    <th className="px-5 py-4 font-medium">外部提醒邮箱</th>
-                    <th className="px-5 py-4 font-medium">临时密码</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {batchResults.map((result) => (
-                    <tr key={result.user.id}>
-                      <td className="px-5 py-4">{result.user.realName}</td>
-                      <td className="px-5 py-4 text-zinc-300">
-                        {result.user.username}
-                      </td>
-                      <td className="px-5 py-4 text-zinc-300">{result.user.email}</td>
-                      <td className="px-5 py-4 text-zinc-300">
-                        {result.user.notificationEmail || "未填写"}
-                      </td>
-                      <td className="px-5 py-4 font-mono text-emerald-300">
-                        {result.temporaryPassword}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="min-w-[920px] divide-y divide-border text-left text-sm">
+                  <thead className="app-table-head">
+                    <tr>
+                      <th className="px-5 py-4 font-medium">姓名</th>
+                      <th className="px-5 py-4 font-medium">账号</th>
+                      <th className="px-5 py-4 font-medium">邮箱</th>
+                      <th className="px-5 py-4 font-medium">外部提醒邮箱</th>
+                      <th className="px-5 py-4 font-medium">临时密码</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {batchResults.map((result) => (
+                      <tr key={result.user.id}>
+                        <td className="px-5 py-4">{result.user.realName}</td>
+                        <td className="px-5 py-4 text-foreground-muted">
+                          {result.user.username}
+                        </td>
+                        <td className="px-5 py-4 text-foreground-muted">{result.user.email}</td>
+                        <td className="px-5 py-4 text-foreground-muted">
+                          {result.user.notificationEmail || "未填写"}
+                        </td>
+                        <td className="px-5 py-4 font-mono text-[var(--success-strong)]">
+                          {result.temporaryPassword}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : null}
 
           {batchFailedResults.length > 0 ? (
             <div className="app-table-shell">
-              <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-                <thead className="app-table-head">
-                  <tr>
-                    <th className="px-5 py-4 font-medium">姓名</th>
-                    <th className="px-5 py-4 font-medium">外部提醒邮箱</th>
-                    <th className="px-5 py-4 font-medium">失败原因</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/10">
-                  {batchFailedResults.map((result, index) => (
-                    <tr key={`${result.realName}-${result.notificationEmail ?? index}`}>
-                      <td className="px-5 py-4">{result.realName}</td>
-                      <td className="px-5 py-4 text-zinc-300">
-                        {result.notificationEmail || "未填写"}
-                      </td>
-                      <td className="px-5 py-4 text-rose-300">{result.reason}</td>
+              <div className="overflow-x-auto">
+                <table className="min-w-[760px] divide-y divide-border text-left text-sm">
+                  <thead className="app-table-head">
+                    <tr>
+                      <th className="px-5 py-4 font-medium">姓名</th>
+                      <th className="px-5 py-4 font-medium">外部提醒邮箱</th>
+                      <th className="px-5 py-4 font-medium">失败原因</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {batchFailedResults.map((result, index) => (
+                      <tr key={`${result.realName}-${result.notificationEmail ?? index}`}>
+                        <td className="px-5 py-4">{result.realName}</td>
+                        <td className="px-5 py-4 text-foreground-muted">
+                          {result.notificationEmail || "未填写"}
+                        </td>
+                        <td className="px-5 py-4 text-[var(--danger-strong)]">{result.reason}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : null}
 
@@ -1362,7 +1366,7 @@ export default function UsersPage() {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-xl font-semibold">用户列表</h2>
-                  <p className="mt-1 text-sm text-zinc-300">查找并选择要管理的用户。</p>
+                  <p className="mt-1 text-sm text-foreground-muted">查找并选择要管理的用户。</p>
                 </div>
                 <div className="app-eyebrow app-eyebrow-neutral">
                   共 {directoryData?.total ?? 0} 位用户
@@ -1463,11 +1467,11 @@ export default function UsersPage() {
                       <div className="h-full w-1/3 animate-[directory-loading_1.1s_ease-in-out_infinite] rounded-full bg-sky-400/70" />
                     </div>
                   ) : null}
-                  <div className="border-b border-white/10 px-5 py-3 text-xs text-zinc-400">
+                  <div className="border-b border-border-soft px-5 py-3 text-xs text-foreground-soft">
                     当前筛选：{directoryDescription}，本页 {directoryUsers.length} 人
                     {directoryLoading && directoryData ? " · 正在刷新" : ""}
                   </div>
-                  <div className="hidden grid-cols-[minmax(180px,1.1fr)_160px_minmax(220px,1.1fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] gap-4 border-b border-white/10 px-5 py-3 text-[11px] font-medium tracking-[0.08em] text-zinc-400 xl:grid">
+                  <div className="hidden grid-cols-[minmax(180px,1.1fr)_160px_minmax(220px,1.1fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] gap-4 border-b border-border-soft px-5 py-3 text-[11px] font-medium tracking-[0.08em] text-foreground-soft xl:grid">
                     <div>用户</div>
                     <div>账号状态</div>
                     <div>实验室邮箱</div>
@@ -1476,7 +1480,7 @@ export default function UsersPage() {
                     <div>群组</div>
                   </div>
                   <div
-                    className={`divide-y divide-white/10 transition-opacity duration-150 ${
+                    className={`divide-y divide-border transition-opacity duration-150 ${
                       directoryLoading && directoryData ? "opacity-75" : "opacity-100"
                     }`}
                   >
@@ -1486,18 +1490,17 @@ export default function UsersPage() {
                           key={user.id}
                           type="button"
                           onClick={() => applyUserSelection(user)}
-                          className={`w-full px-5 py-3.5 text-left transition-colors ${
-                            selectedUserId === user.id
-                              ? "bg-surface-soft"
-                              : "hover:bg-surface-soft"
+                          aria-pressed={selectedUserId === user.id}
+                          className={`app-selectable-row w-full px-5 py-3.5 text-left ${
+                            selectedUserId === user.id ? "is-active" : ""
                           }`}
                         >
                           <div className="grid gap-3 xl:grid-cols-[minmax(180px,1.1fr)_160px_minmax(220px,1.1fr)_minmax(220px,1.1fr)_minmax(180px,0.9fr)_minmax(220px,1fr)] xl:items-center xl:gap-4">
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-zinc-100">
+                              <div className="truncate text-sm font-semibold text-foreground-strong">
                                 {user.realName}
                               </div>
-                              <div className="mt-1 truncate text-xs text-zinc-400">
+                              <div className="mt-1 truncate text-xs text-foreground-soft">
                                 @{getFieldValue(user.username, "未生成账号")}
                                 {user.studentId ? ` · 学号 ${user.studentId}` : ""}
                               </div>
@@ -1515,41 +1518,41 @@ export default function UsersPage() {
                                 ) : null}
                               </div>
                               {getMailboxStatusDescription(user) ? (
-                                <div className="mt-1 truncate text-xs text-zinc-400">
+                                <div className="mt-1 truncate text-xs text-foreground-soft">
                                   {getMailboxStatusDescription(user)}
                                 </div>
                               ) : null}
                             </div>
 
                             <div className="min-w-0">
-                              <div className="truncate text-sm text-zinc-200">{user.email}</div>
-                              <div className="mt-1 truncate text-xs text-zinc-400">
+                              <div className="truncate text-sm text-foreground-strong">{user.email}</div>
+                              <div className="mt-1 truncate text-xs text-foreground-soft">
                                 实验室邮箱
                               </div>
                             </div>
 
                             <div className="min-w-0">
-                              <div className="truncate text-sm text-zinc-200">
+                              <div className="truncate text-sm text-foreground-strong">
                                 {getFieldValue(user.notificationEmail)}
                               </div>
-                              <div className="mt-1 truncate text-xs text-zinc-400">
+                              <div className="mt-1 truncate text-xs text-foreground-soft">
                                 外部提醒邮箱
                               </div>
                             </div>
 
                             <div className="min-w-0">
-                              <div className="text-sm leading-6 text-zinc-200 break-words">
+                              <div className="text-sm leading-6 text-foreground-strong break-words">
                                 {user.roles.length > 0
                                   ? user.roles.map(({ role }) => role.name).join("、")
                                   : "未分配角色"}
                               </div>
-                              <div className="mt-1 text-xs text-zinc-400">
+                              <div className="mt-1 text-xs text-foreground-soft">
                                 {user.roles.length} 项角色
                               </div>
                             </div>
 
                             <div className="min-w-0">
-                              <div className="truncate text-sm text-zinc-200">
+                              <div className="truncate text-sm text-foreground-strong">
                                 {user.memberships.length > 0
                                   ? summarizeNames(
                                       user.memberships.map(({ group }) => group.name),
@@ -1557,7 +1560,7 @@ export default function UsersPage() {
                                     )
                                   : "未加入群组"}
                               </div>
-                              <div className="mt-1 truncate text-xs text-zinc-400">
+                              <div className="mt-1 truncate text-xs text-foreground-soft">
                                 {user.memberships.length} 个群组
                               </div>
                             </div>
@@ -1565,7 +1568,7 @@ export default function UsersPage() {
                         </button>
                       ))
                     ) : (
-                      <div className="px-5 py-12 text-center text-sm text-zinc-400">
+                      <div className="px-5 py-12 text-center text-sm text-foreground-soft">
                         没有匹配的成员，试试更换关键词或切换群组筛选。
                       </div>
                     )}
@@ -1573,7 +1576,7 @@ export default function UsersPage() {
                 </div>
 
                 <div className="app-panel-muted flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="text-sm text-zinc-300">
+                  <div className="text-sm text-foreground-muted">
                     第 {directoryData?.page ?? 1} 页，共 {directoryData?.totalPages ?? 1} 页
                   </div>
                   <div className="flex flex-wrap gap-3">

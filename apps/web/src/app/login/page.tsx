@@ -38,11 +38,7 @@ export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    setMessage(getLoginNotice());
-  }, []);
+  const [message, setMessage] = useState<string | null>(() => getLoginNotice());
 
   useEffect(() => {
     if (status !== "authenticated" || !user) {
@@ -91,7 +87,7 @@ export default function LoginPage() {
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
             className="app-input"
-            placeholder="例如：admin 或 zhangsan@3glab"
+            placeholder="zhangsan 或 zhangsan@3glab"
           />
         </label>
 
@@ -139,17 +135,6 @@ export default function LoginPage() {
           <li>离开设备前请及时锁屏或退出登录；如发现异常登录、疑似泄密或账号风险，请立即联系管理员处理。</li>
         </ul>
       </section>
-
-      <div className="app-panel-muted mt-6 p-4 text-sm leading-7 text-foreground-muted">
-        <div className="font-medium text-foreground-strong">管理员初始化说明</div>
-        <div className="mt-2">
-          当前默认种子管理员账号为 `xiyou3g`。如需调整初始密码，可通过
-          `ADMIN_INITIAL_PASSWORD` 环境变量覆盖。
-        </div>
-        <div className="mt-2">
-          当前默认管理员不会被强制要求首次改密，登录后会按权限直接进入后台工作区。
-        </div>
-      </div>
 
       <div className="mt-6 flex flex-wrap gap-3 text-sm">
         <Link href="/register" className="app-button-primary-emerald">

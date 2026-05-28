@@ -66,14 +66,14 @@ const toneStyles: Record<
     triggerCount: "border-amber-400/25 bg-amber-400/10 text-[var(--warning-strong)]",
   },
   neutral: {
-    selectedCard: "border-white/20 bg-white/8",
-    selectedIndicator: "border-white/70 bg-white/70",
-    selectedBadge: "border-white/15 bg-white/8 text-slate-100",
-    filterActive: "border-white/20 bg-white/8 text-slate-100",
-    summaryButton: "border-white/15 bg-white/8 text-slate-100",
+    selectedCard: "border-border bg-surface-soft",
+    selectedIndicator: "border-foreground-subtle bg-foreground-subtle",
+    selectedBadge: "border-border bg-surface-soft text-foreground-strong",
+    filterActive: "border-border bg-surface-soft text-foreground-strong",
+    summaryButton: "border-border bg-surface-soft text-foreground-strong",
     triggerSurface:
-      "border-white/12 bg-white/[0.04] hover:border-white/18 hover:bg-white/[0.06]",
-    triggerCount: "border-white/15 bg-white/8 text-slate-100",
+      "border-border-soft bg-surface-soft hover:border-border hover:bg-surface-soft",
+    triggerCount: "border-border bg-surface-soft text-foreground-strong",
   },
 };
 
@@ -190,7 +190,7 @@ function EntitySelectorList({
             type="button"
             onClick={() => setActiveFilter("all")}
             disabled={disabled}
-            className={resolvedFilter === "all" ? styles.filterActive : "text-slate-300"}
+            className={resolvedFilter === "all" ? styles.filterActive : "text-foreground-muted"}
           >
             全部
           </ChipButton>
@@ -200,10 +200,10 @@ function EntitySelectorList({
               type="button"
               onClick={() => setActiveFilter(filter.id)}
               disabled={disabled}
-              className={resolvedFilter === filter.id ? styles.filterActive : "text-slate-300"}
+              className={resolvedFilter === filter.id ? styles.filterActive : "text-foreground-muted"}
             >
               {filter.label}
-              <span className="ml-2 tabular-nums text-slate-400">{filter.count}</span>
+              <span className="ml-2 tabular-nums text-foreground-soft">{filter.count}</span>
             </ChipButton>
           ))}
         </div>
@@ -211,18 +211,18 @@ function EntitySelectorList({
 
       <div className={cn("mt-4 max-h-80 space-y-4 overflow-y-auto pr-1", listClassName)}>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+          <div className="rounded-2xl border border-dashed border-border-soft px-4 py-6 text-sm text-foreground-soft">
             {emptyMessage}
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+          <div className="rounded-2xl border border-dashed border-border-soft px-4 py-6 text-sm text-foreground-soft">
             {noResultsMessage}
           </div>
         ) : (
           groupedItems.map(([section, sectionItems]) => (
             <div key={section}>
               {section !== "默认分组" ? (
-                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+                <div className="mb-2 text-xs uppercase tracking-[0.18em] text-foreground-subtle">
                   {section}
                 </div>
               ) : null}
@@ -251,7 +251,7 @@ function EntitySelectorList({
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                          <div className="truncate text-sm font-medium text-slate-50">
+                          <div className="truncate text-sm font-medium text-foreground-strong">
                             {item.label}
                           </div>
                           {checked ? (
@@ -267,14 +267,14 @@ function EntitySelectorList({
                           {item.badges?.map((badge) => (
                             <span
                               key={badge}
-                              className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300"
+                              className="rounded-full border border-border-soft px-2 py-0.5 text-[11px] text-foreground-muted"
                             >
                               {badge}
                             </span>
                           ))}
                         </div>
                         {item.description ? (
-                          <div className="mt-1 text-xs leading-6 text-slate-400">
+                          <div className="mt-1 text-xs leading-6 text-foreground-soft">
                             {item.description}
                           </div>
                         ) : null}
@@ -283,7 +283,7 @@ function EntitySelectorList({
                             {item.filterTags.map((tag) => (
                               <span
                                 key={`${item.id}-${tag.id}`}
-                                className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-400"
+                                className="rounded-full border border-border-soft px-2 py-0.5 text-[11px] text-foreground-soft"
                               >
                                 {tag.label}
                               </span>
@@ -523,8 +523,8 @@ export function EntitySelector({
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  <div className="text-sm font-medium text-slate-50">{title}</div>
-                  <div className="text-xs tabular-nums text-slate-400">
+                  <div className="text-sm font-medium text-foreground-strong">{title}</div>
+                  <div className="text-xs tabular-nums text-foreground-soft">
                     {selectedItems.length}/{items.length}
                   </div>
                 </div>
@@ -539,7 +539,7 @@ export function EntitySelector({
                       {selectedItems.length} 项
                     </span>
                   ) : null}
-                  <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-200">
+                  <span className="rounded-full border border-border-soft px-3 py-1.5 text-xs text-foreground-strong">
                     {floatingActionLabel}
                   </span>
                 </div>
@@ -547,14 +547,14 @@ export function EntitySelector({
               <div className="min-w-0">
                 <div
                   className={cn(
-                    "line-clamp-3 min-h-[5.25rem] text-sm leading-7 text-slate-100",
+                    "line-clamp-3 min-h-[5.25rem] text-sm leading-7 text-foreground-strong",
                     floatingSummaryClassName,
                   )}
                 >
                   {floatingSummary}
                 </div>
                 {description ? (
-                  <div className="mt-2 line-clamp-1 text-xs leading-5 text-slate-400">
+                  <div className="mt-2 line-clamp-1 text-xs leading-5 text-foreground-soft">
                     {description}
                   </div>
                 ) : null}
@@ -577,7 +577,7 @@ export function EntitySelector({
             aria-controls={open ? dialogId : undefined}
           >
             <div className="min-w-0">
-              <div className="truncate text-sm font-medium text-slate-100">
+              <div className="truncate text-sm font-medium text-foreground-strong">
                 {floatingSummary}
               </div>
             </div>
@@ -592,21 +592,21 @@ export function EntitySelector({
                   {selectedItems.length}
                 </span>
               ) : null}
-              <span className="text-xs text-slate-400">{floatingActionLabel}</span>
+              <span className="text-xs text-foreground-soft">{floatingActionLabel}</span>
             </div>
           </button>
         ) : (
           <section className={cn("app-panel-muted p-4", className)}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-medium text-slate-50">{title}</div>
+                <div className="text-sm font-medium text-foreground-strong">{title}</div>
                 {description ? (
-                  <p className="mt-2 max-w-[58ch] text-xs leading-6 text-slate-400">
+                  <p className="mt-2 max-w-[58ch] text-xs leading-6 text-foreground-soft">
                     {description}
                   </p>
                 ) : null}
               </div>
-              <div className="text-xs tabular-nums text-slate-400">
+              <div className="text-xs tabular-nums text-foreground-soft">
                 {selectedItems.length}/{items.length}
               </div>
             </div>
@@ -625,10 +625,10 @@ export function EntitySelector({
               aria-controls={open ? dialogId : undefined}
             >
               <div className="min-w-0">
-                <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-foreground-subtle">
                   {selectedTitle}
                 </div>
-                <div className="mt-2 line-clamp-2 text-sm leading-6 text-slate-100">
+                <div className="mt-2 line-clamp-2 text-sm leading-6 text-foreground-strong">
                   {floatingSummary}
                 </div>
               </div>
@@ -643,7 +643,7 @@ export function EntitySelector({
                     {selectedItems.length} 项
                   </div>
                 ) : null}
-                <span className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-slate-200">
+                <span className="rounded-full border border-border-soft px-3 py-1.5 text-xs text-foreground-strong">
                   {floatingActionLabel}
                 </span>
               </div>
@@ -668,22 +668,22 @@ export function EntitySelector({
               aria-modal="true"
               aria-labelledby={dialogTitleId}
               aria-describedby={description ? dialogDescriptionId : undefined}
-              className="mx-auto flex min-h-0 w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-white/10 bg-slate-950/95 shadow-2xl max-h-[calc(100dvh-3rem)]"
+              className="mx-auto flex min-h-0 w-full max-w-5xl flex-col overflow-hidden rounded-[32px] border border-border-soft bg-surface shadow-2xl max-h-[calc(100dvh-3rem)]"
             >
-              <div className="border-b border-white/8 px-5 py-4 sm:px-6">
+              <div className="border-b border-border-soft px-5 py-4 sm:px-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <div className="app-eyebrow app-eyebrow-neutral">Selector</div>
+                    <div className="app-eyebrow app-eyebrow-neutral">选择器</div>
                     <h2
                       id={dialogTitleId}
-                      className="mt-4 text-2xl font-semibold text-balance text-slate-50"
+                      className="mt-4 text-2xl font-semibold text-balance text-foreground-strong"
                     >
                       {title}
                     </h2>
                     {description ? (
                       <p
                         id={dialogDescriptionId}
-                        className="mt-3 max-w-[62ch] text-sm leading-7 text-slate-300"
+                        className="mt-3 max-w-[62ch] text-sm leading-7 text-foreground-muted"
                       >
                         {description}
                       </p>
@@ -700,7 +700,7 @@ export function EntitySelector({
               </div>
 
               <div className="grid min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.75fr)]">
-                <div className="flex min-h-0 flex-col border-b border-white/8 px-5 py-5 lg:border-b-0 lg:border-r lg:px-6">
+                <div className="flex min-h-0 flex-col border-b border-border-soft px-5 py-5 lg:border-b-0 lg:border-r lg:px-6">
                   <label htmlFor={inputId} className="block text-sm">
                     <span className="sr-only">{`${title}搜索`}</span>
                     <input
@@ -721,7 +721,7 @@ export function EntitySelector({
                         onClick={() => setActiveFilter("all")}
                         disabled={disabled}
                         className={
-                          resolvedFilter === "all" ? styles.filterActive : "text-slate-300"
+                          resolvedFilter === "all" ? styles.filterActive : "text-foreground-muted"
                         }
                       >
                         全部
@@ -735,11 +735,11 @@ export function EntitySelector({
                           className={
                             resolvedFilter === filter.id
                               ? styles.filterActive
-                              : "text-slate-300"
+                              : "text-foreground-muted"
                           }
                         >
                           {filter.label}
-                          <span className="ml-2 tabular-nums text-slate-400">
+                          <span className="ml-2 tabular-nums text-foreground-soft">
                             {filter.count}
                           </span>
                         </ChipButton>
@@ -754,18 +754,18 @@ export function EntitySelector({
                     )}
                   >
                     {items.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+                      <div className="rounded-2xl border border-dashed border-border-soft px-4 py-6 text-sm text-foreground-soft">
                         {emptyMessage}
                       </div>
                     ) : filteredItems.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+                      <div className="rounded-2xl border border-dashed border-border-soft px-4 py-6 text-sm text-foreground-soft">
                         {noResultsMessage}
                       </div>
                     ) : (
                       groupedItems.map(([section, sectionItems]) => (
                         <div key={section}>
                           {section !== "默认分组" ? (
-                            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-slate-500">
+                            <div className="mb-2 text-xs uppercase tracking-[0.18em] text-foreground-subtle">
                               {section}
                             </div>
                           ) : null}
@@ -798,7 +798,7 @@ export function EntitySelector({
                                   />
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
-                                      <div className="truncate text-sm font-medium text-slate-50">
+                                      <div className="truncate text-sm font-medium text-foreground-strong">
                                         {item.label}
                                       </div>
                                       {checked ? (
@@ -814,14 +814,14 @@ export function EntitySelector({
                                       {item.badges?.map((badge) => (
                                         <span
                                           key={badge}
-                                          className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-300"
+                                          className="rounded-full border border-border-soft px-2 py-0.5 text-[11px] text-foreground-muted"
                                         >
                                           {badge}
                                         </span>
                                       ))}
                                     </div>
                                     {item.description ? (
-                                      <div className="mt-1 text-xs leading-6 text-slate-400">
+                                      <div className="mt-1 text-xs leading-6 text-foreground-soft">
                                         {item.description}
                                       </div>
                                     ) : null}
@@ -830,7 +830,7 @@ export function EntitySelector({
                                         {item.filterTags.map((tag) => (
                                           <span
                                             key={`${item.id}-${tag.id}`}
-                                            className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-slate-400"
+                                            className="rounded-full border border-border-soft px-2 py-0.5 text-[11px] text-foreground-soft"
                                           >
                                             {tag.label}
                                           </span>
@@ -852,10 +852,10 @@ export function EntitySelector({
                   <div className="flex min-h-0 flex-1 flex-col rounded-[28px] border border-border-soft bg-surface p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <div className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
+                        <div className="text-[11px] uppercase tracking-[0.18em] text-foreground-subtle">
                           {selectedTitle}
                         </div>
-                        <div className="mt-2 text-sm text-slate-300">
+                        <div className="mt-2 text-sm text-foreground-muted">
                           {selectedItems.length > 0
                             ? `已选择 ${selectedItems.length} 项`
                             : selectedEmptyLabel}
@@ -865,7 +865,7 @@ export function EntitySelector({
                         <ChipButton
                           type="button"
                           onClick={() => onSelectionChange([])}
-                          className="text-slate-300"
+                          className="text-foreground-muted"
                         >
                           清空
                         </ChipButton>
@@ -896,7 +896,7 @@ export function EntitySelector({
                           </button>
                         ))
                       ) : (
-                        <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-sm text-slate-400">
+                        <div className="rounded-2xl border border-dashed border-border-soft px-4 py-6 text-sm text-foreground-soft">
                           暂未选择任何内容，左侧搜索后即可加入。
                         </div>
                       )}
@@ -915,14 +915,14 @@ export function EntitySelector({
     <section className={cn("app-panel-muted p-5", className)}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-medium text-slate-50">{title}</div>
+          <div className="text-sm font-medium text-foreground-strong">{title}</div>
           {description ? (
-            <p className="mt-2 max-w-[58ch] text-xs leading-6 text-slate-400">
+            <p className="mt-2 max-w-[58ch] text-xs leading-6 text-foreground-soft">
               {description}
             </p>
           ) : null}
         </div>
-        <div className="text-xs text-slate-400">
+        <div className="text-xs text-foreground-soft">
           {filteredItems.length}/{items.length}
         </div>
       </div>

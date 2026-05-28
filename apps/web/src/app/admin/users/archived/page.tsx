@@ -289,7 +289,7 @@ export default function ArchivedUsersPage() {
           <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="app-table-shell">
               <div className="overflow-x-auto">
-                <table className="min-w-[920px] divide-y divide-white/10 text-left text-sm">
+                <table className="min-w-[920px] divide-y divide-border text-left text-sm">
                 <thead className="app-table-head">
                   <tr>
                     <th className="min-w-44 px-5 py-4 font-medium">姓名</th>
@@ -299,7 +299,7 @@ export default function ArchivedUsersPage() {
                     <th className="min-w-56 px-5 py-4 font-medium">内容转移</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/10">
+                <tbody className="divide-y divide-border">
                   {users.map((user) => (
                     <tr
                       key={user.id}
@@ -316,19 +316,19 @@ export default function ArchivedUsersPage() {
                           className="w-full text-left"
                         >
                           <div className="font-medium">{user.realName}</div>
-                          <div className="mt-1 text-xs text-zinc-400">
+                          <div className="mt-1 text-xs text-foreground-soft">
                             {user.studentId || "暂无学号"}
                           </div>
                         </button>
                       </td>
-                      <td className="px-5 py-4 text-zinc-300">{user.email}</td>
-                      <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                      <td className="px-5 py-4 text-foreground-muted">{user.email}</td>
+                      <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                         {formatDateTime(user.archivedAt)}
                       </td>
-                      <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                      <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                         {formatDateTime(user.archiveExpiresAt)}
                       </td>
-                      <td className="px-5 py-4 tabular-nums text-zinc-300 whitespace-nowrap">
+                      <td className="px-5 py-4 tabular-nums text-foreground-muted whitespace-nowrap">
                         {user.contentRestoredAt
                           ? `已于 ${formatDateTime(user.contentRestoredAt)} 转移`
                           : "尚未转移"}
@@ -342,12 +342,12 @@ export default function ArchivedUsersPage() {
 
             <section className="app-panel p-6">
               <h2 className="text-xl font-semibold">归档操作</h2>
-              <p className="mt-2 text-sm leading-7 text-zinc-300">
+              <p className="mt-2 text-sm leading-7 text-foreground-muted">
                 归档后，知识页会先自动移交给对应的方向管理员、年级管理员或实验室管理员。保留期内你仍可继续把剩余内容转移给实验室管理员或对应方向管理员；恢复到方向管理员时会优先选择同年级方向管理员，不存在时回退到上一个年级。即使内容已转移，你也仍可重新启用该账号。
               </p>
 
               {selectedUser ? (
-                <div className="mt-6 space-y-4 app-surface-soft p-4 text-sm text-zinc-300">
+                <div className="mt-6 space-y-4 app-surface-soft p-4 text-sm text-foreground-muted">
                   <div>姓名：{selectedUser.realName}</div>
                   <div>邮箱：{selectedUser.email}</div>
                   <div>
@@ -366,7 +366,7 @@ export default function ArchivedUsersPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-zinc-400">
+                <div className="mt-6 rounded-2xl border border-dashed border-border-soft bg-surface p-4 text-sm text-foreground-soft">
                   请先从左侧列表选择一个归档用户。
                 </div>
               )}

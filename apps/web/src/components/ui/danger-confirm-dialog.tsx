@@ -133,7 +133,7 @@ export function DangerConfirmDialog({
         aria-describedby={descriptionId}
         className="w-full max-w-lg rounded-[32px] border border-red-400/20 bg-surface p-6 text-foreground-strong shadow-2xl"
       >
-        <div className="app-eyebrow app-eyebrow-amber">Danger Zone</div>
+        <div className="app-eyebrow app-eyebrow-amber">高危操作</div>
         <h2 id={titleId} className="mt-4 text-xl font-semibold">
           {title}
         </h2>
@@ -159,14 +159,14 @@ export function DangerConfirmDialog({
           />
         </label>
 
-        <div aria-live="polite" className="mt-2 min-h-6 text-sm text-red-100">
+        <div aria-live="polite" className="mt-2 min-h-6 text-sm text-[var(--danger-strong)]">
           {value.length > 0 && !matched ? "确认文案不匹配，暂时无法执行操作。" : null}
         </div>
 
         {errorMessage ? (
           <div
             role="alert"
-            className="mt-3 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-100"
+            className="mt-3 rounded-2xl border border-[var(--danger-border)] bg-[var(--danger-soft)] px-4 py-3 text-sm text-[var(--danger-strong)]"
           >
             {errorMessage}
           </div>

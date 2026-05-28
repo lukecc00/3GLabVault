@@ -67,7 +67,7 @@ export function WorkspaceShell({
     <div className="app-shell">
       <div className="app-container py-6">
         <div className="grid gap-6 xl:grid-cols-[290px_minmax(0,1fr)]">
-          <aside className="space-y-6">
+          <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
             <div className="app-panel p-5">
               <Link href="/" className="block">
                 <div className={accentClass.badge}>{brandLabel}</div>
@@ -76,13 +76,13 @@ export function WorkspaceShell({
                 </div>
               </Link>
 
-              <nav className="mt-6 space-y-2">
+              <nav className="mt-6 flex gap-2 overflow-x-auto pb-1 xl:block xl:space-y-2 xl:overflow-visible xl:pb-0">
                 {navItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center justify-between rounded-2xl px-4 py-3 text-sm transition-colors duration-200",
+                      "flex shrink-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-sm transition-colors duration-200 xl:w-full",
                       item.active
                         ? accentClass.active
                         : "text-foreground-muted hover:bg-surface-soft hover:text-foreground-strong",

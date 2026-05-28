@@ -285,6 +285,13 @@ export interface BootstrapDirectionGroupsResult {
   spaces: KnowledgeSpaceSummary[];
 }
 
+export interface BootstrapDirectionGroupsStatus {
+  available: boolean;
+  groupCount: number;
+  knowledgeSpaceCount: number;
+  reason: string | null;
+}
+
 export interface AddGroupMemberPayload {
   userId: string;
   membershipRole: MembershipRole;

@@ -123,7 +123,7 @@ export default function RolesPage() {
             <h2 className="text-xl font-semibold">新增角色</h2>
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <label className="text-sm">
-                <div className="mb-2 text-zinc-300">角色名称</div>
+                <div className="mb-2 text-foreground-muted">角色名称</div>
                 <input
                   required
                   value={form.name}
@@ -135,7 +135,7 @@ export default function RolesPage() {
                 />
               </label>
               <label className="text-sm">
-                <div className="mb-2 text-zinc-300">角色编码</div>
+                <div className="mb-2 text-foreground-muted">角色编码</div>
                 <input
                   required
                   value={form.code}
@@ -147,7 +147,7 @@ export default function RolesPage() {
                 />
               </label>
               <label className="text-sm md:col-span-2">
-                <div className="mb-2 text-zinc-300">角色描述</div>
+                <div className="mb-2 text-foreground-muted">角色描述</div>
                 <textarea
                   value={form.description ?? ""}
                   onChange={(event) =>
@@ -160,7 +160,7 @@ export default function RolesPage() {
                   placeholder="可选"
                 />
               </label>
-              <label className="flex items-center gap-3 text-sm text-zinc-300">
+              <label className="flex items-center gap-3 text-sm text-foreground-muted">
                 <input
                   type="checkbox"
                   checked={form.isSystem ?? false}
@@ -201,17 +201,17 @@ export default function RolesPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold">{role.name}</h2>
-                    <p className="mt-2 text-sm text-zinc-400">{role.code}</p>
+                    <p className="mt-2 text-sm text-foreground-soft">{role.code}</p>
                   </div>
                   <span className="app-pill">
                     {role._count.users} 人
                   </span>
                 </div>
-                <p className="mt-4 text-sm leading-7 text-zinc-300">
+                <p className="mt-4 text-sm leading-7 text-foreground-muted">
                   {role.description || "暂无角色描述"}
                 </p>
                 {role.isSystem ? (
-                  <div className="mt-4 text-xs text-emerald-300">系统预置角色</div>
+                  <div className="mt-4 text-xs text-[var(--success-strong)]">系统预置角色</div>
                 ) : null}
               </article>
             ))}
